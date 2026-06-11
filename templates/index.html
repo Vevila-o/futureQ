@@ -1,0 +1,94 @@
+
+{% load static %}
+
+{% block title %}語音日記{% endblock %}
+
+{% block head_css %}
+<link rel="stylesheet" href="{% static 'index.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="app">
+
+  <!-- ── Phase 1: 上傳照片 ─────────────────────────────── -->
+  <section class="phase" id="phase-upload">
+
+    <div class="header">
+      <h1 class="logo">📖 語音日記</h1>
+      <p class="tagline">用聲音，記錄生活的溫度</p>
+    </div>
+
+    <form method="post" action="{% url 'upload_photo' %}"
+          enctype="multipart/form-data" id="upload-form">
+      {% csrf_token %}
+      <label class="drop-zone" id="drop-zone" for="photo-input">
+        <div class="drop-zone-content" id="drop-content">
+          <span class="drop-icon">📷</span>
+          <span class="drop-text">點擊選擇照片</span>
+          <span class="drop-hint">JPG・PNG・HEIC 均可</span>
+        </div>
+        <img id="upload-preview" class="upload-preview" alt="預覽">
+      </label>
+      <input type="file" id="photo-input" name="photo"
+             accept="image/*" class="sr-only" required>
+      <button type="submit" class="btn btn-primary" id="upload-submit" disabled>
+        選好了，開始記錄 →
+      </button>
+    </form>
+
+  </section>
+
+  <!-- ── Phase 2: 錄音（含 AI 追問泡泡）──────────────────── -->
+  <section class="phase hidden" id="phase-record">
+
+    <div class="record-header">
+      <img id="photo-thumb" src="" alt="照片" class="photo-thumb">
+      <div class="round-badge">
+        第 <span id="round-current">1</span> 輪
+        <span class="round-sep">/</span> 3
+      </div>
+    </div>
+
+    <div class="question-bubble hidden" id="question-bubble">
+      <p id="question-text"></p>
+    </div>
+
+    <p class="record-prompt" id="record-prompt">
+      說說這張照片背後的故事吧 ✨
+    </p>
+
+    <div class="recorder-wrap">
+      <div class="timer hidden" id="timer">
+        <span id="timer-sec">60</span> 秒
+      </div>
+      <button class="btn btn-record" id="btn-record">
+        <span class="rec-dot"></span> 開始錄音
+      </button>
+      <button class="btn btn-stop hidden" id="btn-stop">
+        ⏹ 停止並送出
+      </button>
+    </div>
+
+    <button class="btn btn-skip hidden" id="btn-skip">
+      略過問答，直接整理日記
+    </button>
+
+  </section>
+
+  <!-- ── Phase 3: 處理中 ───────────────────────────────── -->
+  <section class="phase hidden" id="phase-processing">
+    <div class="processing">
+      <div class="spinner"></div>
+      <p id="processing-msg">語音辨識中⋯</p>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const SESSION_STATE = {{ session_state_json|default:"{}"|safe }};
+</script>
+<script src="{% static 'voice/recorder.js' %}"></script>
+{% endblock %}
