@@ -7,6 +7,11 @@
 - 建立資料庫 `User`, `DiaryEntry`, `CognitiveAnalysis`, `AiConversation`
 
 
+#### 6/12 日誌
+- 資料表註冊完成，基於Django 內建user再加上性別、生日
+ > **Whisper模型是裝在虛擬環境，非全域** 
+  
+
 > ##### venv 啟動
 
 1. 建立虛擬環境
@@ -38,3 +43,24 @@ pip install -r requirements.txt
 ⚠️環境是完全沒有venv才要做這些步驟，如果發現是少裝套件的話執行 `2` 跟 `3` ，平時都是`2`就可以了
 
 ---
+
+> ##### whisper 安裝(請確認已經進入虛擬環境)
+1. 下載模型
+第一次下載會有部分的快取檔案在本機
+
+```
+pip install openai-whisper
+```
+
+跑到看到:
+```
+[notice] A new release of pip is available: 24.2 -> 26.1.2
+[notice] To update, run: python.exe -m pip install --upgrade pip
+```
+
+![alt text](image-1.png)
+
+2. ffmpeg 環境變數
+
+在這個網頁上最新的file中找到``
+https://github.com/BtbN/FFmpeg-Builds/releases
