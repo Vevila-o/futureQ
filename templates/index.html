@@ -62,13 +62,15 @@
         <span class="rec-dot"></span> 開始錄音
       </button>
       <button class="btn btn-stop hidden" id="btn-stop">
-        ⏹ 停止並送出
+        ⏹ 停止錄音
+      </button>
+      <button class="btn btn-primary hidden" id="btn-submit">
+        送出
+      </button>
+      <button class="btn hidden" id="btn-retry">
+        再錄一次
       </button>
     </div>
-
-    <button class="btn btn-skip hidden" id="btn-skip">
-      略過問答，直接整理日記
-    </button>
 
   </section>
 
@@ -78,6 +80,70 @@
       <div class="spinner"></div>
       <p id="processing-msg">語音辨識中⋯</p>
     </div>
+  </section>
+
+  <!-- ── Phase 4: 結果 ─────────────────────────────────── -->
+  <section class="phase hidden" id="phase-result">
+
+    <div class="result-summary">
+      <p id="result-summary-text"></p>
+    </div>
+
+    <div class="result-scores">
+      <div class="score-item">
+        <span class="score-label">詞彙豐富度</span>
+        <span class="score-value" id="result-vocabulary"></span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">語句流暢度</span>
+        <span class="score-value" id="result-fluency"></span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">話題連貫性</span>
+        <span class="score-value" id="result-coherence"></span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">總字數</span>
+        <span class="score-value" id="result-wordcount"></span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">停頓次數</span>
+        <span class="score-value" id="result-hesitation"></span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">風險等級</span>
+        <span class="score-value" id="result-risk"></span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-ai-chat">
+      AI 對話
+    </button>
+    <button class="btn" id="btn-share">
+      略過對話 分享社群
+    </button>
+
+  </section>
+
+  <!-- ── Phase 5: 分享 ──────────────────────────────────── -->
+  <section class="phase hidden" id="phase-share">
+
+    <img id="share-photo" src="" alt="照片" class="photo-thumb">
+
+    <div class="share-post">
+      <p id="share-post-text"></p>
+    </div>
+
+    <button class="btn btn-primary" id="btn-share-line">
+      分享到 Line
+    </button>
+    <button class="btn btn-primary" id="btn-share-threads">
+      分享到 Threads
+    </button>
+    <button class="btn" id="btn-copy">
+      複製文字
+    </button>
+
   </section>
 
 </div>

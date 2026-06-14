@@ -9,13 +9,16 @@ def get_model():
     _model = whisper.load_model("base") #模型選擇base
   return _model
 
-# 音檔回傳文字
+# 音檔回傳
 """
 回傳後就不會再生成五個檔案
 """
-def transcribe(audio_path: str) -> str:
+def transcribe(audio_path: str) -> dict:
   model = get_model()
   result = model.transcribe(audio_path)
-  return result["text"]
+  return {
+    "text": result["text"],
+    "segments": result["segments"],
+  }
 
 
