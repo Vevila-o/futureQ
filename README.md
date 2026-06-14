@@ -2,11 +2,13 @@
 
 > 詳細環境建置教學請看 [tutor.md](tutor.md)
 
+> 目前只完成到分享，貼文產生跟ai三次交流還沒完成
 ---
 
 ## 目錄
 
 - [專案介紹](#專案介紹)
+- [使用流程](#使用流程)
 - [技術清單](#技術清單)
 - [專案架構](#專案架構)
 - [資料庫設計](#資料庫設計)
@@ -19,7 +21,23 @@
 
 ## 專案介紹
 
-聲影日記是一個專為長者設計的語音日記系統。使用者可以錄製語音或上傳照片，系統會自動將語音轉換成文字（透過 Whisper 模型），並以 AI 進行認知分析，提供溫暖的回應與風險評估。
+聲影日記是一個專為長者設計的語音日記系統。使用者可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），並以 AI 進行認知分析，提供溫暖回應與風險評估，最後可分享到社群媒體。
+
+---
+
+## 使用流程
+
+```
+Phase 1 上傳照片
+    ↓
+Phase 2 錄音（最長 60 秒，可重錄）
+    ↓
+Phase 3 處理中（Whisper 語音轉文字 + AI 分析）
+    ↓
+Phase 4 結果（詞彙豐富度、語句流暢度、話題連貫性、風險等級等）
+    ↓
+Phase 5 分享（分享到 Line / Threads，或複製文字）
+```
 
 ---
 
@@ -29,10 +47,10 @@
 |---|---|
 | 後端框架 | Django 5.2 |
 | 資料庫 | SQLite（本地開發）|
-| 語音辨識 | OpenAI Whisper（本地執行）|
+| 語音辨識 | OpenAI Whisper（本地執行，base 模型）|
 | AI 回應 | OpenAI API |
 | 前端 | HTML / CSS / JavaScript |
-| 音訊解碼 | FFmpeg |
+| 音訊解碼 | FFmpeg（需安裝並加入系統 PATH）|
 
 ---
 
@@ -41,38 +59,38 @@
 ```
 voiceDiary/
 │
-├── manage.py                  # Django 啟動入口
-├── requirements.txt           # 所有套件版本
-├── .env                       # 環境變數（不上傳 git）
-├── .env.example               # 環境變數範本
-├── db.sqlite3                 # 本地資料庫（不上傳 git）
+├── manage.py                    # Django 啟動入口
+├── requirements.txt             # 所有套件版本
+├── .env                         # 環境變數（不上傳 git）
+├── .env.example                 # 環境變數範本
+├── db.sqlite3                   # 本地資料庫（不上傳 git）
 │
-├── voiceDiary/                # Django 專案設定
-│   ├── settings.py            # 全域設定（資料庫、語言、媒體路徑等）
-│   ├── urls.py                # 全域路由
+├── voiceDiary/                  # Django 專案設定
+│   ├── settings.py              # 全域設定（資料庫、語言、媒體路徑等）
+│   ├── urls.py                  # 全域路由
 │   ├── wsgi.py
 │   └── asgi.py
 │
-├── Voice/                     # 主要 App
-│   ├── models.py              # 資料表定義（User、DiaryEntry 等）
-│   ├── views.py               # API 邏輯
-│   ├── admin.py               # 後台管理設定
-│   ├── apps.py
-│   ├── migrations/            # 資料庫遷移紀錄
+├── Voice/                       # 主要 App
+│   ├── models.py                # 資料表定義
+│   ├── views.py                 # API 邏輯
+│   ├── admin.py                 # 後台管理設定
+│   ├── migrations/              # 資料庫遷移紀錄
 │   └── service/
-│       └── whisperTest.py     # Whisper 語音轉文字邏輯
+│       └── whisper.py           # Whisper 語音轉文字邏輯
 │
-├── static/                    # 靜態檔案
-│   ├── index.css
+├── static/                      # 靜態檔案
+│   ├── index.css                # 全域樣式
 │   └── js/
-│       └── recorder.js        # 前端錄音邏輯
+│       ├── photo.js             # 照片上傳、預覽、切換 Phase 邏輯
+│       └── recorder.js          # 錄音、倒數計時、上傳、結果顯示、分享邏輯
 │
-├── media/                     # 使用者上傳的檔案（不上傳 git）
-│   ├── audio/                 # 語音檔
-│   └── photo/                 # 照片
+├── media/                       # 使用者上傳的檔案（不上傳 git）
+│   ├── audio/                   # 語音檔
+│   └── photo/                   # 照片
 │
-├── templates/                 # HTML 頁面
-└── tutor.md                   # 環境建置教學
+└── templates/
+    └── index.html               # 主頁面（含全部 5 個 Phase）
 ```
 
 ---
@@ -83,6 +101,7 @@ voiceDiary/
 
 ### User（使用者）
 繼承 Django 內建帳號系統，額外新增：
+
 | 欄位 | 說明 |
 |---|---|
 | gender | 性別 |
@@ -91,10 +110,11 @@ voiceDiary/
 Django 內建已包含：帳號、密碼、信箱、是否為管理員等。
 
 ### DiaryEntry（聲影日記）
+
 | 欄位 | 說明 |
 |---|---|
-| audio_file | 語音檔案（m4a / mp3 / wav）|
-| photo | 照片 |
+| audio_file | 語音檔案，存放於 `media/audio/` |
+| photo | 照片，存放於 `media/photo/` |
 | transcription | Whisper 語音轉文字結果 |
 | photo_description | 照片 AI 描述 |
 | ai_response | AI 溫暖回應 |
@@ -103,6 +123,7 @@ Django 內建已包含：帳號、密碼、信箱、是否為管理員等。
 | updated_at | 更新時間 |
 
 ### CognitiveAnalysis（認知分析）
+
 | 欄位 | 說明 |
 |---|---|
 | vocabulary_richness | 詞彙豐富度 |
@@ -115,6 +136,7 @@ Django 內建已包含：帳號、密碼、信箱、是否為管理員等。
 | analyzed_at | 分析時間 |
 
 ### AiConversation（AI 追問對話）
+
 | 欄位 | 說明 |
 |---|---|
 | messages | 對話訊息（JSON 格式）|
@@ -129,10 +151,8 @@ Django 內建已包含：帳號、密碼、信箱、是否為管理員等。
 開始之前請確認電腦已安裝：
 
 - Python 3.12
-- FFmpeg（加入系統 PATH）
+- FFmpeg（需加入系統 PATH，詳見 [tutor.md](tutor.md)）
 - Git
-
-詳細安裝步驟請看 [tutor.md](tutor.md)
 
 ---
 
@@ -159,6 +179,8 @@ python -m venv venv
 ```bash
 pip install -r requirements.txt
 ```
+
+> Whisper 模型（約 145MB）會在第一次執行時自動下載，不包含在套件安裝中。
 
 ### 4. 設定環境變數
 
@@ -192,7 +214,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-開啟瀏覽器進入 `http://127.0.0.1:8000`
+開啟瀏覽器進入 `http://127.0.0.1:8000/index/`
 
 ---
 
@@ -201,9 +223,9 @@ python manage.py runserver
 進入 `http://127.0.0.1:8000/admin`，用 `createsuperuser` 建立的帳號登入。
 
 後台可以管理：
-- 使用者帳號
-- 聲影日記紀錄
-- 認知分析結果
+- 使用者帳號（含性別、生日）
+- 聲影日記紀錄（語音、照片、轉文字結果、分析狀態）
+- 認知分析結果（各項分數、風險等級）
 - AI 對話紀錄
 
 ---
