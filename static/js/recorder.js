@@ -35,11 +35,10 @@ function stopRecording() {
 async function uploadAudio(audioBlob) {
     const formData = new FormData();
     formData.append("audio_file", audioBlob, "recording.m4a");  // 加入音訊檔案
-
+    formData.append("entry_id", currentEntryId);
 
     //這邊暫時空api的位置，等功能寫出來再fetch
-    
-    const response = await fetch("", {
+    const response = await fetch("/uploadAudio/", {
         method: "POST",
         headers: {
             "X-CSRFToken": getCookie("csrftoken"),  // Django CSRF 驗證
@@ -56,3 +55,19 @@ function getCookie(name) {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(";").shift();
 }
+
+// 監聽開始錄音
+document.getElementById("btn-record").addEventListener("click", async function(){
+    await startRecording();
+    document.getElementById("btn-record").classList.add("hidden")
+    document.getElementById("btn-stop").classList.remove("hidden");
+})
+
+// 監聽停止錄音
+document.getElementById("btn-stop").addEventListener("click", async function() {
+    const getRecordBlob = await stopRecording();
+    document.getElementById("btn-record").classList.remove("hidden")
+    document.getElementById("btn-stop").classList.add("hidden");
+    await uploadAudio(getRecordBlob)
+    
+})

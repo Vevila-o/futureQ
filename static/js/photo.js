@@ -1,5 +1,5 @@
 // 圖片上傳&儲存
-
+let currentEntryId = null;
 
 
 //上傳 
@@ -19,6 +19,7 @@ document.getElementById("upload-form").addEventListener("submit",async function(
   console.log(data);
 
   if (data.id){
+    currentEntryId = data.id
     document.getElementById("photo-thumb").src = photoObjectURL;
     document.getElementById("phase-upload").classList.add("hidden");
     document.getElementById("phase-record").classList.remove("hidden");

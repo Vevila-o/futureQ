@@ -34,7 +34,7 @@ class DiaryEntry(models.Model):
         FAILED     = "failed",     "失敗"
 
     audio_file = models.FileField(
-        "語音檔案", upload_to="voiceDiary/media/audio",
+        "語音檔案", upload_to="audio",
         blank=True, null=True,
         help_text="支援 m4a / mp3 / wav，上限 3 分鐘",
     )

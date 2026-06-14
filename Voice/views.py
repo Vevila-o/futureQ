@@ -25,13 +25,16 @@ def upload_photo(request):
 # 上傳語音轉譯回傳
 def upload_audio(request):
     if request.method == "POST":
+        # 語音上傳
         audio = request.FILES["audio_file"]
+        entry_id = request.POST.get("entry_id")
+        entry = DiaryEntry.objects.get(id = entry_id)
+        entry.audio_file = audio
+        entry.save() # 第一次存到硬碟
         
-        entry = DiaryEntry.objects.create(
-            audio_file = audio
-        )
+        # whisper 轉譯
         text = transcribe(entry.audio_file.path)
         entry.transcription = text
         entry.status = DiaryEntry.Status.DONE
-        entry.save()
+        entry.save() # 第二次存轉譯結果
         return JsonResponse({"text": text})

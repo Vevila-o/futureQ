@@ -24,5 +24,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('index/', voice_views.voiceIndex, name="index"), #首頁
     path('uploadPhoto/',voice_views.upload_photo, name='upload_photo'), #照片上傳
-
+    path('uploadAudio/',voice_views.upload_audio, name='upload_photo'), #語音上傳
 ]

@@ -21,7 +21,7 @@ class DiaryEntryAdmin(admin.ModelAdmin):
     list_display  = ('id', 'status', 'created_at', 'updated_at')  # 後台列表顯示的欄位
     list_filter   = ('status',)                                    # 右側篩選器
     ordering      = ('-created_at',)                               # 預設排序（最新在前）
-
+    actions = ['delete_selected']
 admin.site.register(DiaryEntry, DiaryEntryAdmin)
 
 
