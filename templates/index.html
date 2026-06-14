@@ -1,13 +1,14 @@
-
 {% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>語音日記</title>
+  <link rel="stylesheet" href="{% static 'index.css' %}">
+</head>
+<body>
 
-{% block title %}語音日記{% endblock %}
-
-{% block head_css %}
-<link rel="stylesheet" href="{% static 'index.css' %}">
-{% endblock %}
-
-{% block content %}
 <div class="app" id="app">
 
   <!-- ── Phase 1: 上傳照片 ─────────────────────────────── -->
@@ -29,7 +30,7 @@
         </div>
         <img id="upload-preview" class="upload-preview" alt="預覽">
       </label>
-      <input type="file" id="photo-input" name="photo"
+      <input type="file" id="photo-input" name="photo_file"
              accept="image/*" class="sr-only" required>
       <button type="submit" class="btn btn-primary" id="upload-submit" disabled>
         選好了，開始記錄 →
@@ -84,11 +85,12 @@
   </section>
 
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
   const SESSION_STATE = {{ session_state_json|default:"{}"|safe }};
 </script>
-<script src="{% static 'voice/recorder.js' %}"></script>
-{% endblock %}
+<script src="{% static 'js/recorder.js' %}"></script>
+<script src="{% static 'js/photo.js' %}"></script>
+
+</body>
+</html>

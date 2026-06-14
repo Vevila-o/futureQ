@@ -39,7 +39,7 @@ class DiaryEntry(models.Model):
         help_text="支援 m4a / mp3 / wav，上限 3 分鐘",
     )
     photo = models.ImageField(
-        "照片", upload_to="voiceDiary/media/photo",
+        "照片", upload_to="photo",
         blank=True, null=True,
     )
     transcription     = models.TextField("Whisper 語音轉文字", blank=True)
