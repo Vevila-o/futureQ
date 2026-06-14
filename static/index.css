@@ -179,8 +179,8 @@ body {
   margin-bottom: 24px;
 }
 .photo-thumb {
-  width: 76px;
-  height: 76px;
+  width: 100%;
+  height: 220px;
   object-fit: cover;
   border-radius: 12px;
   border: 2px solid var(--border);
@@ -195,6 +195,9 @@ body {
   padding: 8px 18px;
   border-radius: 999px;
   border: 1px solid var(--accent);
+  display: block;
+  width: fit-content;
+  margin: 12px auto;
 }
 .round-sep {
   color: var(--accent);

@@ -31,7 +31,7 @@
         <img id="upload-preview" class="upload-preview" alt="預覽">
       </label>
       <input type="file" id="photo-input" name="photo_file"
-             accept="image/*" class="sr-only" required>
+             accept="media/photo/*" class="sr-only" required>
       <button type="submit" class="btn btn-primary" id="upload-submit" disabled>
         選好了，開始記錄 →
       </button>
@@ -43,11 +43,12 @@
   <section class="phase hidden" id="phase-record">
 
     <div class="record-header">
-      <img id="photo-thumb" src="" alt="照片" class="photo-thumb">
-      <div class="round-badge">
-        第 <span id="round-current">1</span> 輪
-        <span class="round-sep">/</span> 3
-      </div>
+      <img id="photo-thumb" src="media/photo/" alt="照片" class="photo-thumb">
+    </div>
+
+    <div class="round-badge">
+      第 <span id="round-current">1</span> 輪
+      <span class="round-sep">/</span> 3
     </div>
 
     <div class="question-bubble hidden" id="question-bubble">
