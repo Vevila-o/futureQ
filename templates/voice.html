@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>憶智防線 - 語音紀錄</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/nav.css">
+<link rel="stylesheet" href="../static/css/voice.css">
+<link rel="stylesheet" href="../static/css/header.css"/>
+</head>
+<body>
+
+<div id="headerback-placeholder" 
+     data-title="聲影日記" 
+     data-icon="mic_none" 
+     data-back="back">
+</div>
+
+<main>
+
+  <div class="prompt-header">
+    <h2 class="prompt-title">請說出您的故事</h2>
+    <p class="prompt-sub">跟我們說說這張圖片發生了什麼吧！</p>
+  </div>
+
+  <div class="prompt-photo">
+    <img alt="一位微笑的長者手拿茶杯坐在窗邊"
+         src="https://lh3.googleusercontent.com/aida-public/AB6AXuC582P2Qi2kHL6dHPLQoLpzaJ91bM1giacgetF0KuhaIJv9pLHFo7Ys_2NJ86cHjYCw_R6HQ5crYgky_XjuPLLZ0ubZEhZWNu5HwzqeiFTlf_p9r8TBrkBfL1yrB_Bl8ydBrZSFTYO5xtJyY27y-cvmu3nPSIq7X_f_2fGBIECLNx-KYtxQaY7xyuBSo7Ll4Wu7afd1Ad302KtUNAeYkt0WEJkF-YgBk_e_D501HFd21jOju15qG-ZHNSQlcLTo6bPbyGtOjs_KEjCG">
+  </div>
+
+  <div class="record-status">
+    <span class="status-dot" id="status-dot"></span>
+    <span class="status-label" id="status-label">尚未開始</span>
+  </div>
+  <div class="record-timer" id="record-timer">03:00</div>
+  <p class="record-limit">時長限制三分鐘</p>
+
+  <div class="record-controls" id="record-controls"></div>
+
+  <div class="waveform" id="waveform">
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+  </div>
+
+  <button class="btn-save" id="btn-save" disabled>保存錄音</button>
+
+</main>
+
+<div id="nav-placeholder"></div>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/headerback.js"></script>
+<script src="../static/js/voice.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>憶智防線</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/nav.css">
+<link rel="stylesheet" href="../static/css/finish.css">
+<link rel="stylesheet" href="../static/css/header.css"/>
+</head>
+<body>
+
+<div id="headerback-placeholder" 
+     data-title="聲影日記" 
+     data-icon="mic_none" 
+     data-back="back">
+</div>
+
+<main>
+
+  <h2 class="congrats-title">恭喜完成！</h2>
+  <p class="congrats-sub">今天的記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
+  <p class="congrats-date" id="congrats-date"></p>
+
+  <div class="summary-card">
+    <div class="summary-photo">
+      <img alt="公園裡盛開的紅花"
+           src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaXxZgvk3wVuYvacExYJddNihj6m4A8lj8JFMqxPUMmDXXZEpdRcvdwrK-qvNJ55uqgO4k4M5J9O-NfJ2i3fUnR3Kq6jxHTlz7HamWTTIkRiLsLW-jlMYJ6h6JlRaoOmPwsjVf2aDTP09Dnt_w0tVn1mRVGYgaoTaPSB_h0cSJEwqE7GxT1_0kZ6uFmCQ3cVpEHZPJ75aJbZVei2XpovWiz0pKJtJ7jId-9tr39rNG7mIQe-P2vkEfx2uQGtlDtl7WCruReGZOoVTz">
+    </div>
+    <div class="summary-body">
+      <div class="summary-text">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">mic</span>
+        <p>今天我和孫子在公園玩，看到紅色的花開了，我們真開心！</p>
+      </div>
+      <div class="summary-time">10:45 AM</div>
+    </div>
+  </div>
+
+  <div class="ai-zone" id="ai-zone">
+    <div class="ai-avatar">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">smart_toy</span>
+    </div>
+    <div class="ai-bubble">
+      <p>AI助手：今天跟孫子玩什麼呀？我們聊天吧！</p>
+    </div>
+    <div class="ai-actions">
+      <button class="btn-reply" id="btn-reply">回覆 (可用次數 0/3)</button>
+      <button class="btn-skip" id="btn-skip">略過</button>
+    </div>
+  </div>
+
+  <div class="share-section">
+    <p class="share-label">是否分享到動態牆？</p>
+    <div class="share-row">
+      <button class="btn-share" id="btn-share">分享</button>
+      <button class="btn-no-share" id="btn-no-share">不分享</button>
+    </div>
+    <p class="share-feedback" id="share-feedback" style="display:none;"></p>
+  </div>
+
+</main>
+
+<div id="nav-placeholder"></div>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/headerback.js"></script>
+<script src="../static/js/finish.js"></script>
+</body>
+</html>

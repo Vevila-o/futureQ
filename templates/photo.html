@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>聲影日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../static/css/index.css"/>
+<link rel="stylesheet" href="../static/css/photo.css"/>
+<link rel="stylesheet" href="../static/css/nav.css"/>
+<link rel="stylesheet" href="../static/css/header.css"/>
+</head>
+<body>
+
+<div id="headerback-placeholder" 
+     data-title="聲影日記" 
+     data-icon="mic_none" 
+     data-back="back">
+</div>
+
+<main>
+
+  <div class="page-header">
+    <h2 class="page-title">上傳今日照片</h2>
+    <p class="page-sub">為您的日記添加一張精彩的回憶</p>
+  </div>
+
+  <div class="upload-zone" id="upload-zone">
+    <img class="preview-img" id="preview-img" alt="預覽照片"/>
+    <button class="preview-delete" id="btn-delete" aria-label="移除照片">
+      <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+    </button>
+    <div class="zone-content" id="zone-content">
+      <span class="material-symbols-outlined zone-icon">image</span>
+      <span class="zone-text">點擊新增照片</span>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" class="sr-only"/>
+
+  <div class="bottom-btns">
+    <button class="btn-primary" id="btn-save" disabled>
+      <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">save</span>
+      保存照片
+    </button>
+    <button class="btn-outline" onclick="location.href='index.html'">返回</button>
+  </div>
+
+</main>
+
+<div id="toast">
+  <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1;">check_circle</span>
+  <span id="toast-msg">照片已儲存！</span>
+</div>
+
+<div id="nav-placeholder"></div>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/headerback.js"></script>
+<script src="../static/js/photo.js"></script>
+</body>
+</html>
