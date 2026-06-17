@@ -23,6 +23,9 @@ from Voice import views as voice_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('index/', voice_views.voiceIndex, name="index"), #首頁
-    path('uploadPhoto/',voice_views.upload_photo, name='upload_photo'), #照片上傳
-
+    path('uploadPhoto/', voice_views.upload_photo, name='upload_photo'), #照片上傳
+    
+    # ✨ 這裡是你剛剛新增的兩行路由（對齊你們組員原本使用的 voice_views 命名）
+    path('finish/', voice_views.finish_page, name='finish_page'),  # 完成與重置畫面
+    path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'),  # AI 三次對話 API
 ]
