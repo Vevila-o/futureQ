@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const icon = placeholder.getAttribute("data-icon") || "";
   const backUrl = placeholder.getAttribute("data-back") || "back";
 
-  fetch("headerback.html")
+  fetch("/headerback/")
     .then(response => {
       if (!response.ok) throw new Error("無法載入 HeaderBack");
       return response.text();

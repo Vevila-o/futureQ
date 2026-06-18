@@ -25,9 +25,12 @@
     <p class="page-sub">為您的日記添加一張精彩的回憶</p>
   </div>
 
+<form id="photo-form" method="POST" action="{% url 'save_diary' %}" enctype="multipart/form-data">
+  {% csrf_token %}
+
   <div class="upload-zone" id="upload-zone">
     <img class="preview-img" id="preview-img" alt="預覽照片"/>
-    <button class="preview-delete" id="btn-delete" aria-label="移除照片">
+    <button class="preview-delete" id="btn-delete" type="button" aria-label="移除照片">
       <span class="material-symbols-outlined" style="font-size:20px;">close</span>
     </button>
     <div class="zone-content" id="zone-content">
@@ -36,15 +39,16 @@
     </div>
   </div>
 
-  <input type="file" id="file-input" accept="image/*" class="sr-only"/>
+  <input type="file" id="file-input" name="photo" accept="image/*" class="sr-only"/>
 
   <div class="bottom-btns">
-    <button class="btn-primary" id="btn-save" disabled>
+    <button class="btn-primary" id="btn-save" type="submit" disabled>
       <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">save</span>
       保存照片
     </button>
-    <button class="btn-outline" onclick="location.href='index.html'">返回</button>
+    <button class="btn-outline" type="button" onclick="location.href='/index/'">返回</button>
   </div>
+</form>
 
 </main>
 

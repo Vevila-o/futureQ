@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("nav.html")
+  fetch("/nav/")
     .then(response => {
       if (!response.ok) throw new Error("無法載入導覽列");
       return response.text();
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const journalBtn = document.querySelector(".nav-item-home");
       if (journalBtn) {
         journalBtn.addEventListener("click", () => {
-          window.location.href = "index.html";
+          window.location.href = "/index/";
         });
       }
     })

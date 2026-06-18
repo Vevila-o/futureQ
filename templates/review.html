@@ -15,7 +15,7 @@
 <div id="headerback-placeholder" 
      data-title="動態回顧" 
      data-icon="history_edu" 
-     data-back="index.html">
+     data-back="/index/">
 </div>
 
 <main>
@@ -52,6 +52,10 @@
 </div>
 
 <div id="nav-placeholder"></div>
+<script>
+  window.REVIEW_DATA = {{ review_data_json|safe }};
+</script>
+
 <script src="../static/js/nav.js"></script>
 <script src="../static/js/headerback.js"></script>
 <script src="../static/js/review.js"></script>

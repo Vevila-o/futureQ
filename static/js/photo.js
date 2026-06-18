@@ -30,6 +30,7 @@ const deleteBtn   = document.getElementById('btn-delete');
 const saveBtn     = document.getElementById('btn-save');
 
 let currentPhotoDataUrl = null;
+let selectedPhotoFile = null;
 
 uploadZone.addEventListener('click', (e) => {
   if (e.target.closest('#btn-delete')) return;
@@ -47,6 +48,8 @@ fileInput.addEventListener('change', () => {
     return;
   }
 
+  selectedPhotoFile = file;
+
   const reader = new FileReader();
   reader.onload = () => {
     currentPhotoDataUrl = reader.result;
@@ -60,13 +63,14 @@ fileInput.addEventListener('change', () => {
     showToast('照片讀取失敗，請重新選擇', true);
   };
   reader.readAsDataURL(file);
-
-  fileInput.value = '';
 });
 
 deleteBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   currentPhotoDataUrl = null;
+  selectedPhotoFile = null;
+  fileInput.value = '';
+
   previewImg.src = '';
   previewImg.classList.remove('visible');
   uploadZone.classList.remove('has-img');
@@ -95,15 +99,46 @@ uploadZone.addEventListener('drop', (e) => {
   }
 });
 
-saveBtn.addEventListener('click', () => {
+saveBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  if (!selectedPhotoFile) {
+    showToast('請先選擇照片', true);
+    return;
+  }
+
   if (currentPhotoDataUrl) {
     try {
       sessionStorage.setItem('diaryPhoto', currentPhotoDataUrl);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
-  showToast('照片已儲存！');
-  setTimeout(() => { window.location.href = 'voice.html'; }, 900);
+
+  const formData = new FormData();
+  formData.append('photo', selectedPhotoFile);
+
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  try {
+    const response = await fetch('/saveDiary/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      showToast('照片已儲存！');
+
+      setTimeout(() => {
+        window.location.href = response.url;
+      }, 500);
+    } else {
+      showToast('照片儲存失敗，請再試一次', true);
+    }
+  } catch (error) {
+    showToast('連線失敗，請再試一次', true);
+  }
 });
 
 window.addEventListener('scroll', () => {

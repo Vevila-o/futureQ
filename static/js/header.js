@@ -1,6 +1,6 @@
 // js/header.js
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("header.html")
+  fetch("/header/")
     .then(response => {
       if (!response.ok) throw new Error("無法載入 Header");
       return response.text();

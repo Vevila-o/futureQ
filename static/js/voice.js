@@ -35,7 +35,17 @@
   var LIMIT = 180; 
   var remaining = LIMIT;
   var timerId = null;
-  var state = 'idle'; 
+  var state = 'idle';
+  
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var recordedBlob = null;
+
+  var params = new URLSearchParams(window.location.search);
+  var diaryId = params.get('diary_id');
+
+  var audioPreview = document.getElementById('audio-preview');
+  var audioPlayer = document.getElementById('audio-player');
 
   var elDot      = document.getElementById('status-dot');
   var elLabel     = document.getElementById('status-label');
@@ -119,15 +129,131 @@
   function startTimer() { stopTimer(); timerId = setInterval(tick, 1000); }
   function stopTimer()  { if (timerId) { clearInterval(timerId); timerId = null; } }
 
-  function onStart()   { state = 'recording'; startTimer(); renderControls(); renderStatus(); }
-  function onPause()   { state = 'paused'; stopTimer(); renderControls(); renderStatus(); }
-  function onRestart() { remaining = LIMIT; state = 'recording'; startTimer(); renderControls(); renderStatus(); }
-  function onStop()    { state = 'ended'; stopTimer(); renderControls(); renderStatus(); }
+  async function onStart() {
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-  elSave.addEventListener('click', function () {
-    if (elSave.disabled) return;
+      audioChunks = [];
+      recordedBlob = null;
+
+      if (audioPreview) audioPreview.style.display = 'none';
+      if (audioPlayer) audioPlayer.src = '';
+
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function (event) {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = function () {
+        recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+        var audioUrl = URL.createObjectURL(recordedBlob);
+        if (audioPlayer) audioPlayer.src = audioUrl;
+        if (audioPreview) audioPreview.style.display = 'block';
+
+        stream.getTracks().forEach(function (track) {
+          track.stop();
+        });
+      };
+
+      mediaRecorder.start();
+
+      state = 'recording';
+      startTimer();
+      renderControls();
+      renderStatus();
+
+    } catch (err) {
+      alert('無法使用麥克風，請確認瀏覽器是否允許錄音權限');
+    }
+  }
+  function onPause() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.pause();
+  }
+
+  state = 'paused';
+  stopTimer();
+  renderControls();
+  renderStatus();
+}
+
+  function onRestart() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+
+    remaining = LIMIT;
+    state = 'idle';
+    recordedBlob = null;
+    audioChunks = [];
+
+    if (audioPreview) audioPreview.style.display = 'none';
+    if (audioPlayer) audioPlayer.src = '';
+
+    renderControls();
+    renderStatus();
+  }
+
+  function onStop() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+
+    state = 'ended';
     stopTimer();
-    window.location.href = 'finish.html';
+    renderControls();
+    renderStatus();
+  }
+
+  elSave.addEventListener('click', async function () {
+    if (elSave.disabled) return;
+
+    stopTimer();
+
+    if (!diaryId) {
+      alert('找不到日記 ID，請重新上傳照片');
+      return;
+    }
+
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+
+      await new Promise(function (resolve) {
+        setTimeout(resolve, 500);
+      });
+    }
+
+    if (!recordedBlob) {
+      alert('尚未錄到音檔');
+      return;
+    }
+
+    var formData = new FormData();
+    formData.append('diary_id', diaryId);
+    formData.append('audio_file', recordedBlob, 'diary_audio.webm');
+
+    // 先放假文字，之後接 Whisper 時再換成真正轉文字結果
+    formData.append('transcription', '這裡之後會放 Whisper 語音轉文字結果');
+
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    var response = await fetch('/updateDiaryAudio/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      window.location.href = '/finish/';
+    } else {
+      alert('錄音儲存失敗，請再試一次');
+    }
   });
 
   setInterval(function () {
