@@ -9,13 +9,161 @@
 <link rel="stylesheet" href="../static/css/nav.css">
 <link rel="stylesheet" href="../static/css/finish.css">
 <link rel="stylesheet" href="../static/css/header.css"/>
+<style>
+  /* ==========================================
+     ✨ 完整對話聊天室樣式（外觀完全對稱統一版）
+     ========================================== */
+  
+  /* 聊天歷史容器 */
+  .chat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px 4px;
+  }
+
+  /* 單一對話橫列 */
+  .chat-row {
+    display: flex;
+    gap: 12px;
+    align-items: center; /* 讓頭像跟橢圓對話框垂直對齊 */
+    width: 100%;
+  }
+
+  /* 🤖 AI 橫列（靠左）：頭像在左，對話框在右 */
+  .chat-row.ai-row {
+    justify-content: flex-start;
+    flex-direction: row;
+  }
+
+  /* 🥊 使用者橫列（靠右）：對話框在左，頭像在右 */
+  .chat-row.user-row {
+    justify-content: flex-end;
+    flex-direction: row;
+  }
+
+  /* 👤 雙邊圓形頭像樣式 */
+  .ai-avatar, .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ai-avatar {
+    background-color: var(--primary, #36684c);
+    color: #fff;
+  }
+  .user-avatar {
+    background-color: #e0e0e0;
+    color: #555;
+  }
+
+  /* 💬 雙邊對話框通用文字與外觀（字型、尺寸、粗細、顏色與底色完全統一） */
+  .ai-bubble, .user-bubble {
+    position: relative; /* 讓箭頭可以根據對話框做定位 */
+    padding: 10px 16px;
+    border-radius: 20px; /* 橢圓形外觀 */
+    max-width: 65%;
+    word-break: break-all;
+    
+    background-color: #f0f0f0; /* 💡 兩邊統一為高質感淺灰色 */
+    color: #333;               /* 💡 兩邊統一為清晰深灰色字 */
+    font-family: 'Noto Sans TC', sans-serif !important;
+    font-size: calc(1rem * var(--fs-scale, 1)) !important;
+    font-weight: 700 !important; /* 強制流暢粗體字 */
+    line-height: 1.4 !important;
+  }
+
+  /* 🤖 AI 對話框獨有邊距 */
+  .ai-bubble {
+    margin-left: 8px; /* 留空間給左側小箭頭 */
+  }
+
+  /* 💡 🤖 AI 泡泡左側箭頭：明確朝左指向機器人頭像 */
+  .ai-bubble::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -7px; /* 貼在對話框左側外 */
+    transform: translateY(-50%);
+    border-width: 6px 8px 6px 0;
+    border-style: solid;
+    border-color: transparent #f0f0f0 transparent transparent; /* 右邊有顏色，箭頭朝左 */
+  }
+
+  /* 🥊 使用者對話框獨有邊距 */
+  .user-bubble {
+    margin-right: 8px; /* 留空間給右側小箭頭 */
+  }
+
+  /* 💡 🥊 使用者泡泡右側箭頭：明確朝右指向人類頭像 */
+  .user-bubble::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -7px; /* 貼在對話框右側外 */
+    transform: translateY(-50%);
+    border-width: 6px 0 6px 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent #f0f0f0; /* 左邊有顏色，箭頭朝右 */
+  }
+
+  /* ⌨️ 下方打字輸入與發送區 */
+  .input-zone {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+    align-items: center;
+  }
+  .input-zone input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--outline-variant, #ccc);
+    border-radius: 24px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: calc(1rem * var(--fs-scale, 1));
+    outline: none;
+  }
+  .input-zone input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+
+  /* 圓形紙飛機發送按鈕 */
+  .btn-reply-icon {
+    background-color: var(--primary, #36684c);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-reply-icon:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+</style>
 </head>
 <body>
 
 <div id="headerback-placeholder" 
-     data-title="聲影日記" 
-     data-icon="mic_none" 
-     data-back="back">
+      data-title="聲影日記" 
+      data-icon="mic_none" 
+      data-back="back">
 </div>
 
 <main>
@@ -39,15 +187,27 @@
   </div>
 
   <div class="ai-zone" id="ai-zone">
-    <div class="ai-avatar">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">smart_toy</span>
+    
+    <div class="chat-box" id="chat-box">
+      <div class="chat-row ai-row">
+        <div class="ai-avatar">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">smart_toy</span>
+        </div>
+        <div class="ai-bubble">
+          今天跟孫子玩什麼呀？我們聊天吧！
+        </div>
+      </div>
     </div>
-    <div class="ai-bubble">
-      <p>AI助手：今天跟孫子玩什麼呀？我們聊天吧！</p>
+
+    <div class="input-zone">
+      <input type="text" id="user-input" placeholder="回覆 (剩餘次數 3/3)" autocomplete="off">
+      <button class="btn-reply-icon" id="btn-reply">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">send</span>
+      </button>
     </div>
-    <div class="ai-actions">
-      <button class="btn-reply" id="btn-reply">回覆 (可用次數 0/3)</button>
-      <button class="btn-skip" id="btn-skip">略過</button>
+
+    <div class="ai-actions" style="margin-top: 12px; justify-content: flex-end;">
+      <button class="btn-skip" id="btn-skip">略過對話</button>
     </div>
   </div>
 
