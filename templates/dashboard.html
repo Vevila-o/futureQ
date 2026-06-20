@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>健康儀表板 - 憶智防線</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<!-- 字型 -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+<!-- 共用元件 CSS -->
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/header.css">
+<link rel="stylesheet" href="../static/css/nav.css">
+<link rel="stylesheet" href="../static/css/dashboard.css">
+
+<!-- Tailwind 自訂色彩設定 -->
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary":                  "#36684c",
+        "on-primary":               "#ffffff",
+        "primary-container":        "#7baf8e",
+        "primary-fixed":            "#b9efcb",
+        "primary-fixed-dim":        "#9dd3b0",
+        "inverse-primary":          "#9dd3b0",
+        "on-primary-container":     "#0c4229",
+        "on-primary-fixed":         "#002111",
+        "on-primary-fixed-variant": "#1d5035",
+        "secondary":                "#526259",
+        "on-secondary":             "#ffffff",
+        "secondary-container":      "#d3e4d8",
+        "on-secondary-container":   "#57665d",
+        "secondary-fixed":          "#d6e7db",
+        "secondary-fixed-dim":      "#bacbbf",
+        "on-secondary-fixed":       "#101e17",
+        "on-secondary-fixed-variant":"#3b4a41",
+        "tertiary":                 "#5d5f5a",
+        "on-tertiary":              "#ffffff",
+        "tertiary-container":       "#a3a49e",
+        "on-tertiary-container":    "#393a36",
+        "tertiary-fixed":           "#e3e3dc",
+        "tertiary-fixed-dim":       "#c7c7c0",
+        "on-tertiary-fixed":        "#1a1c18",
+        "on-tertiary-fixed-variant":"#464742",
+        "error":                    "#ba1a1a",
+        "on-error":                 "#ffffff",
+        "error-container":          "#ffdad6",
+        "on-error-container":       "#93000a",
+        "background":               "#fbf9f6",
+        "on-background":            "#1b1c1a",
+        "surface":                  "#fbf9f6",
+        "surface-bright":           "#fbf9f6",
+        "surface-dim":              "#dcdad7",
+        "surface-variant":          "#e4e2df",
+        "surface-container-lowest": "#ffffff",
+        "surface-container-low":    "#f5f3f0",
+        "surface-container":        "#f0edea",
+        "surface-container-high":   "#eae8e5",
+        "surface-container-highest":"#e4e2df",
+        "on-surface":               "#1b1c1a",
+        "on-surface-variant":       "#414942",
+        "outline":                  "#717972",
+        "outline-variant":          "#c0c9c0",
+        "inverse-surface":          "#30302f",
+        "inverse-on-surface":       "#f3f0ed",
+        "surface-tint":             "#36684c"
+      },
+      borderRadius: {
+        DEFAULT: "0.25rem",
+        lg: "1rem",
+        xl: "1.5rem",
+        "2xl": "2.5rem",
+        full: "9999px"
+      },
+      spacing: {
+        "touch-target-min": "56px",
+        "gutter":           "16px",
+        "stack-sm":         "8px",
+        "stack-md":         "16px",
+        "stack-lg":         "32px",
+        "margin-page":      "24px"
+      },
+      fontFamily: {
+        "headline-lg":        ["Public Sans", "PingFang SC", "sans-serif"],
+        "headline-lg-mobile": ["Public Sans", "PingFang SC", "sans-serif"],
+        "headline-md":        ["Public Sans", "PingFang SC", "sans-serif"],
+        "body-lg":            ["Public Sans", "PingFang SC", "sans-serif"],
+        "body-md":            ["Public Sans", "PingFang SC", "sans-serif"],
+        "label-lg":           ["Public Sans", "PingFang SC", "sans-serif"],
+        "label-md":           ["Public Sans", "PingFang SC", "sans-serif"]
+      },
+      fontSize: {
+        "headline-lg":        ["34px", { lineHeight: "42px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-lg-mobile": ["28px", { lineHeight: "34px", fontWeight: "700" }],
+        "headline-md":        ["24px", { lineHeight: "30px", fontWeight: "600" }],
+        "body-lg":            ["20px", { lineHeight: "30px", fontWeight: "400" }],
+        "body-md":            ["18px", { lineHeight: "26px", fontWeight: "400" }],
+        "label-lg":           ["16px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+        "label-md":           ["14px", { lineHeight: "18px", fontWeight: "500" }]
+      }
+    }
+  }
+}
+</script>
+</head>
+
+<body class="text-on-surface" style="overflow: auto;">
+
+<!-- 共用 Header（由 header.js 載入） -->
+<div id="header-placeholder"></div>
+
+<!-- 說明視窗 Modal -->
+<div id="modal-overlay">
+  <div id="info-modal" class="border-2 border-[#7BAF8E] shadow-xl">
+    <div class="h-14 bg-secondary-container flex items-center px-6 border-b border-[#7BAF8E]/20">
+      <h3 class="text-headline-md font-bold text-on-secondary-container" id="modal-title"></h3>
+    </div>
+    <div class="p-8 bg-[#FAFAF7]">
+      <p class="text-body-lg text-on-surface-variant font-medium leading-relaxed" id="modal-content"></p>
+    </div>
+    <div class="p-6 pt-0 bg-[#FAFAF7]">
+      <button class="w-full h-touch-target-min bg-primary text-on-primary rounded-xl text-body-lg font-bold active:scale-95 transition-all duration-150" id="modal-close">
+        我知道了
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 主內容 -->
+<main class="pt-20 px-margin-page space-y-stack-lg max-w-[600px] mx-auto pb-[100px]">
+
+  <!-- AI 狀態卡 -->
+  <section class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant flex items-center gap-6 overflow-hidden">
+    <div class="relative w-32 h-32 flex-shrink-0">
+      <img alt="AI Assistant" class="w-full h-full object-contain"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXYQtrWFGThdoH_1YJlAMqBkD0v4HVzcoH1NByvyBuWRu6Zv-irPHYbVA2mhZcxhnlVshsMkI-EZMXJAg7LW6BR2DF6_B_Ktb_hPvpX12Wfsdc5UAk3K7vAAx9lbk944Po0lrSXTCDpfMvMCoIHtfcoR9w_9b_ozwywDdQFFnhOC5rzNUwMsSx6yyvJMxkvNCEg5Qu6pV34tH0POZMTpTkfuq6t_q5gK3ItAvYAenlBvZkjBcbyGstUI8LrcxOjQQeaHqiWWCFyW8e">
+    </div>
+    <div class="flex flex-col">
+      <div class="relative inline-block mb-2">
+        <div class="bg-primary-container/20 px-6 py-2 rounded-2xl rounded-bl-none">
+          <span class="text-headline-lg-mobile font-headline-lg-mobile text-primary block font-bold">健康</span>
+        </div>
+      </div>
+      <p class="text-body-lg font-body-lg text-on-surface-variant font-bold">最近很健康喔 繼續保持!</p>
+    </div>
+  </section>
+
+  <!-- 腦年齡卡 -->
+  <section class="bg-surface-container-lowest rounded-xl p-6 border border-primary-container flex justify-between items-center">
+    <div>
+      <h2 class="text-headline-md font-headline-md text-on-surface font-bold">估算腦年齡</h2>
+      <p class="text-label-lg font-label-lg text-on-surface-variant mt-1 font-bold">基於綜合認知表現</p>
+    </div>
+    <div class="flex items-baseline gap-1">
+      <span class="text-headline-lg font-headline-lg text-primary font-bold">45</span>
+      <span class="text-label-lg font-label-lg text-primary font-bold">歲</span>
+    </div>
+  </section>
+
+  <!-- 認知能力分布圖 -->
+  <section class="rounded-xl p-6 border border-[#E8E8E1] relative bg-white">
+    <h2 class="text-headline-md font-headline-md text-on-surface font-bold mb-2">認知能力分布圖</h2>
+    <div class="flex gap-4 mb-8">
+      <div class="flex items-center gap-2">
+        <div class="flex items-center">
+          <div class="w-4 h-0.5 bg-[#36684c]"></div>
+          <div class="w-1.5 h-1.5 rounded-full bg-[#36684c] -ml-1"></div>
+        </div>
+        <span class="text-label-md font-bold text-on-surface">長者數值</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 bg-[#7BAF8E]/30 border border-[#7BAF8E] rounded-sm"></div>
+        <span class="text-label-md font-bold text-on-surface">同齡平均值</span>
+      </div>
+    </div>
+
+    <div class="relative w-full aspect-square flex items-center justify-center p-8">
+      <!-- 背景格線 -->
+      <div class="absolute inset-0 flex items-center justify-center opacity-10">
+        <svg class="w-3/4 h-3/4 stroke-on-surface stroke-[0.5] fill-none" viewBox="0 0 100 100">
+          <polygon points="50,5 89,27.5 89,72.5 50,95 11,72.5 11,27.5"></polygon>
+          <polygon points="50,20 76,35 76,65 50,80 24,65 24,35"></polygon>
+          <polygon points="50,35 63,42.5 63,57.5 50,65 37,57.5 37,42.5"></polygon>
+        </svg>
+      </div>
+      <!-- 雷達圖資料層 -->
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-3/4 h-3/4" viewBox="0 0 100 100">
+          <polygon id="radar-avg" class="fill-[#7BAF8E]/30 stroke-[#7BAF8E] stroke-[1]"
+            points="50,25 71.6,37.5 71.6,62.5 50,75 28.4,62.5 28.4,37.5"></polygon>
+          <polygon id="radar-user" class="fill-none stroke-[#36684c] stroke-[2]"
+            points="50,20 68,40 72,68 50,78 28,65 32,38"></polygon>
+          <circle cx="50" cy="20" fill="#36684c" r="1.5"></circle>
+          <circle cx="68" cy="40" fill="#36684c" r="1.5"></circle>
+          <circle cx="72" cy="68" fill="#36684c" r="1.5"></circle>
+          <circle cx="50" cy="78" fill="#36684c" r="1.5"></circle>
+          <circle cx="28" cy="65" fill="#36684c" r="1.5"></circle>
+          <circle cx="32" cy="38" fill="#36684c" r="1.5"></circle>
+        </svg>
+      </div>
+      <!-- 雷達圖標籤（點擊可開說明） -->
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="流暢度" data-desc="評估說話或表達時的順暢程度，是否常有停頓、猶豫或重複。">
+        <span class="text-label-lg font-bold text-on-surface">流暢度</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+      <div class="absolute top-[22%] right-0 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="資訊量" data-desc="評估表達內容的豐富度，能否在對話中傳達核心重點與充足資訊。">
+        <span class="text-label-lg font-bold text-on-surface">資訊量</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+      <div class="absolute bottom-[22%] right-0 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="句子結構" data-desc="評估文法與組織能力，句子是否完整、有邏輯且條理分明。">
+        <span class="text-label-lg font-bold text-on-surface">句子結構</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="命名能力" data-desc="評估大腦對物品、人物或概念的「提取能力」，能否精確叫出正確名稱。">
+        <span class="text-label-lg font-bold text-on-surface">命名能力</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+      <div class="absolute bottom-[22%] left-0 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="語意正確性" data-desc="評估用字遣詞的精準度，是否能正確表達心中所想，無文字錯亂或誤用。">
+        <span class="text-label-lg font-bold text-on-surface">語意正確性</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+      <div class="absolute top-[22%] left-0 flex flex-col items-center cursor-pointer info-trigger group"
+        data-title="整體溝通能力" data-desc="綜合各項表現的全面性評估，反映在日常生活中的實際交流互動狀態。">
+        <span class="text-label-lg font-bold text-on-surface">整體溝通能力</span>
+        <span class="material-symbols-outlined !text-[16px] text-[#9E9E9E] group-hover:text-primary transition-colors">info</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 操作按鈕 -->
+  <section class="space-y-4">
+    <button class="w-full h-touch-target-min bg-primary text-on-primary rounded-2xl text-body-lg font-bold active:scale-95 transition-all duration-150">
+      查看週報表 / 月報表
+    </button>
+    <button class="w-full h-touch-target-min bg-surface-container-low text-on-surface border border-outline-variant rounded-2xl text-body-lg font-bold active:scale-95 transition-all duration-150">
+      健康改善建議
+    </button>
+  </section>
+
+</main>
+
+<!-- 共用 Nav（由 nav.js 載入） -->
+<div id="nav-placeholder"></div>
+
+<!-- JS -->
+<script src="../static/js/dashboard.js"></script>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/header.js"></script>
+
+</body>
+</html>
