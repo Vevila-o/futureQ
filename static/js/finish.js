@@ -51,73 +51,72 @@
   }
 
   // ==========================================
-  // ✨ 3. 聊天室連動機制 (精準同步後端、強制限制3次)
+  // ✨ 3. 真實麥克風錄音與後端 Whisper API 完美對接
   // ==========================================
-  var REPLIES_LEFT = 3; // 預設值，隨後會與後端 Session 精準同步
-  var btnReply = document.getElementById("btn-reply");
-  var userInput = document.getElementById("user-input");
+  var REPLIES_LEFT = 3; 
+  var isRecording = false;
+  var mediaRecorder = null;
+  var audioChunks = [];
+
+  var btnVoice = document.getElementById("btn-voice");
+  var voiceBtnText = document.getElementById("voice-btn-text");
+  var voiceIcon = document.getElementById("voice-icon");
+  var voiceStatus = document.getElementById("voice-status");
   var chatBox = document.getElementById("chat-box");
 
-  // 💡 [更新 UI 狀態函式]：根據剩餘次數，即時調整輸入框的提示字與鎖定狀態
-  function updateInputUI() {
-    if (!userInput) return;
+  function updateVoiceUI() {
+    if (!btnVoice || !voiceStatus) return;
     if (REPLIES_LEFT <= 0) {
-      if (btnReply) btnReply.disabled = true;
-      userInput.disabled = true;
-      userInput.placeholder = "今日對話次數已滿囉！";
+      btnVoice.disabled = true;
+      if (voiceBtnText) voiceBtnText.textContent = "今日對話已結束囉！";
+      if (voiceIcon) voiceIcon.textContent = "lock";
+      voiceStatus.textContent = "今日對話次數已滿囉！";
     } else {
-      if (btnReply) btnReply.disabled = false;
-      userInput.disabled = false;
-      userInput.placeholder = "回覆 (剩餘次數 " + REPLIES_LEFT + "/3)";
+      btnVoice.disabled = false;
+      voiceStatus.textContent = "對話剩餘次數：" + REPLIES_LEFT + "/3";
     }
   }
 
-  function sendMessage() {
-    // 💡 安全閥：如果已經沒次數了，按鈕按得下去也直接攔截，絕不放行
-    if (!userInput || !btnReply || REPLIES_LEFT <= 0) {
-      updateInputUI();
-      return;
+  // 傳送實體音檔給全新擴充的後端 Whisper 處理中心
+  function sendAudioFileToBackend(audioBlob) {
+    if (REPLIES_LEFT <= 0) return;
+
+    if (btnVoice) {
+      btnVoice.disabled = true;
+      if (voiceBtnText) voiceBtnText.textContent = "語音辨識與思考中...";
+      if (voiceIcon) voiceIcon.textContent = "sync";
     }
 
-    var userPrompt = userInput.value.trim();
-    if (!userPrompt) return;
-
-    // 🥊 A. 動態長出使用者泡泡（結構：泡泡在左、頭像在右）
-    var userRow = document.createElement("div");
-    userRow.className = "chat-row user-row";
-    userRow.innerHTML =
-      '<div class="user-bubble">' +
-      userPrompt +
-      "</div>" +
-      '<div class="user-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">person</span></div>';
-    chatBox.appendChild(userRow);
-
-    // 清空輸入並將滾動條推至最底部
-    userInput.value = "";
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    // 💡 送出瞬間立刻強制鎖死輸入框，防止長輩手速太快連續狂點導致次數爆掉
-    btnReply.disabled = true;
-    userInput.disabled = true;
-    userInput.placeholder = "AI 助手正在思考中...";
+    // 打包成二進位 FormData
+    var formData = new FormData();
+    formData.append('audio_data', audioBlob);
 
     var csrftoken = getCookie("csrftoken");
 
-    // B. 發送 Fetch 請求給 Django 後端
-    fetch("/api/ai-chat/", {
+    // 🌐 射向我們剛剛在 urls.py 與 views.py 新建的通道！
+    fetch("/api/upload-chat-voice/", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "X-CSRFToken": csrftoken,
       },
-      body: JSON.stringify({ message: userPrompt }),
+      body: formData,
     })
-      .then(function (response) {
-        return response.json();
-      })
-      .then(function (data) {
-        if (data.status === "success") {
-          // 🤖 C. 成功收到回覆，追加左側 AI 泡泡
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.status === "success") {
+        // 🥊 A. 抓取後端 Whisper 轉出來的【真實文字】，強制吐在右邊！
+        var userRow = document.createElement("div");
+        userRow.className = "chat-row user-row";
+        userRow.innerHTML =
+          '<div class="user-bubble">' +
+          data.user_text +
+          "</div>" +
+          '<div class="user-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">person</span></div>';
+        chatBox.appendChild(userRow);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 🤖 B. 稍微延遲一下下，左邊緊接著印出 AI 的下一句暖心台詞
+        setTimeout(function () {
           var aiRow = document.createElement("div");
           aiRow.className = "chat-row ai-row";
           aiRow.innerHTML =
@@ -126,43 +125,84 @@
             data.reply +
             "</div>";
           chatBox.appendChild(aiRow);
-
-          // 滾動條聚焦至底部
           chatBox.scrollTop = chatBox.scrollHeight;
 
-          // 💡 關鍵核心：強行用後端傳回來的剩餘次數覆蓋前端變數，達成絕對同步
+          // 讀取後端剩下的真實計數
           REPLIES_LEFT = data.remaining;
-
-          // 💡 釋放鎖定並更新 placeholder 數字
-          updateInputUI();
-          if (REPLIES_LEFT > 0) {
-            userInput.focus(); // 聚焦回文字框方便長輩連續操作
+          updateVoiceUI();
+          
+          if (REPLIES_LEFT > 0 && btnVoice) {
+            if (voiceBtnText) voiceBtnText.textContent = "按一下開始說話";
+            if (voiceIcon) voiceIcon.textContent = "mic";
           }
-        } else {
-          // 如果後端拋出已達上限等警告，跳出提示，並同步鎖死
-          alert(data.message);
-          REPLIES_LEFT = 0;
-          updateInputUI();
-        }
-      })
-      .catch(function (err) {
-        console.error("錯誤:", err);
-        // 發生異常時解鎖介面讓使用者可以重試
-        btnReply.disabled = false;
-        userInput.disabled = false;
-        userInput.placeholder = "連線失敗，請再試一次 (剩餘次數 " + REPLIES_LEFT + "/3)";
-      });
+        }, 600);
+
+      } else {
+        alert(data.message);
+        resetVoiceButton();
+      }
+    })
+    .catch(function (err) {
+      console.error("發送音檔失敗:", err);
+      alert("錄音上傳失敗，請檢查網路或伺服器狀態");
+      resetVoiceButton();
+    });
   }
 
-  // 綁定點擊與 Enter 鍵事件
-  if (btnReply && userInput) {
-    // 💡 頁面剛載入時，先執行一次 UI 初始化設定
-    updateInputUI();
+  function resetVoiceButton() {
+    isRecording = false;
+    if (btnVoice) {
+      btnVoice.classList.remove("recording");
+    }
+    updateVoiceUI();
+    if (REPLIES_LEFT > 0 && btnVoice) {
+      if (voiceBtnText) voiceBtnText.textContent = "按一下開始說話";
+      if (voiceIcon) voiceIcon.textContent = "mic";
+    }
+  }
 
-    btnReply.addEventListener("click", sendMessage);
-    userInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        sendMessage();
+  if (btnVoice) {
+    updateVoiceUI();
+    
+    btnVoice.addEventListener("click", function() {
+      if (REPLIES_LEFT <= 0) return;
+      
+      if (!isRecording) {
+        // 🔴 1. 調用實體麥克風權限
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function(stream) {
+            isRecording = true;
+            audioChunks = []; 
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = function(e) {
+              audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = function() {
+              // 打包 WAV 實體結構
+              var audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              // 丟給發送管線
+              sendAudioFileToBackend(audioBlob);
+            };
+
+            mediaRecorder.start();
+            btnVoice.classList.add("recording");
+            if (voiceBtnText) voiceBtnText.textContent = "正在錄音中...再按一次結束";
+            if (voiceIcon) voiceIcon.textContent = "stop";
+          })
+          .catch(function(err) {
+            console.error("無法開啟麥克風:", err);
+            alert("麥克風啟動失敗，請確認網頁是否擁有錄音授權喔！");
+          });
+      } else {
+        // ⏹️ 2. 停止錄音，觸發上面的 onstop 打包與發送
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+          mediaRecorder.stream.getTracks().forEach(function(track) { track.stop(); });
+        }
+        isRecording = false;
+        btnVoice.classList.remove("recording");
       }
     });
   }
@@ -176,7 +216,9 @@
     });
   }
 
-  // 5. 分享功能
+  // ==========================================
+  // 5. 分享功能與按鈕
+  // ==========================================
   var feedback = document.getElementById("share-feedback");
 
   function showFeedback(message) {
@@ -221,53 +263,22 @@
     });
   }
 
-  // 判斷是否為手機裝置
-  function isMobile() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  }
-
-  // 分享到 LINE
+  // LINE 分享與 FB 分享
   var btnShareLine = document.getElementById("btn-share-line");
   if (btnShareLine) {
     btnShareLine.addEventListener("click", function () {
       var text = document.querySelector(".summary-text p");
       var message = text ? text.textContent : "我的聲影日記";
-
-      // 只有手機才用 Web Share API
-      if (isMobile() && navigator.share) {
-        navigator
-          .share({
-            title: "我的聲影日記",
-            text: message + "\n\n" + window.location.href,
-          })
-          .catch(function (err) {
-            console.log("分享取消", err);
-          });
-      } else {
-        // 電腦版一律用 LINE 網頁分享
-        var url =
-          "https://social-plugins.line.me/lineit/share?url=" +
-          encodeURIComponent(window.location.href) +
-          "&text=" +
-          encodeURIComponent(message);
-        window.open(url, "_blank");
-      }
+      var url = "https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(window.location.href) + "&text=" + encodeURIComponent(message);
+      window.open(url, "_blank");
     });
   }
 
-  // 分享到 Facebook（強制走網頁版，避免手機跳轉 App）
   var btnShareFb = document.getElementById("btn-share-fb");
   if (btnShareFb) {
     btnShareFb.addEventListener("click", function () {
       var url = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(window.location.href);
-
-      if (isMobile()) {
-        // 手機：直接在目前頁面導向，不開新分頁，避免被導去 App
-        window.location.href = url;
-      } else {
-        // 電腦：開新分頁
-        window.open(url, "_blank");
-      }
+      window.open(url, "_blank");
     });
   }
 
