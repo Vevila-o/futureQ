@@ -118,10 +118,17 @@ def voice_page(request):
     return render(request, "voice.html")
 
 
-# 完成頁
 def finish_page(request):
-    return render(request, "finish.html")
+    request.session['chat_count'] = 0  
 
+    diary_id = request.GET.get('diary_id')
+    diary = None
+    if diary_id:
+        diary = get_object_or_404(DiaryEntry, id=diary_id)
+
+    return render(request, 'finish.html', {
+        'diary': diary
+    })
 
 # 動態回顧頁
 def review_page(request):

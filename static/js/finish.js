@@ -1,19 +1,3 @@
-// 暫時用假資料模擬，等 B 的 API 完成後換掉
-var MOCK_DATA = {
-  photo_url: "https://gemini.google.com/share/0a44e8eef133",
-  transcription: "今天我和孫子在公園玩，看到紅色的花開了，我們真開心！",
-  ai_response: "AI助手：今天跟孫子玩什麼呀？我們聊天吧！",
-};
-
-// 把假資料顯示在頁面上
-var photoEl = document.querySelector(".summary-photo img");
-var transcriptEl = document.querySelector(".summary-text p");
-var aiBubbleText = document.querySelector(".ai-bubble p");
-
-if (photoEl) photoEl.src = MOCK_DATA.photo_url;
-if (transcriptEl) transcriptEl.textContent = MOCK_DATA.transcription;
-if (aiBubbleText) aiBubbleText.textContent = MOCK_DATA.ai_response;
-
 (function () {
   "use strict";
 
@@ -115,36 +99,105 @@ if (aiBubbleText) aiBubbleText.textContent = MOCK_DATA.ai_response;
   }
 
   // 5. 分享功能
-  var btnShare = document.getElementById("btn-share");
-  var btnNoShare = document.getElementById("btn-no-share");
   var feedback = document.getElementById("share-feedback");
 
-  function finishShare(message) {
-    if (btnShare) btnShare.disabled = true;
-    if (btnNoShare) btnNoShare.disabled = true;
+  function showFeedback(message) {
     if (feedback) {
       feedback.textContent = message;
       feedback.style.display = "block";
+      setTimeout(function () {
+        feedback.style.display = "none";
+      }, 2000);
     }
-    setTimeout(function () {
-      window.location.href = "/index/";
-    }, 1200);
   }
-  if (btnShare)
-    btnShare.addEventListener("click", function () {
-      finishShare("已分享到動態牆！");
-    });
-  if (btnNoShare)
-    btnNoShare.addEventListener("click", function () {
-      finishShare("好的，這篇只留給自己。");
-    });
 
-  window.addEventListener(
-    "scroll",
-    function () {
-      var header = document.getElementById("main-header");
-      if (header) header.classList.toggle("scrolled", window.scrollY > 10);
-    },
-    { passive: true }
-  );
+  // 儲存圖片
+  var btnSaveImage = document.getElementById("btn-save-image");
+  if (btnSaveImage) {
+    btnSaveImage.addEventListener("click", function () {
+      var img = document.querySelector(".summary-photo img");
+      if (!img) {
+        showFeedback("找不到圖片");
+        return;
+      }
+      var a = document.createElement("a");
+      a.href = img.src;
+      a.download = "我的日記.jpg";
+      a.click();
+      showFeedback("圖片已儲存！");
+    });
+  }
+
+  // 複製連結
+  var btnCopyLink = document.getElementById("btn-copy-link");
+  if (btnCopyLink) {
+    btnCopyLink.addEventListener("click", function () {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(function () {
+          showFeedback("連結已複製！");
+        })
+        .catch(function () {
+          showFeedback("複製失敗，請手動複製網址");
+        });
+    });
+  }
+
+  // 判斷是否為手機裝置
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  // 分享到 LINE
+  var btnShareLine = document.getElementById("btn-share-line");
+  if (btnShareLine) {
+    btnShareLine.addEventListener("click", function () {
+      var text = document.querySelector(".summary-text p");
+      var message = text ? text.textContent : "我的聲影日記";
+
+      // 只有手機才用 Web Share API
+      if (isMobile() && navigator.share) {
+        navigator
+          .share({
+            title: "我的聲影日記",
+            text: message + "\n\n" + window.location.href,
+          })
+          .catch(function (err) {
+            console.log("分享取消", err);
+          });
+      } else {
+        // 電腦版一律用 LINE 網頁分享
+        var url =
+          "https://social-plugins.line.me/lineit/share?url=" +
+          encodeURIComponent(window.location.href) +
+          "&text=" +
+          encodeURIComponent(message);
+        window.open(url, "_blank");
+      }
+    });
+  }
+
+  // 分享到 Facebook（強制走網頁版，避免手機跳轉 App）
+  var btnShareFb = document.getElementById("btn-share-fb");
+  if (btnShareFb) {
+    btnShareFb.addEventListener("click", function () {
+      var url = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(window.location.href);
+
+      if (isMobile()) {
+        // 手機：直接在目前頁面導向，不開新分頁，避免被導去 App
+        window.location.href = url;
+      } else {
+        // 電腦：開新分頁
+        window.open(url, "_blank");
+      }
+    });
+  }
+
+  // 完成回首頁
+  var btnNoShare = document.getElementById("btn-no-share");
+  if (btnNoShare) {
+    btnNoShare.addEventListener("click", function () {
+      window.location.href = "/index/";
+    });
+  }
 })();
