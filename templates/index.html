@@ -20,7 +20,7 @@
     <p class="welcome-sub">今天想記錄下什麼美好的回憶嗎？</p>
   </section>
   <section>
-<a href="photo.html" style="text-decoration:none;display:block;">
+<a href="/uploadPhoto/" style="text-decoration:none;display:block;">
   <button class="action-btn action-btn-today" style="width:100%;">
     <div style="text-align:left;">
       <span class="action-label">今天</span>
@@ -29,7 +29,7 @@
     <span class="material-symbols-outlined" style="font-size:60px;font-variation-settings:'FILL' 1;">add_circle</span>
   </button>
 </a>
-<a href="review.html" style="text-decoration:none;display:block;">
+<a href="/review/" style="text-decoration:none;display:block;">
   <button class="action-btn action-btn-past" style="width:100%;">
     <div style="text-align:left;">
       <span class="action-label">動態回顧</span>
@@ -117,6 +117,10 @@
 </div>
 
 <div id="nav-placeholder"></div>
+
+<script>
+  window.CALENDAR_DATA = {{ calendar_data_json|safe }};
+</script>
 
 <script src="../static/js/index.js"></script>
 <script src="../static/js/nav.js"></script>

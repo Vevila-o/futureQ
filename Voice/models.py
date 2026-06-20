@@ -24,7 +24,6 @@ class User(AbstractUser):
 
 
 
-
 # 聲影日記主表
 class DiaryEntry(models.Model):
     class Status(models.TextChoices):
@@ -33,24 +32,72 @@ class DiaryEntry(models.Model):
         DONE       = "done",       "完成"
         FAILED     = "failed",     "失敗"
 
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="使用者"
+    )
+
+    title = models.CharField(
+        "日記標題",
+        max_length=50,
+        blank=True,
+        default=""
+    )
+
     audio_file = models.FileField(
-        "語音檔案", upload_to="voiceDiary/media/audio",
-        blank=True, null=True,
+        "語音檔案",
+        upload_to="voiceDiary/media/audio",
+        blank=True,
+        null=True,
         help_text="支援 m4a / mp3 / wav，上限 3 分鐘",
     )
+
     photo = models.ImageField(
-        "照片", upload_to="voiceDiary/media/photo",
-        blank=True, null=True,
+        "照片",
+        upload_to="voiceDiary/media/photo",
+        blank=True,
+        null=True,
     )
-    transcription     = models.TextField("Whisper 語音轉文字", blank=True)
-    photo_description = models.TextField("照片 AI 描述",       blank=True)
-    ai_response       = models.TextField("AI 溫暖回應",        blank=True)
+
+    transcription = models.TextField(
+        "Whisper 語音轉文字",
+        blank=True
+    )
+
+    diary_text = models.TextField(
+        "日記文字",
+        blank=True
+    )
+
+    photo_description = models.TextField(
+        "照片 AI 描述",
+        blank=True
+    )
+
+    ai_response = models.TextField(
+        "AI 溫暖回應",
+        blank=True
+    )
+
     status = models.CharField(
-        "分析狀態", max_length=20,
-        choices=Status.choices, default=Status.PENDING,
+        "分析狀態",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
     )
-    created_at = models.DateTimeField("建立時間", auto_now_add=True)
-    updated_at = models.DateTimeField("更新時間", auto_now=True)
+
+    created_at = models.DateTimeField(
+        "建立時間",
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        "更新時間",
+        auto_now=True
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -58,40 +105,76 @@ class DiaryEntry(models.Model):
         verbose_name_plural = "聲影日記"
 
     def __str__(self):
-        return f"日記 {self.pk} ｜ {self.created_at:%Y/%m/%d}"
+        date = self.created_at.strftime("%Y/%m/%d") if self.created_at else "未建立日期"
+
+        if self.title:
+            return f"{date}｜{self.title}"
+
+        short_text = self.transcription[:15] if self.transcription else "尚無轉文字"
+        return f"{date}｜{short_text}"
 
 
 # 認知分析結果
 class CognitiveAnalysis(models.Model):
-    class RiskLevel(models.TextChoices):
-        LOW    = "low",    "低風險"
-        MEDIUM = "medium", "中風險"
-        HIGH   = "high",   "高風險"
+    RISK_LEVEL_CHOICES = [
+        ("low", "低風險"),
+        ("medium", "中風險"),
+        ("high", "高風險"),
+    ]
 
-    vocabulary_richness = models.FloatField("詞彙豐富度", null=True, blank=True)
-    sentence_fluency    = models.FloatField("語句流暢度", null=True, blank=True)
-    topic_coherence     = models.FloatField("話題連貫性", null=True, blank=True)
-    word_count          = models.IntegerField("總字數",   null=True, blank=True)
-    hesitation_count    = models.IntegerField("停頓次數", null=True, blank=True)
-    risk_level     = models.CharField(
-        "風險等級", max_length=10,
-        choices=RiskLevel.choices, default=RiskLevel.LOW,
+    diary = models.OneToOneField(
+        DiaryEntry,
+        on_delete=models.CASCADE,
+        related_name="cognitive_analysis"
     )
-    summary        = models.TextField("AI 分析摘要", blank=True)
-    raw_llm_output = models.JSONField("LLM 原始輸出", default=dict)
-    analyzed_at    = models.DateTimeField("分析時間", auto_now_add=True)
+
+    fluency_score = models.IntegerField("流暢度", default=0)          # 流暢度
+    information_score = models.IntegerField("資訊量", default=0)      # 資訊量
+    sentence_score = models.IntegerField("句子結構", default=0)         # 句子結構
+    naming_score = models.IntegerField("命名能力", default=0)           # 命名能力
+    semantic_score = models.IntegerField("語意正確性", default=0)         # 語意正確性
+    communication_score = models.IntegerField("整體溝通能力", default=0)    # 整體溝通能力
+
+    total_score = models.IntegerField("總分", default=0)            # 總分
+    average_score = models.DecimalField(
+        "平均分數",
+        max_digits=4,
+        decimal_places=2,
+        default=0
+    )                                                       # 平均分數
+
+    risk_level = models.CharField(
+        "風險等級",
+        max_length=10,
+        choices=RISK_LEVEL_CHOICES,
+        default="low"
+    )
+
+    suggestion = models.TextField("建議內容", blank=True, default="")   # 給使用者看的提醒
+    ai_feedback = models.TextField("AI 回饋內容", blank=True, default="")
+
+    analyzed_at = models.DateTimeField("分析時間", auto_now_add=True)
 
     class Meta:
-        verbose_name = "認知分析"
-        verbose_name_plural = "認知分析"
+        verbose_name = "認知分析結果"
+        verbose_name_plural = "認知分析結果"
 
     def __str__(self):
-        return f"認知分析 {self.pk}"
+        return f"日記 {self.diary.id} 的認知分析"
 
 
 # AI 追問對話
 class AiConversation(models.Model):
     MAX_ROUNDS = 3
+
+    diary = models.OneToOneField(
+        DiaryEntry,
+        on_delete=models.CASCADE,
+        related_name="ai_conversation",
+        null=True,
+        blank=True,
+        verbose_name="對應日記"
+    )
 
     messages    = models.JSONField("對話訊息", default=list)
     round_count = models.IntegerField("目前輪數", default=0)
@@ -100,8 +183,8 @@ class AiConversation(models.Model):
     updated_at  = models.DateTimeField("更新時間", auto_now=True)
 
     class Meta:
-        verbose_name = "AI 對話"
-        verbose_name_plural = "AI 對話"
+        verbose_name = "AI 追問對話"
+        verbose_name_plural = "AI 追問對話"
 
     def __str__(self):
         return f"對話（第 {self.round_count} 輪）{self.pk}"

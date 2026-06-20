@@ -1,70 +1,261 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
-<title>憶智防線</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../static/css/index.css">
-<link rel="stylesheet" href="../static/css/nav.css">
-<link rel="stylesheet" href="../static/css/finish.css">
-<link rel="stylesheet" href="../static/css/header.css"/>
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      name="viewport"
+    />
+    <title>憶智防線</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/index.css" />
+    <link rel="stylesheet" href="/static/css/nav.css" />
+    <link rel="stylesheet" href="/static/css/finish.css" />
+    <link rel="stylesheet" href="/static/css/header.css" />
+    <style>
+      /* ==========================================
+      ✨ 終極強制對稱排版（擊碎外部 CSS 干擾，保護聊天室外觀）
+      ========================================== */
 
-<div id="headerback-placeholder" 
-     data-title="聲影日記" 
-     data-icon="mic_none" 
-     data-back="back">
-</div>
+      main {
+        max-width: 600px !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding: 16px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+      }
 
-<main>
+      .ai-zone {
+        width: 100% !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+      }
 
-  <h2 class="congrats-title">恭喜完成！</h2>
-  <p class="congrats-sub">今天的記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
-  <p class="congrats-date" id="congrats-date"></p>
+      .chat-box {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        width: 100% !important;
+        margin-bottom: 16px !important;
+        max-height: 400px !important;
+        overflow-y: auto !important;
+        padding: 8px 4px !important;
+      }
 
-  <div class="summary-card">
-    <div class="summary-photo">
-      <img alt="公園裡盛開的紅花"
-           src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaXxZgvk3wVuYvacExYJddNihj6m4A8lj8JFMqxPUMmDXXZEpdRcvdwrK-qvNJ55uqgO4k4M5J9O-NfJ2i3fUnR3Kq6jxHTlz7HamWTTIkRiLsLW-jlMYJ6h6JlRaoOmPwsjVf2aDTP09Dnt_w0tVn1mRVGYgaoTaPSB_h0cSJEwqE7GxT1_0kZ6uFmCQ3cVpEHZPJ75aJbZVei2XpovWiz0pKJtJ7jId-9tr39rNG7mIQe-P2vkEfx2uQGtlDtl7WCruReGZOoVTz">
-    </div>
-    <div class="summary-body">
-      <div class="summary-text">
-        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">mic</span>
-        <p>今天我和孫子在公園玩，看到紅色的花開了，我們真開心！</p>
+      .chat-row {
+        display: flex !important;
+        gap: 12px !important;
+        align-items: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      /* 🤖 機器人橫列：強制靠左 */
+      .chat-row.ai-row {
+        justify-content: flex-start !important;
+        flex-direction: row !important;
+      }
+
+      /* 🥊 使用者橫列：強制靠右 */
+      .chat-row.user-row {
+        justify-content: flex-end !important;
+        flex-direction: row !important;
+      }
+
+      .ai-avatar,
+      .user-avatar {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+      }
+      .ai-avatar {
+        background-color: var(--primary, #36684c) !important;
+        color: #fff !important;
+      }
+      .user-avatar {
+        background-color: #e0e0e0 !important;
+        color: #555 !important;
+      }
+
+      /* 💬 修正泡泡擠壓變形與邊距 */
+      .ai-bubble,
+      .user-bubble {
+        position: relative !important;
+        padding: 10px 16px !important;
+        border-radius: 20px !important;
+        max-width: 65% !important;
+        width: auto !important;
+        word-break: break-all !important;
+        background-color: #f0f0f0 !important;
+        color: #333 !important;
+        font-family: "Noto Sans TC", sans-serif !important;
+        font-size: calc(1rem * var(--fs-scale, 1)) !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+      }
+
+      /* 🤖 AI 箭頭朝左 */
+      .ai-bubble {
+        margin-left: 8px !important;
+      }
+      .ai-bubble::before {
+        content: "" !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: -7px !important;
+        right: auto !important;
+        transform: translateY(-50%) !important;
+        border-width: 6px 8px 6px 0 !important;
+        border-style: solid !important;
+        border-color: transparent #f0f0f0 transparent transparent !important;
+      }
+      .ai-bubble::after { display: none !important; }
+
+      /* 🥊 人類箭頭朝右 */
+      .user-bubble {
+        margin-right: 8px !important;
+      }
+      .user-bubble::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 50% !important;
+        right: -7px !important;
+        left: auto !important;
+        transform: translateY(-50%) !important;
+        border-width: 6px 0 6px 8px !important;
+        border-style: solid !important;
+        border-color: transparent transparent transparent #f0f0f0 !important;
+      }
+      .user-bubble::before { display: none !important; }
+
+      /* 🎙️ 語音操作區全新樣式 */
+      .voice-zone {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-top: 12px !important;
+      }
+      
+      .btn-voice-record {
+        background-color: var(--primary, #36684c) !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        border-radius: 30px !important;
+        font-family: "Noto Sans TC", sans-serif !important;
+        font-size: calc(1.1rem * var(--fs-scale, 1)) !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transition: all 0.2s ease !important;
+        width: 80% !important;
+      }
+
+      .btn-voice-record.recording {
+        background-color: #d32f2f !important;
+        animation: pulse 1.5s infinite !important;
+      }
+
+      .btn-voice-record:disabled {
+        background-color: #ccc !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+      }
+
+      .voice-status-text {
+        font-family: "Noto Sans TC", sans-serif !important;
+        font-size: calc(0.9rem * var(--fs-scale, 1)) !important;
+        color: #666 !important;
+        font-weight: 700 !important;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
+        70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="headerback-placeholder" data-title="聲影日記" data-icon="mic_none" data-back="back"></div>
+
+    <main>
+      <h2 class="congrats-title">恭喜完成！</h2>
+      <p class="congrats-sub">今天的記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
+      <p class="congrats-date" id="congrats-date"></p>
+
+      <div class="summary-card" style="width: 100% !important; box-sizing: border-box !important;">
+        <div class="summary-photo">
+          <img alt="日記照片" src="{% if diary.photo %}{{ diary.photo.url }}{% endif %}" />
+        </div>
+        <div class="summary-body">
+          <div class="summary-text">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">mic</span>
+            <p>{% if diary.transcription %}{{ diary.transcription }}{% else %}尚無語音轉譯內容{% endif %}</p>
+          </div>
+          <div class="summary-time">10:45 AM</div>
+        </div>
       </div>
-      <div class="summary-time">10:45 AM</div>
-    </div>
-  </div>
 
-  <div class="ai-zone" id="ai-zone">
-    <div class="ai-avatar">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">smart_toy</span>
-    </div>
-    <div class="ai-bubble">
-      <p>AI助手：今天跟孫子玩什麼呀？我們聊天吧！</p>
-    </div>
-    <div class="ai-actions">
-      <button class="btn-reply" id="btn-reply">回覆 (可用次數 0/3)</button>
-      <button class="btn-skip" id="btn-skip">略過</button>
-    </div>
-  </div>
+      <div class="ai-zone" id="ai-zone">
+        <div class="chat-box" id="chat-box">
+          <div class="chat-row ai-row">
+            <div class="ai-avatar">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">smart_toy</span>
+            </div>
+            <div class="ai-bubble">今天記錄得真棒！關於今天的生活，還有什麼想跟我分享的嗎？</div>
+          </div>
+        </div>
 
-  <div class="share-section">
-    <p class="share-label">是否分享到動態牆？</p>
-    <div class="share-row">
-      <button class="btn-share" id="btn-share">分享</button>
-      <button class="btn-no-share" id="btn-no-share">不分享</button>
-    </div>
-    <p class="share-feedback" id="share-feedback" style="display:none;"></p>
-  </div>
+        <div class="voice-zone">
+          <button class="btn-voice-record" id="btn-voice">
+            <span class="material-symbols-outlined" id="voice-icon">mic</span>
+            <span id="voice-btn-text">按一下開始說話</span>
+          </button>
+          <p class="voice-status-text" id="voice-status">對話剩餘次數：3/3</p>
+        </div>
 
-</main>
+        <div class="ai-actions" style="margin-top: 16px; display: flex; justify-content: flex-end">
+          <button class="btn-skip" id="btn-skip">略過對話</button>
+        </div>
+      </div>
 
-<div id="nav-placeholder"></div>
-<script src="../static/js/nav.js"></script>
-<script src="../static/js/headerback.js"></script>
-<script src="../static/js/finish.js"></script>
-</body>
+      <div class="share-section" style="width: 100% !important; box-sizing: border-box !important;">
+        <p class="share-label">分享這則日記</p>
+        <div class="share-row">
+          <button class="btn-share" id="btn-save-image">📷 儲存圖片</button>
+          <button class="btn-share" id="btn-copy-link">🔗 複製連結</button>
+        </div>
+        <div class="share-row">
+          <button class="btn-share" id="btn-share-line">LINE 分享</button>
+          <button class="btn-share" id="btn-share-fb">Facebook 分享</button>
+        </div>
+        <p class="share-feedback" id="share-feedback" style="display: none"></p>
+        <div class="share-row" style="margin-top: 12px">
+          <button class="btn-no-share" id="btn-no-share">完成，回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <div id="nav-placeholder"></div>
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/headerback.js"></script>
+    <script src="/static/js/finish.js"></script>
+  </body>
 </html>

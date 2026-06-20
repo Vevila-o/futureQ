@@ -1,17 +1,28 @@
 // js/index.js
 
-// === 假資料區 ===
-const DEMO_ENTRIES = {
-  "2026-6-1":  { type:"audio", transcript:"今天天氣真好，和老伴去公園散步，看到好多人在打太極。空氣很清新，心情也跟著好起來了。", photo:null },
-  "2026-6-2":  { type:"audio", transcript:"小孫子打電話來說學校運動會得了第一名，我好高興，晚上做了他最喜歡吃的紅燒肉。", photo:null },
-  "2026-6-3":  { type:"audio", transcript:"去老社區找老朋友王阿姨喝茶，聊了一個下午。她說她兒子要從美國回來了，我們都很開心。", photo:null },
-  "2026-6-5":  { type:"audio", transcript:"看了一部老電影，想起年輕時候的事情。那時候我們在電影院排隊好長時間，真的是美好的回憶。", photo:null },
-  "2026-6-7":  { type:"audio", transcript:"早上去市場買菜，遇到賣水果的老闆說荔枝上市了，買了一斤回來，甜得很！", photo:null },
-  "2026-6-8":  { type:"emoji", emoji:"😊", transcript:"今天心情很好，沒有特別的事，就是覺得生活很平靜很幸福。", photo:null },
-  "2026-6-10": { type:"audio", transcript:"和女兒視訊，看到外孫女又長高了不少。她說學鋼琴進步了，還彈了一首給我聽，真開心。", photo:null },
-  "2026-6-11": { type:"photo", transcript:"家門口的茉莉花開了，香味飄了整個走廊。拍下來留個紀念，以後翻看也能想起這個香味。", photo:"https://lh3.googleusercontent.com/aida-public/AB6AXuDabO9XMCmKxNTHNYWiTInrpQ2R7RDQTEn_9txxTwr1GLgNGAK3YeRGUL7P598rugiKhwBSY_k8tQz8PMOEt6GiV1aYpl4XkVMRPAwkefY-W9ybY8NVfZkgiNywfUHx0H78Nqsn6nyZBatI66brxK3c9aArJC0rsylt2DHwcGqC8WkypgBpFnUw-61Fr9wb6jTQQZUbNOg-nTInyd6Q82nqoK7MIl0UzHNc9qedT1o6acw1t10xKesvnAUReZTBxcu5wD_VtxNClZBk" },
-  "2026-6-14": { type:"photo", transcript:"下午去看了社區的書法展，有好多漂亮的字。看到一幅寫「歲月靜好」的，買了一份印刷品帶回家。", photo:"https://lh3.googleusercontent.com/aida-public/AB6AXuBHQRG1zXlP-uAliC8Yrlbivdr4kYy15tzMgqomHbjQzYc52qaVkB9rmDbwGkPRionT5UeWD2sSvqMlP_rjzQ1QQz_EkR2mA_-CTsgaUV4jZk-ga5nU7n8ydh5m8qbOsmv0UFGoqSYGKaaTE1XoIvFPn0lsVhypwfEoljl6m6jZd5K4Ybx2oF2Ba_bVHOdL1as-EQcODMY5-yqGG79rOhXV2o-4zoIMFHVW6ZVdKte4gVXTbTeL9mk3PaNj_9F7aLVfOCbfqy5ZDJmd" }
-};
+// === 從 Django 資料庫傳來的真資料 ===
+// index.html 需要先有：window.CALENDAR_DATA = [...]
+const CALENDAR_DATA = window.CALENDAR_DATA || [];
+
+// 轉成原本日曆程式吃得懂的格式：
+// 原本 key 是 "2026-6-18"
+const DEMO_ENTRIES = {};
+
+CALENDAR_DATA.forEach(entry => {
+  if (!entry.date) return;
+
+  // entry.date 會是 "2026-06-18"
+  const [year, month, day] = entry.date.split("-").map(Number);
+  const key = `${year}-${month}-${day}`;
+
+  DEMO_ENTRIES[key] = {
+    type: entry.photo ? "photo" : "audio",
+    transcript: entry.transcript || "尚無語音轉譯內容",
+    photo: entry.photo || null,
+    ai_response: entry.ai_response || "",
+    status: entry.status || "",
+  };
+});
 
 // === 日曆狀態變數 ===
 const today = new Date();

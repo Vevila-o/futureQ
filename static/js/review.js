@@ -17,42 +17,11 @@
   if (localStorage.getItem('app-dark') === '1') document.body.classList.add('dark');
 })();
 
-const today = new Date();
-
-function dateLabel(d) {
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
-}
-
-const yesterday = new Date(today);
-yesterday.setDate(today.getDate() - 1);
-
-const lastYear = new Date(today);
-lastYear.setFullYear(today.getFullYear() - 1);
-
-const DEMO = {
-  yesterday: [
-    {
-      date: dateLabel(yesterday),
-      tag: '昨天',
-      transcript: '昨天下午去菜市場買了蔬菜，順便和隔壁的李阿姨聊了聊。她說她的孫子快要回來了，我們都很期待。回家後煮了一鍋排骨湯，香味飄滿整個廚房。',
-      photo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDabO9XMCmKxNTHNYWiTInrpQ2R7RDQTEn_9txxTwr1GLgNGAK3YeRGUL7P598rugiKhwBSY_k8tQz8PMOEt6GiV1aYpl4XkVMRPAwkefY-W9ybY8NVfZkgiNywfUHx0H78Nqsn6nyZBatI66brxK3c9aArJC0rsylt2DHwcGqC8WkypgBpFnUw-61Fr9wb6jTQQZUbNOg-nTInyd6Q82nqoK7MIl0UzHNc9qedT1o6acw1t10xKesvnAUReZTBxcu5wD_VtxNClZBk'
-    },
-    {
-      date: dateLabel(yesterday),
-      tag: '昨天傍晚',
-      transcript: '傍晚和老伴在社區公園散步，夕陽很美，我們坐在長椅上聊了很久年輕時候的事。那個時候日子苦，但心裡很踏實。',
-      photo: null
-    }
-  ],
-  lastyear: [
-    {
-      date: dateLabel(lastYear),
-      tag: '去年的今天',
-      transcript: '去年的今天，小女兒帶著外孫回來住了三天。外孫第一次學會叫「阿嬤」，我高興得眼眶都濕了。我們去附近的公園拍了好多照片，那天的天氣特別好。',
-      photo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHQRG1zXlP-uAliC8Yrlbivdr4kYy15tzMgqomHbjQzYc52qaVkB9rmDbwGkPRionT5UeWD2sSvqMlP_rjzQ1QQz_EkR2mA_-CTsgaUV4jZk-ga5nU7n8ydh5m8qbOsmv0UFGoqSYGKaaTE1XoIvFPn0lsVhypwfEoljl6m6jZd5K4Ybx2oF2Ba_bVHOdL1as-EQcODMY5-yqGG79rOhXV2o-4zoIMFHVW6ZVdKte4gVXTbTeL9mk3PaNj_9F7aLVfOCbfqy5ZDJmd'
-    }
-  ]
+const DEMO = window.REVIEW_DATA || {
+  yesterday: [],
+  lastyear: []
 };
+
 
 function renderCards(entries, containerId) {
   const container = document.getElementById(containerId);
