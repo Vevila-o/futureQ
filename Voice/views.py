@@ -14,10 +14,9 @@ import whisper
 def voiceIndex(request):
     return render(request, "index.html", {"session_state_json": "{}"})  
 
-# 2. 🚀 錄音上傳
-@csrf_exempt
+# 上傳照片頁
 def upload_photo(request):
-    return JsonResponse({'status': 'success', 'message': '語音轉錄成功！'})
+    return render(request, "photo.html")
 
 # 3. 🚀 核心問答 API：Session 完美控管 3 次限制，每次都精準回應並扣除次數
 @csrf_exempt
