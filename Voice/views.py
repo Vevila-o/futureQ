@@ -17,8 +17,51 @@ from openai import OpenAI
 
 # 1. 聲影日記首頁
 def voiceIndex(request):
-    return render(request, "index.html", {"session_state_json": "{}"})  
+    today = timezone.localdate()
 
+    # 查詢目前月份的日記
+    entries = DiaryEntry.objects.filter(
+        created_at__year=today.year,
+        created_at__month=today.month,
+    ).order_by("created_at")
+
+    calendar_entries = []
+
+    for entry in entries:
+        created_at = timezone.localtime(entry.created_at)
+
+        calendar_entries.append({
+            "id": entry.id,
+            "date": created_at.strftime("%Y-%m-%d"),
+            "day": created_at.day,
+            "title": entry.title or "聲影日記",
+            "transcript": (
+                entry.transcription
+                or entry.diary_text
+                or "尚無語音轉譯內容"
+            ),
+            "photo": entry.photo.url if entry.photo else "",
+            "audio": entry.audio_file.url if entry.audio_file else "",
+            "status": entry.status,
+        })
+
+    # 暫時加入，確認後端是否真的查到資料
+    print("目前日期：", today)
+    print("本月日記數量：", entries.count())
+    print("月曆資料：", calendar_entries)
+
+    return render(request, "index.html", {
+        "calendar_entries": calendar_entries,
+        "calendar_data_json": json.dumps(
+            calendar_entries,
+            cls=DjangoJSONEncoder,
+            ensure_ascii=False,
+        ),
+        "current_year": today.year,
+        "current_month": today.month,
+        "session_state_json": "{}",
+    })
+    
 # 上傳照片頁
 def upload_photo(request):
     return render(request, "photo.html")
@@ -263,6 +306,29 @@ def update_diary_audio(request):
             diary.status = DiaryEntry.Status.DONE
             diary.save()
 
+            # === 進行語言表達認知分析並儲存結果 ===
+            from Voice.utils import analyze_transcription
+            from .models import CognitiveAnalysis
+            
+            try:
+                analysis_result = analyze_transcription(transcription)
+                CognitiveAnalysis.objects.create(
+                    diary=diary,
+                    fluency_score=analysis_result["fluency_score"],
+                    information_score=analysis_result["information_score"],
+                    sentence_score=analysis_result["sentence_score"],
+                    naming_score=analysis_result["naming_score"],
+                    semantic_score=analysis_result["semantic_score"],
+                    communication_score=analysis_result["communication_score"],
+                    total_score=analysis_result["total_score"],
+                    average_score=analysis_result["average_score"],
+                    risk_level=analysis_result["risk_level"],
+                    suggestion=analysis_result["suggestion"],
+                    ai_feedback=analysis_result["ai_feedback"],
+                )
+            except Exception as analysis_err:
+                print(f"認知能力分析儲存失敗: {analysis_err}")
+
             return JsonResponse({
                 "success": True,
                 "diary_id": diary.id,
@@ -283,6 +349,116 @@ def update_diary_audio(request):
         "success": False,
         "error": "只接受 POST"
     }, status=405)
+
+#健康儀表板
+def dashboard(request):
+    from django.contrib.auth import get_user_model
+    from django.db.models import Avg
+    from .models import CognitiveAnalysis, DiaryEntry
+    from datetime import date
+    
+    User = get_user_model()
+    # 獲取當前登入者，若未登入，尋找 demo_elder 或第一個使用者
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if not target_user:
+        target_user = User.objects.first()
+        
+    # 計算一周內 (7天內) 的認知分數平均
+    one_week_ago = timezone.now() - timedelta(days=7)
+    
+    # 查詢與 target_user 關聯的日記認知分析
+    analyses = CognitiveAnalysis.objects.none()
+    has_week_data = False
+    if target_user:
+        week_analyses = CognitiveAnalysis.objects.filter(
+            diary__user=target_user,
+            diary__created_at__gte=one_week_ago
+        )
+        if week_analyses.exists():
+            has_week_data = True
+            analyses = week_analyses
+        else:
+            has_week_data = False
+            # 如果一周內沒有資料，則退而求其次抓該使用者的所有分析紀錄
+            analyses = CognitiveAnalysis.objects.filter(diary__user=target_user)
+        
+    has_data = analyses.exists()
+    
+    if has_data:
+        avg_scores = analyses.aggregate(
+            avg_fluency=Avg('fluency_score'),
+            avg_information=Avg('information_score'),
+            avg_sentence=Avg('sentence_score'),
+            avg_naming=Avg('naming_score'),
+            avg_semantic=Avg('semantic_score'),
+            avg_communication=Avg('communication_score'),
+            avg_total=Avg('total_score'),
+        )
+        scores = {
+            "fluency_score": float(avg_scores['avg_fluency'] or 0),
+            "information_score": float(avg_scores['avg_information'] or 0),
+            "sentence_score": float(avg_scores['avg_sentence'] or 0),
+            "naming_score": float(avg_scores['avg_naming'] or 0),
+            "semantic_score": float(avg_scores['avg_semantic'] or 0),
+            "communication_score": float(avg_scores['avg_communication'] or 0),
+        }
+        total_score_avg = float(avg_scores['avg_total'] or 0)
+    else:
+        # 完全無資料時的預設假資料
+        scores = {
+            "fluency_score": 3.0,
+            "information_score": 2.5,
+            "sentence_score": 3.2,
+            "naming_score": 2.8,
+            "semantic_score": 3.0,
+            "communication_score": 2.9,
+        }
+        total_score_avg = sum(scores.values())
+        
+    # 計算腦年齡
+    actual_age = 78
+    if target_user and target_user.userbirth:
+        birth = target_user.userbirth
+        today = date.today()
+        actual_age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+        
+    # 根據認知表現估算健康狀態與腦年齡
+    from Voice.utils import get_risk_result
+    
+    risk_info = get_risk_result(total_score_avg)
+    risk_level = risk_info["risk_level"]
+    health_message = risk_info["suggestion"]
+    
+    if risk_level == "low":
+        health_status = "健康"
+        brain_age = max(45, actual_age - 5)
+    elif risk_level == "medium":
+        health_status = "中等"
+        brain_age = actual_age + 2
+    else:
+        health_status = "須注意"
+        brain_age = actual_age + 8
+
+    # 雷達圖數據的陣列格式 (流暢度, 資訊量, 句子結構, 命名能力, 語意正確性, 整體溝通能力)
+    radar_data = [
+        scores["fluency_score"],
+        scores["information_score"],
+        scores["sentence_score"],
+        scores["naming_score"],
+        scores["semantic_score"],
+        scores["communication_score"],
+    ]
+    
+    context = {
+        "has_data": has_data,
+        "has_week_data": has_week_data,
+        "radar_data_json": json.dumps(radar_data),
+        "brain_age": brain_age,
+        "health_status": health_status,
+        "health_message": health_message,
+    }
+    
+    return render(request, "dashboard.html", context)
 
 
 # 共用元件

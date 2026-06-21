@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(data => {
       document.getElementById("nav-placeholder").innerHTML = data;
-<<<<<<< HEAD
 
       // ── 1. 偵測目前頁面，決定哪個 nav 項目要高亮 ──
       const path = window.location.pathname;
@@ -22,14 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
         path.includes("finish")
       ) {
         activePage = "index"; // 錄音流程屬於聲影日記流程
-=======
-      
-      const journalBtn = document.querySelector(".nav-item-home");
-      if (journalBtn) {
-        journalBtn.addEventListener("click", () => {
-          window.location.href = "/index/";
-        });
->>>>>>> 0abec28163a3078357b7b74ba9bc4844907fcfcc
       }
 
       // ── 2. 把對應按鈕換成「凸起圓圈」樣式 ──
@@ -49,8 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // ── 3. 綁定各按鈕的點擊導覽 ──
       const navLinks = {
-        "index":     "index.html",
-        "home":      "index.html",
+        "index": "index.html",
+        "home": "index.html",
         "dashboard": "dashboard.html",
         // "info" 和 "member" 頁面尚未完成，先不綁定
       };

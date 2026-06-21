@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from Voice import views
 from Voice import views as voice_views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -26,6 +27,7 @@ urlpatterns = [
 
     # 頁面
     path('index/', voice_views.voiceIndex, name="index"),
+    path('dashboard/', voice_views.dashboard, name='dashboard'),
     path('uploadPhoto/', voice_views.upload_photo, name='upload_photo'),
     path('voice/', voice_views.voice_page, name='voice_page'),
     path('finish/', voice_views.finish_page, name='finish_page'),
