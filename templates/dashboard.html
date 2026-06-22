@@ -275,6 +275,7 @@
   <!-- JS -->
   <script>
     window.RADAR_USER_DATA = {{ radar_data_json | safe }};
+    window.HAS_WEEK_DATA = {% if has_week_data %}true{% else %}false{% endif %};
   </script>
   <script src="../static/js/dashboard.js"></script>
   <script src="/static/js/nav.js?v=2"></script>

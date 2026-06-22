@@ -6,6 +6,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalClose = document.getElementById("modal-close");
 
   if (overlay && modalClose) {
+    // ── 檢查是否有一周內的資料，若無則跳出溫馨彈窗 ──
+    if (window.HAS_WEEK_DATA === false) {
+      modalTitle.textContent = "溫馨小提醒 🌸";
+      modalContent.textContent = "親愛的長輩您好！為了能更精準地為您分析大腦的健康狀況，建議您可以先持續完成 7 天的聲影日記喔。讓我們每天一起用聲音記錄生活，守護智慧與健康，加油！❤️";
+      if (modalClose) {
+        modalClose.textContent = "去寫日記";
+      }
+      overlay.classList.add("show");
+    }
+
     // 點擊雷達圖標籤 → 開啟說明視窗
     document.querySelectorAll(".info-trigger").forEach(function (el) {
       el.addEventListener("click", function () {
@@ -15,14 +25,18 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-    // 點擊「我知道了」→ 關閉
+    // 點擊「我知道了」/「去寫日記」→ 關閉或導頁
     modalClose.addEventListener("click", function () {
-      overlay.classList.remove("show");
+      if (window.HAS_WEEK_DATA === false) {
+        window.location.href = "/index/";
+      } else {
+        overlay.classList.remove("show");
+      }
     });
 
-    // 點擊半透明背景 → 關閉
+    // 點擊半透明背景 → 關閉 (無週資料時禁止點擊背景關閉)
     overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) {
+      if (e.target === overlay && window.HAS_WEEK_DATA !== false) {
         overlay.classList.remove("show");
       }
     });
