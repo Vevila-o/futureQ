@@ -49,7 +49,7 @@ class DiaryEntry(models.Model):
 
     audio_file = models.FileField(
         "語音檔案",
-        upload_to="voiceDiary/media/audio",
+        upload_to="audio",
         blank=True,
         null=True,
         help_text="支援 m4a / mp3 / wav，上限 3 分鐘",
@@ -57,7 +57,7 @@ class DiaryEntry(models.Model):
 
     photo = models.ImageField(
         "照片",
-        upload_to="voiceDiary/media/photo",
+        upload_to="photo",
         blank=True,
         null=True,
     )

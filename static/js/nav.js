@@ -40,9 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // ── 3. 綁定各按鈕的點擊導覽 ──
       const navLinks = {
-        "index": "index.html",
-        "home": "index.html",
-        "dashboard": "dashboard.html",
+        "index": "/index/",
+        "home": "",
+        "dashboard": "/dashboard/",
         // "info" 和 "member" 頁面尚未完成，先不綁定
       };
 

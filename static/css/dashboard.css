@@ -63,3 +63,12 @@ body {
   from { opacity: 0; transform: scale(0.9); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* 避免編輯器自動存檔排版換行造成 Django 變數解析失敗的自訂樣式 */
+.health-status-text {
+  display: block;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  color: var(--primary, #36684c);
+}

@@ -142,14 +142,13 @@ def upload_chat_voice(request):
 
 
         # === 階段二：呼叫 OpenAI 進行智慧溫暖且籠統的回覆生成 ===
-        # 🟢 為了順利 Git Push 通關，這裡故意留空！
-        api_key = ""
-        base_url = "https://api.openai.com/v1"
-        
+        api_key = settings.OPENAI_API_KEY
+        base_url = settings.OPENAI_BASE_URL
+
         # 後端安全防呆
         if not api_key:
-            return JsonResponse({'status': 'error', 'message': '後端尚未配置金鑰，請組長或組員手動在 views.py 填入！'})
-        
+            return JsonResponse({'status': 'error', 'message': 'OPENAI_API_KEY 尚未在 .env 設定'})
+
         # 初始化 OpenAI 客戶端
         client = OpenAI(api_key=api_key, base_url=base_url)
         
