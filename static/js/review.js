@@ -22,6 +22,21 @@ const DEMO = window.REVIEW_DATA || {
   lastyear: []
 };
 
+// === 語音播放狀態 ===
+let activeEntry = null;
+let currentAudio = null;
+let isPlaying = false;
+
+function resetPlayButton() {
+  const playBtn = document.querySelector('#entry-modal .modal-play-btn');
+  if (playBtn) {
+    playBtn.innerHTML = `
+      <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">play_arrow</span>
+      播放語音
+    `;
+  }
+}
+
 
 function renderCards(entries, containerId) {
   const container = document.getElementById(containerId);
@@ -73,6 +88,7 @@ function renderCards(entries, containerId) {
 }
 
 function openModal(entry) {
+  activeEntry = entry;
   document.getElementById('modal-date').textContent = `${entry.date}（${entry.tag}）`;
   const img         = document.getElementById('modal-photo-img');
   const placeholder = document.getElementById('modal-photo-placeholder');
@@ -85,6 +101,18 @@ function openModal(entry) {
     placeholder.style.display = 'block';
   }
   document.getElementById('modal-transcript').textContent = entry.transcript;
+
+  // 控制播放按鈕顯示與狀態
+  const playBtn = document.querySelector('#entry-modal .modal-play-btn');
+  if (playBtn) {
+    if (entry.audio) {
+      playBtn.style.display = 'flex';
+      resetPlayButton();
+    } else {
+      playBtn.style.display = 'none';
+    }
+  }
+
   const overlay = document.getElementById('entry-overlay');
   overlay.style.display = 'flex';
   requestAnimationFrame(() => {
@@ -94,6 +122,12 @@ function openModal(entry) {
 }
 
 function closeModal() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+    isPlaying = false;
+    resetPlayButton();
+  }
   const overlay = document.getElementById('entry-overlay');
   overlay.classList.remove('visible');
   setTimeout(() => { overlay.classList.remove('open'); overlay.style.display = 'none'; }, 300);
@@ -103,6 +137,59 @@ document.getElementById('modal-close-btn').addEventListener('click', closeModal)
 document.getElementById('entry-overlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
+
+// 播放按鈕點擊監聽
+const modalPlayBtn = document.querySelector('#entry-modal .modal-play-btn');
+if (modalPlayBtn) {
+  modalPlayBtn.addEventListener('click', () => {
+    if (!activeEntry || !activeEntry.audio) return;
+
+    if (currentAudio && isPlaying) {
+      currentAudio.pause();
+      isPlaying = false;
+      resetPlayButton();
+    } else {
+      const expectedSrc = window.location.origin + activeEntry.audio;
+      if (!currentAudio || (currentAudio.src !== expectedSrc && !currentAudio.src.endsWith(activeEntry.audio))) {
+        if (currentAudio) {
+          currentAudio.pause();
+        }
+        currentAudio = new Audio(activeEntry.audio);
+        currentAudio.addEventListener('ended', () => {
+          isPlaying = false;
+          resetPlayButton();
+          currentAudio = null;
+        });
+        currentAudio.addEventListener('error', (e) => {
+          console.error('語音播放出錯:', e);
+          alert('無法播放此語音檔');
+          isPlaying = false;
+          resetPlayButton();
+          currentAudio = null;
+        });
+      }
+
+      modalPlayBtn.innerHTML = `
+        <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">hourglass_empty</span>
+        載入中...
+      `;
+
+      currentAudio.play()
+        .then(() => {
+          isPlaying = true;
+          modalPlayBtn.innerHTML = `
+            <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">pause</span>
+            暫停播放
+          `;
+        })
+        .catch(err => {
+          console.error('播放失敗:', err);
+          alert('語音播放失敗');
+          resetPlayButton();
+        });
+    }
+  });
+}
 
 function switchTab(tab) {
   document.getElementById('tab-yesterday').classList.toggle('active', tab === 'yesterday');

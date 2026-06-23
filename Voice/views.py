@@ -19,11 +19,8 @@ from openai import OpenAI
 def voiceIndex(request):
     today = timezone.localdate()
 
-    # 查詢目前月份的日記
-    entries = DiaryEntry.objects.filter(
-        created_at__year=today.year,
-        created_at__month=today.month,
-    ).order_by("created_at")
+    # 查詢所有日記 (讓前端月曆能自由切換月份並看到資料)
+    entries = DiaryEntry.objects.all().order_by("created_at")
 
     calendar_entries = []
 
@@ -238,6 +235,7 @@ def review_page(request):
             "tag": tag,
             "transcript": entry.transcription or "尚無語音轉譯內容",
             "photo": entry.photo.url if entry.photo else None,
+            "audio": entry.audio_file.url if entry.audio_file else None,
             "ai_response": entry.ai_response or "",
             "status": entry.status,
         }
@@ -363,25 +361,37 @@ def dashboard(request):
     if not target_user:
         target_user = User.objects.first()
         
-    # 計算一周內 (7天內) 的認知分數平均
-    one_week_ago = timezone.now() - timedelta(days=7)
-    
-    # 查詢與 target_user 關聯的日記認知分析
+    # 查詢與 target_user 關聯的日記認知分析，必須連續7天都有資料才進行分析
     analyses = CognitiveAnalysis.objects.none()
     has_week_data = False
     if target_user:
-        week_analyses = CognitiveAnalysis.objects.filter(
-            diary__user=target_user,
-            diary__created_at__gte=one_week_ago
-        )
-        if week_analyses.exists():
-            has_week_data = True
-            analyses = week_analyses
-        else:
-            has_week_data = False
-            # 如果一周內沒有資料，則退而求其次抓該使用者的所有分析紀錄
-            analyses = CognitiveAnalysis.objects.filter(diary__user=target_user)
+        latest_analysis = CognitiveAnalysis.objects.filter(
+            diary__user=target_user
+        ).order_by('-diary__created_at').first()
         
+        if latest_analysis:
+            latest_date = timezone.localtime(latest_analysis.diary.created_at).date()
+            consecutive_days = [latest_date - timedelta(days=i) for i in range(7)]
+            
+            # 檢查這連續 7 天是否每天都有至少一筆日記分析資料
+            has_all_7_days = True
+            for day in consecutive_days:
+                if not CognitiveAnalysis.objects.filter(
+                    diary__user=target_user,
+                    diary__created_at__date=day
+                ).exists():
+                    has_all_7_days = False
+                    break
+            
+            if has_all_7_days:
+                has_week_data = True
+                analyses = CognitiveAnalysis.objects.filter(
+                    diary__user=target_user,
+                    diary__created_at__date__in=consecutive_days
+                )
+            else:
+                has_week_data = False
+                
     has_data = analyses.exists()
     
     if has_data:

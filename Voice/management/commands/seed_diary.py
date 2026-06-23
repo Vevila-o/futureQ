@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 "days_ago": 1,
                 "title": "公園散步",
                 "photo": "voiceDiary/media/photo/1.png",
-                "audio_file": "diary/audio/demo_park.mp3",
+                "audio_file": "voiceDiary/media/audio/1.mp3",
                 "transcription": (
                     "今天我和孫子去公園散步，"
                     "看到紅色的花開了，我們覺得很開心。"
@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 "days_ago": 2,
                 "title": "在家吃飯",
                 "photo": "voiceDiary/media/photo/2.png",
-                "audio_file": "diary/audio/demo_short.mp3",
+                "audio_file": "voiceDiary/media/audio/2.mp3",
                 "transcription": "今天在家吃飯。",
                 "ai_response": "簡單的一天也很值得記錄呢！",
             },
@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 "days_ago": 3,
                 "title": "社區活動",
                 "photo": "voiceDiary/media/photo/3.png",
-                "audio_file": "diary/audio/demo_activity.mp3",
+                "audio_file": "voiceDiary/media/audio/3.mp3",
                 "transcription": (
                     "昨天下午我和朋友去社區活動中心參加唱歌活動，"
                     "大家一起唱了很多熟悉的歌曲，我覺得很開心。"
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 "days_ago": 4,
                 "title": "早上市場買菜",
                 "photo": "voiceDiary/media/photo/4.png",
-                "audio_file": "diary/audio/demo_vegetable.mp3",
+                "audio_file": "voiceDiary/media/audio/4.mp3",
                 "transcription": (
                     "今天早上我去菜市場買菜，"
                     "買了高麗菜、番茄和雞蛋，"
@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 "days_ago": 5,
                 "title": "陪孫女畫畫",
                 "photo": "voiceDiary/media/photo/5.png",
-                "audio_file": "diary/audio/demo_drawing.mp3",
+                "audio_file": "voiceDiary/media/audio/5.mp3",
                 "transcription": (
                     "下午孫女來家裡陪我，"
                     "她坐在客廳畫畫，畫了一棵大樹和很多漂亮的花，"
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                 "days_ago": 6,
                 "title": "醫院定期回診",
                 "photo": "voiceDiary/media/photo/6.png",
-                "audio_file": "diary/audio/demo_hospital.mp3",
+                "audio_file": "voiceDiary/media/audio/6.mp3",
                 "transcription": (
                     "昨天早上女兒陪我去醫院回診，"
                     "醫生幫我量血壓，也提醒我要記得按時吃藥和多散步。"
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 "days_ago": 7,
                 "title": "和女兒吃午餐",
                 "photo": "voiceDiary/media/photo/7.png",
-                "audio_file": "diary/audio/demo_lunch.mp3",
+                "audio_file": "voiceDiary/media/audio/7.mp3",
                 "transcription": (
                     "今天中午女兒回來陪我吃飯，"
                     "我煮了青菜和魚，"
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 "days_ago": 15,
                 "title": "和朋友喝下午茶",
                 "photo": "voiceDiary/media/photo/15.png",
-                "audio_file": "diary/audio/demo_tea.mp3",
+                "audio_file": "voiceDiary/media/audio/15.mp3",
                 "transcription": "下午我和朋友在餐廳喝茶聊天，我們吃了蛋糕，也聊到以前一起工作的事情，心情很愉快。",
                 "ai_response": "和老朋友一起喝茶聊天，一定是很輕鬆又珍貴的時光呢！",
             },
@@ -130,7 +130,7 @@ class Command(BaseCommand):
                 "days_ago": 30,
                 "title": "市場買水果",
                 "photo": "voiceDiary/media/photo/30.png",
-                "audio_file": "diary/audio/demo_market.mp3",
+                "audio_file": "diary/audio/30.mp3",
                 "transcription": "早上我去市場買水果，買了蘋果和香蕉，還遇到以前的鄰居。",
                 "ai_response": "去市場還遇到鄰居，感覺很有人情味呢！",
             },
@@ -138,7 +138,7 @@ class Command(BaseCommand):
                 "days_ago": 365,
                 "title": "家人晚餐",
                 "photo": "voiceDiary/media/photo/365.png",
-                "audio_file": "diary/audio/demo_family.mp3",
+                "audio_file": "diary/audio/365.mp3",
                 "transcription": "我們全家一起吃晚餐，大家坐在客廳聊天，感覺很熱鬧。",
                 "ai_response": "這是一個很珍貴的回憶呢！家人一起聊天的時光很溫暖。",
             },
@@ -186,16 +186,12 @@ class Command(BaseCommand):
             diary = DiaryEntry.objects.create(**diary_data)
 
             # 設定假資料日期，時間固定為當天上午 10 點
-            target_datetime = timezone.now() - timedelta(
-                days=item["days_ago"]
+            import datetime
+            naive_datetime = datetime.datetime.combine(
+                target_date,
+                datetime.time(10, 0, 0)
             )
-
-            target_datetime = target_datetime.replace(
-                hour=10,
-                minute=0,
-                second=0,
-                microsecond=0,
-            )
+            target_datetime = timezone.make_aware(naive_datetime)
 
             # 使用 update，避免 auto_now_add 重新蓋掉日期
             DiaryEntry.objects.filter(

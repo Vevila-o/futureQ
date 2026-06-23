@@ -19,6 +19,7 @@ CALENDAR_DATA.forEach(entry => {
     type: entry.photo ? "photo" : "audio",
     transcript: entry.transcript || "尚無語音轉譯內容",
     photo: entry.photo || null,
+    audio: entry.audio || null,
     ai_response: entry.ai_response || "",
     status: entry.status || "",
   };
@@ -33,6 +34,11 @@ let pickerYear = curYear;
 
 const WEEKDAYS = ["一","二","三","四","五","六","日"];
 const WEEK_NAMES = ["日","一","二","三","四","五","六"];
+
+// === 語音播放狀態 ===
+let activeEntryKey = null;
+let currentAudio = null;
+let isPlaying = false;
 
 // === 日曆渲染邏輯 ===
 function buildCalendar() {
@@ -174,9 +180,21 @@ function toggleView() {
 }
 
 // === 日記 Modal 邏輯 ===
+function resetPlayButton() {
+  const playBtn = document.getElementById("modal-play-btn");
+  if (playBtn) {
+    playBtn.innerHTML = `
+      <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1;">play_arrow</span>
+      播放語音
+    `;
+  }
+}
+
 function openEntry(key, day) {
   const entry = DEMO_ENTRIES[key];
   if (!entry) return;
+
+  activeEntryKey = key;
 
   document.getElementById("modal-date").textContent = `${curYear}年${curMonth+1}月${day}日`;
 
@@ -192,10 +210,27 @@ function openEntry(key, day) {
   }
   document.getElementById("modal-transcript").textContent = entry.transcript || "尚無轉譯內容。";
 
+  // 控制播放按鈕顯示與狀態
+  const playBtn = document.getElementById("modal-play-btn");
+  if (playBtn) {
+    if (entry.audio) {
+      playBtn.style.display = "flex";
+      resetPlayButton();
+    } else {
+      playBtn.style.display = "none";
+    }
+  }
+
   showOverlay("entry-overlay", "entry-modal", "translateY(100%)", "translateY(0)");
 }
 
 function closeEntry() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+    isPlaying = false;
+    resetPlayButton();
+  }
   hideOverlay("entry-overlay", "entry-modal", "translateY(100%)");
 }
 
@@ -289,4 +324,62 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("entry-overlay").addEventListener("click", e => {
     if (e.target === e.currentTarget) closeEntry();
   });
+
+  // 播放語音按鈕事件
+  const playBtn = document.getElementById("modal-play-btn");
+  if (playBtn) {
+    playBtn.addEventListener("click", () => {
+      if (!activeEntryKey) return;
+      const entry = DEMO_ENTRIES[activeEntryKey];
+      if (!entry || !entry.audio) return;
+
+      if (currentAudio && isPlaying) {
+        // 暫停播放
+        currentAudio.pause();
+        isPlaying = false;
+        resetPlayButton();
+      } else {
+        // 如果切換了日記，或者 audio 還沒初始化，則重新建立物件
+        const expectedSrc = window.location.origin + entry.audio;
+        if (!currentAudio || (currentAudio.src !== expectedSrc && !currentAudio.src.endsWith(entry.audio))) {
+          if (currentAudio) {
+            currentAudio.pause();
+          }
+          currentAudio = new Audio(entry.audio);
+          currentAudio.addEventListener("ended", () => {
+            isPlaying = false;
+            resetPlayButton();
+            currentAudio = null;
+          });
+          currentAudio.addEventListener("error", (e) => {
+            console.error("語音播放出錯:", e);
+            alert("無法播放此語音檔");
+            isPlaying = false;
+            resetPlayButton();
+            currentAudio = null;
+          });
+        }
+
+        // 開始播放
+        playBtn.innerHTML = `
+          <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1;">hourglass_empty</span>
+          載入中...
+        `;
+
+        currentAudio.play()
+          .then(() => {
+            isPlaying = true;
+            playBtn.innerHTML = `
+              <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1;">pause</span>
+              暫停播放
+            `;
+          })
+          .catch(err => {
+            console.error("播放失敗:", err);
+            alert("語音播放失敗");
+            resetPlayButton();
+          });
+      }
+    });
+  }
 });
