@@ -112,7 +112,9 @@
       elLabel.textContent = "錄音完成";
       elDot.style.backgroundColor = "var(--primary)";
     }
-    elSave.disabled = state === "idle";
+    var canSave = state === "paused" || state === "ended";
+    elSave.style.display = canSave ? "block" : "none";
+    elSave.disabled = !canSave;
   }
 
   function tick() {
@@ -250,6 +252,10 @@
 
     var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
+    var overlay = document.getElementById("loading-overlay");
+    if (overlay) overlay.style.display = "flex";
+    window.removeEventListener("beforeunload", beforeUnloadHandler);
+
     var response = await fetch("/updateDiaryAudio/", {
       method: "POST",
       headers: {
@@ -261,6 +267,7 @@
     if (response.ok) {
       window.location.href = "/finish/?diary_id=" + diaryId;
     } else {
+      if (overlay) overlay.style.display = "none";
       alert("錄音儲存失敗，請再試一次");
     }
   });
@@ -283,4 +290,31 @@
 
   renderControls();
   renderStatus();
+
+  // 錄音進行中攔截離頁（瀏覽器原生提示）
+  function beforeUnloadHandler(e) {
+    if (state !== "idle") {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  }
+  window.addEventListener("beforeunload", beforeUnloadHandler);
+
+  // 攔截頁首返回鍵（capture phase 確保在 headerback.js 之前執行）
+  document.addEventListener(
+    "click",
+    function (e) {
+      var backBtn = e.target.closest("#btn-back");
+      if (!backBtn) return;
+      if (state === "idle") return;
+
+      e.stopPropagation();
+      e.preventDefault();
+      if (confirm("錄音尚未儲存，離開後錄音將會丟失。\n確定要離開嗎？")) {
+        window.removeEventListener("beforeunload", beforeUnloadHandler);
+        history.back();
+      }
+    },
+    true
+  );
 })();

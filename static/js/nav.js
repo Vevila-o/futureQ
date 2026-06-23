@@ -13,22 +13,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (path.includes("dashboard")) {
         activePage = "dashboard";
+      } else if (path.includes("member")) {
+        activePage = "member";
       } else if (path.includes("review")) {
-        activePage = "index"; // 動態回顧屬於聲影日記流程
+        activePage = "index";
       } else if (
         path.includes("photo") ||
         path.includes("voice") ||
         path.includes("finish")
       ) {
-        activePage = "index"; // 錄音流程屬於聲影日記流程
+        activePage = "index";
       }
 
       // ── 2. 把對應按鈕換成「凸起圓圈」樣式 ──
       const activeBtn = document.querySelector(`[data-page="${activePage}"]`);
       if (activeBtn) {
-        activeBtn.className = "nav-item-home"; // 套用 nav.css 的高亮 class
+        activeBtn.className = "nav-item-home";
 
-        // 把圖示包進 home-circle div
         const icon = activeBtn.querySelector(".material-symbols-outlined");
         if (icon) {
           const circle = document.createElement("div");
@@ -41,9 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // ── 3. 綁定各按鈕的點擊導覽 ──
       const navLinks = {
         "index": "/index/",
-        "home": "",
+        "home": "/index/",
         "dashboard": "/dashboard/",
-        // "info" 和 "member" 頁面尚未完成，先不綁定
+        "member": "/member/",
       };
 
       document.querySelectorAll("[data-page]").forEach(btn => {

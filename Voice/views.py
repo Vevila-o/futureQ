@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import DiaryEntry
+from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.files.base import ContentFile
@@ -50,6 +51,11 @@ def voiceIndex(request):
     print("本月日記數量：", entries.count())
     print("月曆資料：", calendar_entries)
 
+    has_today_diary = DiaryEntry.objects.filter(
+        created_at__date=today,
+        status="done",
+    ).exists()
+
     return render(request, "index.html", {
         "calendar_entries": calendar_entries,
         "calendar_data_json": json.dumps(
@@ -59,6 +65,7 @@ def voiceIndex(request):
         ),
         "current_year": today.year,
         "current_month": today.month,
+        "has_today_diary": has_today_diary,
         "session_state_json": "{}",
     })
     
@@ -194,6 +201,41 @@ def upload_chat_voice(request):
         if 'temp_path' in locals() and os.path.exists(temp_path):
             os.remove(temp_path)
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+# 會員頁
+def member_page(request):
+    User = get_user_model()
+    user = User.objects.first()
+
+    diary_count = DiaryEntry.objects.filter(user=user).count() if user else 0
+
+    # 計算連續記錄天數
+    streak_days = 0
+    if user:
+        today = timezone.localdate()
+        check = today
+        while DiaryEntry.objects.filter(user=user, created_at__date=check).exists():
+            streak_days += 1
+            check -= timedelta(days=1)
+
+    gender_map = {"male": "男", "female": "女", "other": "其他"}
+
+    ctx = {
+        "user": user,
+        "display_name": (user.get_full_name() or user.username) if user else "未登入",
+        "join_date": user.date_joined.strftime("%Y 年 %m 月") if user else "—",
+        "birth_date": user.userbirth.strftime("%Y / %m / %d") if user and user.userbirth else "尚未設定",
+        "gender_display": gender_map.get(user.gender, user.gender or "尚未設定") if user else "—",
+        "diary_count": diary_count,
+        "streak_days": streak_days,
+    }
+    return render(request, "member.html", ctx)
+
+
+# loading 過場頁
+def loading_page(request):
+    return render(request, "loading.html")
 
 
 # 錄音頁

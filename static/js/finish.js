@@ -172,6 +172,8 @@
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(function(stream) {
             isRecording = true;
+            var skipBtn = document.getElementById("btn-skip");
+            if (skipBtn) skipBtn.style.display = "none";
             audioChunks = []; 
             mediaRecorder = new MediaRecorder(stream);
             

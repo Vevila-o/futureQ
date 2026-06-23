@@ -54,7 +54,7 @@
     <div class="wave-bar"></div>
   </div>
 
-  <button class="btn-save" id="btn-save" disabled>保存錄音</button>
+  <button class="btn-save" id="btn-save" disabled style="display:none;">保存錄音</button>
   <div class="audio-preview" id="audio-preview" style="display:none; margin-top:16px;">
   <p style="font-weight:700; margin-bottom:8px;">錄音預聽</p>
   <audio id="audio-player" controls style="width:100%;"></audio>
@@ -71,6 +71,34 @@
 </form>
 
 </main>
+
+<!-- Loading Overlay（Whisper 處理中） -->
+<div id="loading-overlay" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:#6b9a7a;
+  flex-direction:column; align-items:center; justify-content:center;
+  font-family:'Noto Sans TC',sans-serif;
+">
+  <div style="
+    width:190px; height:190px; background:#fff; border-radius:50%;
+    border:4px solid rgba(255,255,255,0.6);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:52px; box-shadow:0 4px 24px rgba(0,0,0,0.12);
+  ">
+    <img src="/static/img/logo.jpg.png" alt="logo" style="width:68%;height:68%;object-fit:contain;"/>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;color:#fff;">
+    <span class="material-symbols-outlined" id="loading-gear" style="
+      font-size:30px; color:#fff;
+      font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 30;
+      animation:gear-spin 1.8s linear infinite;
+    ">settings</span>
+    <span style="font-size:20px;font-weight:500;letter-spacing:0.04em;color:#fff;">計算中請稍後</span>
+  </div>
+</div>
+<style>
+  @keyframes gear-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
 
 <div id="nav-placeholder"></div>
 <script src="../static/js/nav.js"></script>

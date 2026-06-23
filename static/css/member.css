@@ -1,0 +1,194 @@
+/* =========================================
+   member.css
+   ========================================= */
+
+main {
+  padding: 80px 20px 100px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── 個人資料橫幅 ─────────────────── */
+.member-banner {
+  background: var(--primary);
+  border-radius: 24px;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.member-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 3px solid rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-name {
+  font-size: calc(22px * var(--fs-scale));
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.member-sub {
+  font-size: calc(13px * var(--fs-scale));
+  color: rgba(255,255,255,0.75);
+}
+
+.member-edit-btn {
+  margin-top: 4px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  background: transparent;
+  color: #fff;
+  font-size: calc(14px * var(--fs-scale));
+  font-weight: 600;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.member-edit-btn:active { background: rgba(255,255,255,0.15); }
+
+/* ── 統計卡 ──────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface-container);
+  border-radius: 18px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.stat-icon {
+  font-size: 24px;
+  color: var(--primary);
+  font-variation-settings: 'FILL' 1;
+  margin-bottom: 4px;
+}
+
+.stat-num {
+  font-size: calc(28px * var(--fs-scale));
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: calc(13px * var(--fs-scale));
+  color: var(--on-surface-variant);
+}
+
+/* ── 區段標題 ─────────────────────── */
+.section-title {
+  font-size: calc(12px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+
+/* ── 通用 Row 卡片 ────────────────── */
+.info-card {
+  background: var(--surface-container);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+  border-top: 1px solid var(--outline-variant);
+  gap: 12px;
+}
+
+.info-row:first-child { border-top: none; }
+
+.info-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.info-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.info-row-label {
+  font-size: calc(15px * var(--fs-scale));
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+.info-row-value {
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-surface-variant);
+  text-align: right;
+}
+
+/* ── 可點擊 row ──────────────────── */
+.info-row.clickable {
+  cursor: pointer;
+  transition: background .15s;
+}
+.info-row.clickable:active { background: var(--surface-container-high); }
+
+.info-row-arrow {
+  font-size: 20px;
+  color: var(--on-surface-variant);
+  opacity: 0.5;
+}
+
+/* ── 登出 Row ─────────────────────── */
+.info-card.danger .info-row-label {
+  color: var(--error);
+  font-weight: 600;
+}
+.info-card.danger .info-row-icon {
+  background: #ffdad6;
+  color: var(--error);
+}
