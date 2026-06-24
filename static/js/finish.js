@@ -58,26 +58,94 @@
   var mediaRecorder = null;
   var audioChunks = [];
 
+  var diaryId = window.DIARY_ID || "";
+
   var btnVoice = document.getElementById("btn-voice");
   var voiceBtnText = document.getElementById("voice-btn-text");
   var voiceIcon = document.getElementById("voice-icon");
   var voiceStatus = document.getElementById("voice-status");
   var chatBox = document.getElementById("chat-box");
 
+  // 頁面載入後自動取得 AI 首問
+  if (diaryId) {
+    fetch("/api/ai-first-question/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ diary_id: diaryId }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach(function (msg) {
+            var row = document.createElement("div");
+            if (msg.role === "assistant") {
+              row.className = "chat-row ai-row";
+              row.innerHTML =
+                '<div class="ai-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">smart_toy</span></div>' +
+                '<div class="ai-bubble">' + msg.content + "</div>";
+            } else {
+              row.className = "chat-row user-row";
+              row.innerHTML =
+                '<div class="user-bubble">' + msg.content + "</div>" +
+                '<div class="user-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">person</span></div>';
+            }
+            chatBox.appendChild(row);
+          });
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        REPLIES_LEFT = data.remaining || 0;
+        updateVoiceUI();
+      })
+      .catch(function (err) {
+        console.error("首問取得失敗:", err);
+      });
+  }
+
   function updateVoiceUI() {
     if (!btnVoice || !voiceStatus) return;
     if (REPLIES_LEFT <= 0) {
       btnVoice.disabled = true;
-      if (voiceBtnText) voiceBtnText.textContent = "今日對話已結束囉！";
+      btnVoice.style.backgroundColor = "#9e9e9e";
+      btnVoice.style.cursor = "not-allowed";
+      if (voiceBtnText) voiceBtnText.textContent = "已達對話上限";
       if (voiceIcon) voiceIcon.textContent = "lock";
-      voiceStatus.textContent = "今日對話次數已滿囉！";
+      voiceStatus.textContent = "三次對話已完成，感謝你的分享！";
     } else {
       btnVoice.disabled = false;
+      btnVoice.style.backgroundColor = "";
+      btnVoice.style.cursor = "";
       voiceStatus.textContent = "對話剩餘次數：" + REPLIES_LEFT + "/3";
     }
   }
 
   // 傳送實體音檔給全新擴充的後端 Whisper 處理中心
+  function showTypingBubble(role) {
+    removeTypingBubble();
+    var row = document.createElement("div");
+    row.id = "typing-indicator";
+    if (role === "user") {
+      row.className = "chat-row user-row";
+      row.innerHTML =
+        '<div class="user-bubble typing-bubble"><span></span><span></span><span></span></div>' +
+        '<div class="user-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">person</span></div>';
+    } else {
+      row.className = "chat-row ai-row";
+      row.innerHTML =
+        '<div class="ai-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">smart_toy</span></div>' +
+        '<div class="ai-bubble typing-bubble"><span></span><span></span><span></span></div>';
+    }
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function removeTypingBubble() {
+    var el = document.getElementById("typing-indicator");
+    if (el) el.remove();
+  }
+
   function sendAudioFileToBackend(audioBlob) {
     if (REPLIES_LEFT <= 0) return;
 
@@ -90,10 +158,10 @@
     // 打包成二進位 FormData
     var formData = new FormData();
     formData.append('audio_data', audioBlob);
+    formData.append('diary_id', diaryId);
 
     var csrftoken = getCookie("csrftoken");
 
-    // 🌐 射向我們剛剛在 urls.py 與 views.py 新建的通道！
     fetch("/api/upload-chat-voice/", {
       method: "POST",
       headers: {
@@ -103,39 +171,38 @@
     })
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      removeTypingBubble();
       if (data.status === "success") {
-        // 🥊 A. 抓取後端 Whisper 轉出來的【真實文字】，強制吐在右邊！
+        // 使用者文字出現（右側）
         var userRow = document.createElement("div");
         userRow.className = "chat-row user-row";
         userRow.innerHTML =
-          '<div class="user-bubble">' +
-          data.user_text +
-          "</div>" +
+          '<div class="user-bubble">' + data.user_text + "</div>" +
           '<div class="user-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">person</span></div>';
         chatBox.appendChild(userRow);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // 🤖 B. 稍微延遲一下下，左邊緊接著印出 AI 的下一句暖心台詞
+        // AI 思考中氣泡（左側）
+        showTypingBubble("ai");
+
         setTimeout(function () {
+          removeTypingBubble();
           var aiRow = document.createElement("div");
           aiRow.className = "chat-row ai-row";
           aiRow.innerHTML =
             '<div class="ai-avatar"><span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1;">smart_toy</span></div>' +
-            '<div class="ai-bubble">' +
-            data.reply +
-            "</div>";
+            '<div class="ai-bubble">' + data.reply + "</div>";
           chatBox.appendChild(aiRow);
           chatBox.scrollTop = chatBox.scrollHeight;
 
-          // 讀取後端剩下的真實計數
           REPLIES_LEFT = data.remaining;
           updateVoiceUI();
-          
+
           if (REPLIES_LEFT > 0 && btnVoice) {
             if (voiceBtnText) voiceBtnText.textContent = "按一下開始說話";
             if (voiceIcon) voiceIcon.textContent = "mic";
           }
-        }, 600);
+        }, 800);
 
       } else {
         alert(data.message);
@@ -189,6 +256,7 @@
             };
 
             mediaRecorder.start();
+            showTypingBubble("user");
             btnVoice.classList.add("recording");
             if (voiceBtnText) voiceBtnText.textContent = "正在錄音中...再按一次結束";
             if (voiceIcon) voiceIcon.textContent = "stop";

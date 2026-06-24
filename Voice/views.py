@@ -3,7 +3,7 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import DiaryEntry
+from .models import DiaryEntry, AiConversation
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -72,9 +72,59 @@ def voiceIndex(request):
 def upload_photo(request):
     return render(request, "photo.html")
 
-# 3. 🚀 核心問答 API：Session 完美控管 3 次限制，每次都精準回應並扣除次數
+# 核心問答 3 次限制
 @csrf_exempt
-def ai_chat_api(request):
+    # 第一次 
+def ai_firstQ(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': '只接受 POST'})
+    
+    data = json.loads(request.body)
+    diary_id = data.get('diary_id')
+    if not diary_id:
+        return JsonResponse({'status': 'error', 'message': 'diary_id 缺失'})
+    diary = get_object_or_404(DiaryEntry, pk=diary_id)
+    
+    conv = getattr(diary, 'ai_conversation', None)
+
+    # 已有對話紀錄，直接回傳全部訊息讓前端重建
+    if conv and conv.messages:
+        status = 'finished' if conv.is_finished else 'success'
+        return JsonResponse({
+            'status': status,
+            'messages': conv.messages,
+            'remaining': AiConversation.MAX_ROUNDS - conv.round_count,
+        })
+    
+    transcription = diary.transcription or ""
+    try:
+        client = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL)
+        system_prompt = ("你是一位溫暖的長輩聊天夥伴，根據長輩的日記內容，提出一個簡短有溫度的延伸問題（30字以內），讓他繼續分享。只回問題本身，不要其他說明。")
+
+        res = client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content":system_prompt },
+                {"role": "user", "content": transcription}
+            ],
+            max_tokens=60,
+            temperature=0.8
+        )
+        question = res.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"AI 首問生成失敗: {e}")
+        question = "今天這段經歷，讓你印象最深刻的是什麼呢？"
+        
+    conv, _ = AiConversation.objects.get_or_create(diary = diary)
+    conv.messages = [{"role": "assistant", "content": question}]
+    conv.round_count = 0
+    conv.is_finished = False
+    conv.save()
+
+    return JsonResponse({'status': 'success', 'question': question, 'remaining': 3})
+
+# 無效呼叫
+# def ai_chat_api(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': '只接受 POST 請求'})
     try:
@@ -111,12 +161,7 @@ def ai_chat_api(request):
 def upload_chat_voice(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': '只接受 POST 請求'})
-        
-    # 檢查對話次數防線
-    chat_count = request.session.get('chat_count', 0)
-    if chat_count >= 3:
-        return JsonResponse({'status': 'error', 'message': '已經達到今日問答上限（3次）囉！', 'remaining': 0})
-        
+    
     audio_file = request.FILES.get('audio_data') # 接收前端錄音包
     if not audio_file:
         return JsonResponse({'status': 'error', 'message': '沒有收到錄音檔'})
@@ -142,6 +187,13 @@ def upload_chat_voice(request):
         # 辨識完成後，立刻清理移除硬碟中的暫存檔
         if os.path.exists(temp_path):
             os.remove(temp_path)
+            
+        diary_id = request.POST.get('diary_id')
+        diary = get_object_or_404(DiaryEntry, pk=diary_id) if diary_id else None
+        conv = getattr(diary, 'ai_conversation', None) if diary else None
+
+        if conv and conv.round_count >= AiConversation.MAX_ROUNDS:
+            return JsonResponse({'status': 'error', 'message': '已達對話上限', 'remaining': 0})
 
         if not whisper_text:
             return JsonResponse({'status': 'error', 'message': '沒聽清楚，請再大聲說一次喔！'})
@@ -170,7 +222,7 @@ def upload_chat_voice(request):
         
         # 呼叫大模型（自動校正為官方標準的小模型名稱 gpt-4o-mini）
         response = client.chat.completions.create(
-            model="gpt-4o-mini", 
+            model= settings.OPENAI_MODEL, 
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": whisper_text}
@@ -179,14 +231,22 @@ def upload_chat_voice(request):
             temperature=0.7
         )
         
-        # 成功拿到大腦動態生成的精緻回應
+        # 生成回應
         ai_reply = response.choices[0].message.content.strip()
-
-
-        # === 階段三：推進問答階段與扣除次數 ===
-        chat_count += 1
-        request.session['chat_count'] = chat_count
-        remaining = 3 - chat_count
+        
+        # 存入 AiConversation
+        remaining = 0
+        if conv:
+            msgs = list(conv.messages)
+            msgs.append({"role": "user", "content": whisper_text})
+            msgs.append({"role": "assistant", "content": ai_reply})
+            conv.messages = msgs
+            conv.round_count += 1
+            if conv.round_count >= AiConversation.MAX_ROUNDS:
+                conv.is_finished = True
+            conv.save()
+            remaining = AiConversation.MAX_ROUNDS - conv.round_count
+            
 
         # 回傳轉好的真實文字 (user_text) 與 AI 的智慧對答
         return JsonResponse({

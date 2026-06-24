@@ -21,7 +21,7 @@
 
 ## 專案介紹
 
-聲影日記是一個專為長者設計的語音日記系統。使用者可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），並以本地認知分析演算法評估六個認知維度，最後透過 OpenAI API 進行 AI 追問對話。
+聲影日記是一個專為長者設計的語音日記系統。使用者可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），由 OpenAI API 生成日記標題與 AI 溫暖回應，並以本地認知分析演算法評估六個認知維度。首頁月曆顯示歷史日記，點擊可回放語音；動態回顧頁可瀏覽昨天與去年的日記。
 
 ---
 
@@ -33,7 +33,7 @@
 | 資料庫 | SQLite（本地開發）|
 | 語音辨識 | OpenAI Whisper（本地執行，base model）|
 | 認知分析 | 本地演算法（`Voice/utils.py`）|
-| AI 對話 | OpenAI API（gpt-4.1-mini）|
+| AI 生成 | OpenAI API（標題 + 溫暖回應 + 追問對話）|
 | 前端 | HTML / CSS / JavaScript（無框架）|
 | 音訊解碼 | FFmpeg |
 
@@ -52,7 +52,7 @@ voiceDiary/
 ├── record.md                      # 開發筆記
 │
 ├── voiceDiary/                    # Django 專案設定
-│   ├── settings.py                # 全域設定（資料庫、語言、媒體路徑等）
+│   ├── settings.py                # 全域設定（含 CSRF_TRUSTED_ORIGINS for ngrok）
 │   ├── urls.py                    # 全域路由
 │   ├── wsgi.py
 │   └── asgi.py
@@ -72,38 +72,41 @@ voiceDiary/
 │
 ├── static/                        # 靜態檔案
 │   ├── css/
-│   │   ├── index.css              # 首頁 / 共用樣式
+│   │   ├── index.css              # 首頁 / 共用樣式（CSS 變數、主題色）
 │   │   ├── nav.css                # 底部導覽列
 │   │   ├── header.css             # 頁首樣式
 │   │   ├── photo.css              # 上傳照片頁
 │   │   ├── voice.css              # 錄音頁
 │   │   ├── finish.css             # 完成頁
 │   │   ├── review.css             # 動態回顧頁
-│   │   └── dashboard.css          # 儀表板頁
+│   │   ├── dashboard.css          # 儀表板頁
+│   │   └── member.css             # 會員頁
 │   ├── js/
-│   │   ├── index.js               # 首頁月曆邏輯
+│   │   ├── index.js               # 首頁月曆邏輯 + 日記 Modal 語音播放
 │   │   ├── nav.js                 # 底部導覽列動態 + 路由
 │   │   ├── header.js              # 首頁頁首
 │   │   ├── headerback.js          # 含返回鍵頁首
-│   │   ├── photo.js               # 照片上傳邏輯
-│   │   ├── voice.js               # 錄音邏輯
-│   │   ├── finish.js              # AI 對話 + 分享邏輯
-│   │   ├── review.js              # 動態回顧邏輯
+│   │   ├── photo.js               # 照片上傳邏輯（上傳時重命名為 voice_photo.jpg）
+│   │   ├── voice.js               # 錄音邏輯（含返回警告、loading overlay）
+│   │   ├── finish.js              # AI 對話 + 分享邏輯（錄音時隱藏略過按鈕）
+│   │   ├── review.js              # 動態回顧邏輯 + 語音播放
 │   │   ├── dashboard.js           # 儀表板圖表邏輯
 │   │   └── recorder.js            # 備用錄音模組
 │   └── img/                       # 靜態圖片資源
 │
 ├── media/                         # 使用者上傳的檔案（不上傳 git）
 │   ├── audio/                     # 語音檔（.webm / .mp3）
-│   └── photo/                     # 照片
+│   └── photo/                     # 照片（上傳時統一命名為 voice_photo.jpg）
 │
 ├── templates/                     # HTML 頁面
-│   ├── index.html                 # 首頁（月曆）
+│   ├── index.html                 # 首頁（月曆 + 語音播放 Modal）
 │   ├── photo.html                 # 上傳照片
-│   ├── voice.html                 # 錄音
+│   ├── voice.html                 # 錄音（含 loading overlay）
 │   ├── finish.html                # 完成 + AI 對話
-│   ├── review.html                # 動態回顧
+│   ├── review.html                # 動態回顧（含語音播放 Modal）
 │   ├── dashboard.html             # 認知分析儀表板
+│   ├── loading.html               # 計算等待畫面（logo + 旋轉齒輪）
+│   ├── member.html                # 會員頁面（個人資料 + 連續天數）
 │   ├── nav.html                   # 底部導覽列（共用元件）
 │   ├── header.html                # 首頁頁首（共用元件）
 │   └── headerback.html            # 含返回鍵頁首（共用元件）
@@ -117,16 +120,18 @@ voiceDiary/
 
 | 路徑 | 說明 |
 |---|---|
-| `/index/` | 首頁（月曆 + 日記入口）|
+| `/index/` | 首頁（月曆 + 日記入口）今天已完成時顯示完成狀態 |
 | `/dashboard/` | 認知分析儀表板 |
 | `/uploadPhoto/` | 上傳照片 |
-| `/voice/` | 語音錄音 |
+| `/voice/` | 語音錄音（錄音中離開會警告） |
 | `/finish/` | 完成頁面 + AI 三輪對話 |
-| `/review/` | 動態回顧 |
+| `/review/` | 動態回顧（昨天 / 去年的今天）|
+| `/member/` | 會員頁面（個人資料、日記數、連續天數）|
+| `/loading/` | 計算等待畫面（Whisper 處理期間的安撫畫面）|
 | `/admin/` | Django 後台 |
 | **API** | |
 | `/saveDiary/` | 儲存照片、建立日記（POST）|
-| `/updateDiaryAudio/` | 更新語音檔 + Whisper 轉文字（POST）|
+| `/updateDiaryAudio/` | 更新語音檔 + Whisper 轉文字 + AI 生成標題與回應（POST）|
 | `/api/ai-chat/` | AI 文字對話（POST）|
 | `/api/upload-chat-voice/` | AI 語音對話（Whisper + GPT，POST）|
 | **共用元件** | |
@@ -140,14 +145,19 @@ voiceDiary/
 
 ```
 首頁（月曆）
+    ↓ 今天已完成 → 顯示「已完成今天的紀錄」，無法重複進入
     ↓ 點擊「今天」
 上傳照片 (/uploadPhoto/)
-    ↓ 選擇照片 → 儲存 → 建立 DiaryEntry
+    ↓ 選擇照片（自動重命名為 voice_photo.jpg）→ 儲存 → 建立 DiaryEntry
 錄音 (/voice/?diary_id=...)
-    ↓ 錄音 → 保存 → Whisper 語音轉文字
+    ↓ 錄音中離開 → 警告「錄音將丟失」
+    ↓ 暫停後出現「保存錄音」按鈕
+    ↓ 點擊「保存錄音」→ 顯示 loading overlay（齒輪旋轉）
+    ↓ Whisper 轉文字 + AI 生成標題（10 字內含 emoji）+ AI 溫暖回應
 完成頁面 (/finish/?diary_id=...)
-    ↓ 顯示日記摘要 + AI 三輪追問對話（可略過）
-首頁（看到今天的日記標記在月曆上）
+    ↓ 顯示日記摘要（AI 標題 pill + 語音轉文字 + 紀錄時間）
+    ↓ AI 溫暖回應氣泡 + 最多三輪追問對話（可略過）
+首頁（今天的日記標記在月曆上，顯示已完成狀態）
 ```
 
 ---
@@ -162,7 +172,7 @@ voiceDiary/
 
 | 欄位 | 類型 | 說明 |
 |---|---|---|
-| gender | CharField | 性別 |
+| gender | CharField | 性別（male / female / other）|
 | userbirth | DateField | 生日 |
 
 ### DiaryEntry（聲影日記）
@@ -170,13 +180,13 @@ voiceDiary/
 | 欄位 | 類型 | 說明 |
 |---|---|---|
 | user | ForeignKey → User | 日記所屬使用者 |
-| title | CharField | 日記標題 |
+| title | CharField | AI 生成標題（10 字內含 emoji）|
 | audio_file | FileField | 語音檔（上傳至 `media/audio/`）|
-| photo | ImageField | 照片（上傳至 `media/photo/`）|
+| photo | ImageField | 照片（上傳至 `media/photo/`，統一命名 voice_photo.jpg）|
 | transcription | TextField | Whisper 語音轉文字結果 |
 | diary_text | TextField | 日記文字 |
 | photo_description | TextField | 照片 AI 描述 |
-| ai_response | TextField | AI 溫暖回應 |
+| ai_response | TextField | AI 溫暖回應（100 字內）|
 | status | CharField | 分析狀態（pending / processing / done / failed）|
 | created_at | DateTimeField | 建立時間 |
 | updated_at | DateTimeField | 更新時間 |
@@ -286,7 +296,23 @@ python manage.py createsuperuser
 python manage.py seed_diary
 ```
 
-建立 10 筆假日記（含認知分析），用於測試月曆與儀表板。
+建立 10 筆假日記（含認知分析），用於測試月曆、儀表板與動態回顧。
+
+需要確認 `media/audio/` 下存在以下音檔：
+
+```
+demo_short.mp3
+demo_activity.mp3
+demo_vegetable.mp3
+demo_drawing.mp3
+demo_hospital.mp3
+demo_lunch.mp3
+demo_tea.mp3
+demo_market.mp3
+demo_family.mp3
+```
+
+> 若有舊資料衝突，重新執行會略過已存在的日期，不會重複建立。
 
 ### 8. 啟動伺服器
 
@@ -295,6 +321,22 @@ python manage.py runserver
 ```
 
 開啟瀏覽器進入 `http://127.0.0.1:8000/index/`
+
+---
+
+## 使用 ngrok 對外測試
+
+Django 4.0+ 需要明確設定 `CSRF_TRUSTED_ORIGINS` 才能接受 HTTPS 請求。`settings.py` 已預設允許 ngrok 網域，直接啟動 ngrok 即可：
+
+```bash
+ngrok http 8000
+```
+
+若需自訂允許的 origin，可在 `.env` 加入：
+
+```
+CSRF_TRUSTED_ORIGINS=https://你的網域.ngrok-free.app
+```
 
 ---
 
@@ -317,3 +359,4 @@ python manage.py runserver
 | OPENAI_API_KEY | OpenAI API 金鑰 | （必填）|
 | OPENAI_MODEL | 使用的 GPT 模型 | gpt-4.1-mini |
 | OPENAI_BASE_URL | API 網址 | https://api.openai.com/v1 |
+| CSRF_TRUSTED_ORIGINS | 允許的 HTTPS 來源（逗號分隔）| ngrok 萬用字元 |

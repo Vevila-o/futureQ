@@ -34,13 +34,14 @@ urlpatterns = [
     path('voice/', voice_views.voice_page, name='voice_page'),
     path('finish/', voice_views.finish_page, name='finish_page'),
     path('review/', voice_views.review_page, name='review_page'),
-    path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'), 
+    # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'), 
 
     # 儲存聲影日記
     path('saveDiary/', voice_views.save_diary, name='save_diary'),
     path('updateDiaryAudio/', voice_views.update_diary_audio, name='update_diary_audio'),
     
-    # 🎙️ ✨ 全新擴充：專屬聊天室真實語音接收與 Whisper 轉文字通道
+    # 三次對話
+    path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'), # 第一次對話
     path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
 
     # 共用元件
