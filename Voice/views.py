@@ -12,7 +12,6 @@ from django.http import JsonResponse
 import whisper
 import os
 from django.conf import settings
-
 # 🌐 ✨ 引入 OpenAI 官方庫
 from openai import OpenAI
 
@@ -343,6 +342,27 @@ def update_diary_audio(request):
 
             if not diary.title and transcription:
                 diary.title = transcription[:20]
+                
+            #   AI生成溫暖回應
+            try:
+                api_key = settings.OPENAI_API_KEY
+                if api_key and transcription:
+                    client = OpenAI(api_key=api_key, base_url=settings.OPENAI_BASE_URL)
+                    
+                    response = client.chat.completions.create(
+                        model=settings.OPENAI_MODEL,
+                        messages=[
+                            { "role":"system", "content":"你是一位溫暖的長輩聊天夥伴，請根據長輩說的這段日記，用 一句話 做溫暖的摘要，並在最後加一個輕鬆的問題邀請繼續分享。嚴格限制 40 字以內。"},
+                            
+                            {"role":"user", "content":transcription}
+                        ],
+                        max_tokens= 100,
+                        temperature=0.7
+                    )
+                    diary.ai_response= response.choices[0].message.content.strip()
+            except Exception as ai_err:
+                print(f"AI 回應生成失敗: {ai_err}")
+                
 
             diary.status = DiaryEntry.Status.DONE
             diary.save()
