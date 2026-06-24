@@ -301,54 +301,20 @@
     }
   }
 
-  // 儲存圖片
-  var btnSaveImage = document.getElementById("btn-save-image");
-  if (btnSaveImage) {
-    btnSaveImage.addEventListener("click", function () {
-      var img = document.querySelector(".summary-photo img");
-      if (!img) {
-        showFeedback("找不到圖片");
-        return;
-      }
-      var a = document.createElement("a");
-      a.href = img.src;
-      a.download = "我的日記.jpg";
-      a.click();
-      showFeedback("圖片已儲存！");
-    });
-  }
+  // LINE / Facebook 分享 → 前往分享頁
+  var shareUrl = "/share/?diary_id=" + (window.DIARY_ID || "");
 
-  // 複製連結
-  var btnCopyLink = document.getElementById("btn-copy-link");
-  if (btnCopyLink) {
-    btnCopyLink.addEventListener("click", function () {
-      navigator.clipboard
-        .writeText(window.location.href)
-        .then(function () {
-          showFeedback("連結已複製！");
-        })
-        .catch(function () {
-          showFeedback("複製失敗，請手動複製網址");
-        });
-    });
-  }
-
-  // LINE 分享與 FB 分享
   var btnShareLine = document.getElementById("btn-share-line");
   if (btnShareLine) {
     btnShareLine.addEventListener("click", function () {
-      var text = document.querySelector(".summary-text p");
-      var message = text ? text.textContent : "我的聲影日記";
-      var url = "https://social-plugins.line.me/lineit/share?url=" + encodeURIComponent(window.location.href) + "&text=" + encodeURIComponent(message);
-      window.open(url, "_blank");
+      window.location.href = shareUrl;
     });
   }
 
   var btnShareFb = document.getElementById("btn-share-fb");
   if (btnShareFb) {
     btnShareFb.addEventListener("click", function () {
-      var url = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(window.location.href);
-      window.open(url, "_blank");
+      window.location.href = shareUrl;
     });
   }
 

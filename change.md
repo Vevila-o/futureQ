@@ -6,32 +6,37 @@
 
 ## 整體評估
 
-**規模**：49 個檔案異動，+1,327 行 / -260 行。但約一半為媒體檔案（demo 音檔、圖片、ngrok.exe）與文件（README、test_plan），純程式碼異動集中在 5 個 JS 檔、4 個 Template、1 個 views.py。
+**規模**：49+ 個檔案異動，純程式碼異動集中在 6 個 JS 檔、4 個 Template、1 個 views.py。
 
-**性質**：功能補完，非架構重構。
+**性質**：功能補完 + AI 對話存 DB，非架構重構。
 
-- 路由結構、Model、Whisper 流程皆未變動
+- 路由結構、Model 定義皆未變動
 - `frontend-update` 版本的播放按鈕、AI 回應、nav 路由已有 UI 骨架但未接邏輯，本次主要將這些功能真正串通
 - 新增兩個獨立頁面（member、loading），不影響主錄音流程
+- `AiConversation` 模型本次首次被真正寫入（三輪追問對話存 DB）
 
 **最大行為改變**：
 - AI 生成日記標題 + 溫暖回應（原本留空）
+- 三輪追問對話真正存入 `AiConversation`（原本只存 session）
+- 刷新後對話紀錄完整還原
 - 錄音中離頁警告
 - 首頁「今天」按鈕的已完成狀態偵測
 - 語音播放功能在首頁與回顧頁正式可用
 
-**Merge 風險**：低。若要合回 `frontend-update`，衝突點主要在 `views.py`（新增 view、AI 邏輯）與 `voice.js`（按鈕顯示、overlay、返回攔截），其餘為新增檔案或小幅補丁，衝突機率低。
+**Merge 風險**：低。衝突點主要在 `views.py`（新增 view、AI 邏輯）與 `voice.js`、`finish.js`，其餘為新增檔案或小幅補丁。
 
 ---
 
 ## 後端（Django）
 
 ### `Voice/views.py`
+- **新增 `share_page` view**：根據 `diary_id` 取得日記，計算 streak_days，呼叫 OpenAI 生成第一人稱日記內文（50 字內）與 3 個 hashtag；偵測 `?preview=1` 參數傳入 `is_preview`，供 template 條件渲染
+- **新增 `ai_first_question` view**：根據日記 transcription 呼叫 OpenAI 生成首問，建立 `AiConversation`；已有對話時回傳完整 messages 歷史；`is_finished` 時回傳 `status: finished`
 - **新增 `member_page` view**：查詢使用者資料、日記總數、連續記錄天數（今天無日記時從昨天起算）
 - **新增 `loading_page` view**：回傳 loading.html 過場頁
 - **`voiceIndex`**：新增 `has_today_diary` 查詢，今天已完成時傳入 template 以條件顯示
 - **`update_diary_audio`**：Whisper 轉文字後呼叫 OpenAI API 生成 AI 標題（10 字內含 emoji）與溫暖回應（100 字內），存入 `diary.title` 和 `diary.ai_response`
-- **`upload_chat_voice`**：API key 改從 `settings.OPENAI_API_KEY` 讀取，移除原本寫死的空字串
+- **`upload_chat_voice`**：改從 DB（`AiConversation`）計次取代 session；每輪將 user + assistant 訊息存入 `messages`，更新 `round_count`；最後一輪設 `is_finished = True`
 - **`review_page`**：`entry_to_dict` 補上 `"audio": entry.audio_file.url` 欄位，供前端播放語音
 
 ### `voiceDiary/settings.py`
@@ -40,6 +45,8 @@
 ### `voiceDiary/urls.py`
 - 新增路由 `/member/` → `member_page`
 - 新增路由 `/loading/` → `loading_page`
+- 新增路由 `/api/ai-first-question/` → `ai_first_question`
+- 新增路由 `/share/` → `share_page`
 
 ---
 
@@ -54,6 +61,12 @@
 
 ### `static/js/finish.js`
 - 使用者點擊「開始說話」錄音時，隱藏「略過對話」按鈕
+- **LINE / Facebook 分享按鈕**：改為跳轉 `/share/?diary_id=...`（原本直接呼叫 social API），移除「儲存圖片」與「複製連結」（功能移至 share.html）
+- **頁面載入時呼叫 `ai_first_question`**：取得完整對話歷史並逐一渲染到 chat box；`finished` 狀態直接鎖定 UI
+- **`showTypingBubble(role)`**：錄音開始時右側出現使用者三點氣泡，後端回傳後換成左側 AI 三點氣泡，最後替換為 AI 回覆文字
+- **`removeTypingBubble()`**：收到回覆後移除等待氣泡
+- **`updateVoiceUI`**：達到上限時按鈕變灰、文字改為「已達對話上限」、狀態文字說明三次已完成
+- FormData 補上 `diary_id`，讓後端能查到對應的 `AiConversation`
 
 ### `static/js/photo.js`
 - `formData.append` 第三參數補上 `'voice_photo.jpg'`，上傳時統一重命名
@@ -94,6 +107,8 @@
 - Summary 卡片新增 `summary-title`（AI 生成標題 pill），條件顯示
 - `summary-time` 改為動態時間 `{{ diary.created_at|date:"g:i A" }}`（原為寫死 `10:45 AM`）
 - AI 氣泡改顯示 `diary.ai_response`（無資料時才顯示預設文字）
+- `<script>window.DIARY_ID = "{{ diary.id }}";</script>` 傳 diary id 給 JS
+- 新增三點跳動氣泡 CSS（`.typing-bubble`、`@keyframes typing-dot`）
 
 ### `templates/review.html`
 - 新增 `<audio id="modal-audio">` 元素
@@ -103,11 +118,31 @@
 
 ## 新增頁面與樣式
 
+### `templates/share.html`（新增）
+- 分享專用頁面：照片卡片、第一人稱日記內文、連續記錄天數、hashtag pill、品牌 logo
+- 含 Open Graph meta tags（LINE / Facebook 預覽時自動帶出標題、描述、照片）
+- 操作區：LINE 分享、Facebook 分享、html2canvas 儲存圖片、複製連結
+- **雙模式**：`is_preview=False`（一般）顯示 header + nav；`is_preview=True`（`?preview=1`）完全隱藏 header / nav，頂部 padding 縮減，適合社群平台接收方瀏覽
+
 ### `templates/loading.html`（新增）
 - 全頁綠色背景，白色圓形 logo + 旋轉齒輪，作為 Whisper 計算等待畫面
 
 ### `templates/member.html`（新增）
 - 個人資料頁：顯示姓名、加入日期、生日、性別、日記總數、連續記錄天數
+
+### `static/css/share.css`（新增）
+- 分享卡片樣式：照片區、標題、內文、meta 列、hashtag pill、品牌列
+- LINE 綠、Facebook 藍按鈕樣式，次要按鈕（儲存圖片 / 複製連結）樣式
+
+### `static/js/share.js`（新增）
+- 主題 / 字體 / 深色模式初始化
+- `buildShareUrl()`：分享至 LINE / Facebook 時自動在連結後附加 `&preview=1`，確保接收方看到無 header/nav 的乾淨頁面
+- preview 模式下自動將 `main` 的 `padding-top` 縮減至 24px
+- LINE 分享：開啟 `social-plugins.line.me` 分享視窗
+- Facebook 分享：開啟 `facebook.com/sharer` 分享視窗
+- html2canvas 儲存卡片圖片（scale: 2 高畫質）
+- 複製頁面連結（含 clipboard fallback）
+- **本地端限制**：`?preview=1` 可在瀏覽器手動加入測試；實際社群分享需 ngrok 或部署環境
 
 ### `static/css/member.css`（新增）
 - 會員頁樣式：banner、統計卡片、資料欄位、帳號管理區

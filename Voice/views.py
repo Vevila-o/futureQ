@@ -299,6 +299,64 @@ def loading_page(request):
     return render(request, "loading.html")
 
 
+# 分享頁
+def share_page(request):
+    diary_id = request.GET.get('diary_id')
+    diary = get_object_or_404(DiaryEntry, pk=diary_id)
+
+    user = diary.user
+    streak_days = 0
+    if user:
+        today = timezone.localdate()
+        check = today
+        if not DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
+            check = today - timedelta(days=1)
+        while DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
+            streak_days += 1
+            check -= timedelta(days=1)
+
+    first_person_text = diary.transcription or ""
+    hashtags = ["#聲影日記", "#每日記錄", "#長者生活"]
+
+    try:
+        if settings.OPENAI_API_KEY and diary.transcription:
+            client = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL)
+
+            fp_res = client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "請將以下日記內容改寫成第一人稱、溫暖自然的短文（50字以內），保留主要事件。只回改寫後的文字。"},
+                    {"role": "user", "content": diary.transcription}
+                ],
+                max_tokens=80,
+                temperature=0.7
+            )
+            first_person_text = fp_res.choices[0].message.content.strip()
+
+            tag_res = client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "根據以下日記內容，生成 3 個中文 hashtag（含 # 號，用空格分隔），適合社群分享。只回 hashtag，不要其他說明。"},
+                    {"role": "user", "content": diary.transcription}
+                ],
+                max_tokens=30,
+                temperature=0.7
+            )
+            hashtags = tag_res.choices[0].message.content.strip().split()[:3]
+    except Exception as e:
+        print(f"分享頁 AI 生成失敗: {e}")
+
+    is_preview = request.GET.get('preview') == '1'
+
+    return render(request, "share.html", {
+        "diary": diary,
+        "first_person_text": first_person_text,
+        "hashtags": hashtags,
+        "streak_days": streak_days,
+        "is_preview": is_preview,
+    })
+
+
 # 錄音頁
 def voice_page(request):
     return render(request, "voice.html")

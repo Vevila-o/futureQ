@@ -34,7 +34,8 @@ urlpatterns = [
     path('voice/', voice_views.voice_page, name='voice_page'),
     path('finish/', voice_views.finish_page, name='finish_page'),
     path('review/', voice_views.review_page, name='review_page'),
-    # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'), 
+    path('share/', voice_views.share_page, name='share_page'),
+    # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'),
 
     # 儲存聲影日記
     path('saveDiary/', voice_views.save_diary, name='save_diary'),

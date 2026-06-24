@@ -80,7 +80,8 @@ voiceDiary/
 │   │   ├── finish.css             # 完成頁
 │   │   ├── review.css             # 動態回顧頁
 │   │   ├── dashboard.css          # 儀表板頁
-│   │   └── member.css             # 會員頁
+│   │   ├── member.css             # 會員頁
+│   │   └── share.css              # 分享頁
 │   ├── js/
 │   │   ├── index.js               # 首頁月曆邏輯 + 日記 Modal 語音播放
 │   │   ├── nav.js                 # 底部導覽列動態 + 路由
@@ -91,6 +92,7 @@ voiceDiary/
 │   │   ├── finish.js              # AI 對話 + 分享邏輯（錄音時隱藏略過按鈕）
 │   │   ├── review.js              # 動態回顧邏輯 + 語音播放
 │   │   ├── dashboard.js           # 儀表板圖表邏輯
+│   │   ├── share.js               # 分享頁邏輯（LINE/FB/儲存圖片/複製連結）
 │   │   └── recorder.js            # 備用錄音模組
 │   └── img/                       # 靜態圖片資源
 │
@@ -107,6 +109,7 @@ voiceDiary/
 │   ├── dashboard.html             # 認知分析儀表板
 │   ├── loading.html               # 計算等待畫面（logo + 旋轉齒輪）
 │   ├── member.html                # 會員頁面（個人資料 + 連續天數）
+│   ├── share.html                 # 分享頁（卡片 + OG tags + 操作按鈕）
 │   ├── nav.html                   # 底部導覽列（共用元件）
 │   ├── header.html                # 首頁頁首（共用元件）
 │   └── headerback.html            # 含返回鍵頁首（共用元件）
@@ -128,12 +131,16 @@ voiceDiary/
 | `/review/` | 動態回顧（昨天 / 去年的今天）|
 | `/member/` | 會員頁面（個人資料、日記數、連續天數）|
 | `/loading/` | 計算等待畫面（Whisper 處理期間的安撫畫面）|
+| `/share/` | 日記分享頁（第一人稱內文、hashtag、OG 預覽、儲存圖片）|
+| `/share/?preview=1` | 同上，無 header / nav，供 LINE / Facebook 接收方瀏覽 |
 | `/admin/` | Django 後台 |
 | **API** | |
 | `/saveDiary/` | 儲存照片、建立日記（POST）|
 | `/updateDiaryAudio/` | 更新語音檔 + Whisper 轉文字 + AI 生成標題與回應（POST）|
-| `/api/ai-chat/` | AI 文字對話（POST）|
-| `/api/upload-chat-voice/` | AI 語音對話（Whisper + GPT，POST）|
+| `/api/ai-first-question/` | 生成首問 + 回傳完整對話歷史（POST）|
+| `/share/` | 日記分享頁（GET，帶 `diary_id`）|
+| `/api/ai-chat/` | AI 文字對話（POST，目前前端未使用）|
+| `/api/upload-chat-voice/` | AI 語音對話（Whisper + GPT + 存 AiConversation，POST）|
 | **共用元件** | |
 | `/nav/` | 底部導覽列 HTML |
 | `/header/` | 首頁頁首 HTML |
@@ -156,7 +163,15 @@ voiceDiary/
     ↓ Whisper 轉文字 + AI 生成標題（10 字內含 emoji）+ AI 溫暖回應
 完成頁面 (/finish/?diary_id=...)
     ↓ 顯示日記摘要（AI 標題 pill + 語音轉文字 + 紀錄時間）
-    ↓ AI 溫暖回應氣泡 + 最多三輪追問對話（可略過）
+    ↓ AI 溫暖回應氣泡
+    ↓ 自動呼叫 /api/ai-first-question/ → 顯示 AI 首問（三點等待動畫）
+    ↓ 使用者錄音回答 → 右側三點氣泡 → 後端 Whisper + GPT → 左側三點氣泡 → AI 回覆
+    ↓ 最多三輪，對話存入 AiConversation；刷新後完整還原；達上限後按鈕鎖定
+    ↓ 可略過對話
+    ↓ 點擊「LINE 分享」或「Facebook 分享」
+分享頁 (/share/?diary_id=...)
+    ↓ AI 生成第一人稱內文 + 3 個 hashtag
+    ↓ 照片卡片 + LINE / Facebook 分享、儲存圖片、複製連結
 首頁（今天的日記標記在月曆上，顯示已完成狀態）
 ```
 
