@@ -114,7 +114,7 @@ saveBtn.addEventListener('click', async (e) => {
   }
 
   const formData = new FormData();
-  formData.append('photo', selectedPhotoFile);
+  formData.append('photo', selectedPhotoFile, 'voice_photo.jpg');
 
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 

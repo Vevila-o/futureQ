@@ -1,3 +1,4 @@
+ {% load tz %}
 <!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
@@ -205,11 +206,16 @@
           <img alt="日記照片" src="{% if diary.photo %}{{ diary.photo.url }}{% endif %}" />
         </div>
         <div class="summary-body">
+          {% if diary.title %}
+          <div class="summary-title">{{ diary.title }}</div>
+          {% endif %}
           <div class="summary-text">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">mic</span>
             <p>{% if diary.transcription %}{{ diary.transcription }}{% else %}尚無語音轉譯內容{% endif %}</p>
           </div>
-          <div class="summary-time">10:45 AM</div>
+          <div class="summary-time">
+            {% if diary %}{{ diary.created_at|date:"g:i A" }}{% endif %}
+          </div>
         </div>
       </div>
 

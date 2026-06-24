@@ -209,12 +209,14 @@ def member_page(request):
 
     diary_count = DiaryEntry.objects.filter(user=user).count() if user else 0
 
-    # 計算連續記錄天數
+    # 計算連續記錄天數（今天還沒寫但昨天有寫，仍算連續）
     streak_days = 0
     if user:
         today = timezone.localdate()
         check = today
-        while DiaryEntry.objects.filter(user=user, created_at__date=check).exists():
+        if not DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
+            check = today - timedelta(days=1)
+        while DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
             streak_days += 1
             check -= timedelta(days=1)
 
@@ -278,6 +280,7 @@ def review_page(request):
             "tag": tag,
             "transcript": entry.transcription or "尚無語音轉譯內容",
             "photo": entry.photo.url if entry.photo else None,
+            "audio": entry.audio_file.url if entry.audio_file else None,
             "ai_response": entry.ai_response or "",
             "status": entry.status,
         }
@@ -340,28 +343,39 @@ def update_diary_audio(request):
             diary.transcription = transcription
             diary.diary_text = transcription
 
-            if not diary.title and transcription:
-                diary.title = transcription[:20]
-                
-            #   AI生成溫暖回應
+            # AI 生成標題 + 溫暖回應（共用同一個 client）
             try:
                 api_key = settings.OPENAI_API_KEY
                 if api_key and transcription:
                     client = OpenAI(api_key=api_key, base_url=settings.OPENAI_BASE_URL)
-                    
+
+                    # 標題（10字以內）
+                    title_res = client.chat.completions.create(
+                        model=settings.OPENAI_MODEL,
+                        messages=[
+                            {"role": "system", "content": "請用10個字以內為這段日記取一個活潑有趣的標題，可以加上一個表情符號。只回標題，不要其他說明。"},
+                            {"role": "user", "content": transcription}
+                        ],
+                        max_tokens=30,
+                        temperature=0.9
+                    )
+                    diary.title = title_res.choices[0].message.content.strip()
+
+                    # 溫暖回應（100字以內）
                     response = client.chat.completions.create(
                         model=settings.OPENAI_MODEL,
                         messages=[
-                            { "role":"system", "content":"你是一位溫暖的長輩聊天夥伴，請根據長輩說的這段日記，用 一句話 做溫暖的摘要，並在最後加一個輕鬆的問題邀請繼續分享。嚴格限制 40 字以內。"},
-                            
-                            {"role":"user", "content":transcription}
+                            {"role": "system", "content": "你是一位溫暖的長輩聊天夥伴，請根據長輩說的這段日記，做溫暖的摘要，嚴格限制 100 字以內。"},
+                            {"role": "user", "content": transcription}
                         ],
-                        max_tokens= 100,
+                        max_tokens=100,
                         temperature=0.7
                     )
-                    diary.ai_response= response.choices[0].message.content.strip()
+                    diary.ai_response = response.choices[0].message.content.strip()
             except Exception as ai_err:
-                print(f"AI 回應生成失敗: {ai_err}")
+                print(f"AI 生成失敗: {ai_err}")
+                if not diary.title:
+                    diary.title = transcription[:10]
                 
 
             diary.status = DiaryEntry.Status.DONE

@@ -65,7 +65,22 @@ main {
   justify-content: space-between; 
   gap: 10px; 
 }
-.summary-text { 
+.summary-title {
+  display: inline-block;
+  font-size: calc(20px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--secondary-container);
+  border-radius: 999px;
+  padding: 4px 14px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.summary-text {
   display: flex; 
   gap: 8px; 
   align-items: flex-start; 
@@ -76,10 +91,10 @@ main {
   margin-top: 2px; 
 }
 .summary-text p {
-  font-size: calc(16px * var(--fs-scale));
-  font-weight: 700; 
-  line-height: 1.6; 
-  color: var(--on-surface);
+  font-size: calc(14px * var(--fs-scale));
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
 }
 .summary-time {
   text-align: right;

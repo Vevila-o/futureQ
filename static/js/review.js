@@ -72,6 +72,17 @@ function renderCards(entries, containerId) {
   });
 }
 
+const modalAudio    = document.getElementById('modal-audio');
+const modalPlayBtn  = document.getElementById('modal-play-btn');
+const modalPlayIcon = document.getElementById('modal-play-icon');
+const modalPlayText = document.getElementById('modal-play-text');
+
+function resetPlayBtn() {
+  modalAudio.pause();
+  modalPlayIcon.textContent = 'play_arrow';
+  modalPlayText.textContent = '播放語音';
+}
+
 function openModal(entry) {
   document.getElementById('modal-date').textContent = `${entry.date}（${entry.tag}）`;
   const img         = document.getElementById('modal-photo-img');
@@ -85,6 +96,11 @@ function openModal(entry) {
     placeholder.style.display = 'block';
   }
   document.getElementById('modal-transcript').textContent = entry.transcript;
+
+  modalAudio.src = entry.audio || '';
+  resetPlayBtn();
+  modalPlayBtn.disabled = !entry.audio;
+
   const overlay = document.getElementById('entry-overlay');
   overlay.style.display = 'flex';
   requestAnimationFrame(() => {
@@ -94,10 +110,29 @@ function openModal(entry) {
 }
 
 function closeModal() {
+  resetPlayBtn();
   const overlay = document.getElementById('entry-overlay');
   overlay.classList.remove('visible');
   setTimeout(() => { overlay.classList.remove('open'); overlay.style.display = 'none'; }, 300);
 }
+
+modalPlayBtn.addEventListener('click', () => {
+  if (!modalAudio.src) return;
+  if (modalAudio.paused) {
+    modalAudio.play();
+    modalPlayIcon.textContent = 'pause';
+    modalPlayText.textContent = '暫停';
+  } else {
+    modalAudio.pause();
+    modalPlayIcon.textContent = 'play_arrow';
+    modalPlayText.textContent = '播放語音';
+  }
+});
+
+modalAudio.addEventListener('ended', () => {
+  modalPlayIcon.textContent = 'play_arrow';
+  modalPlayText.textContent = '播放語音';
+});
 
 document.getElementById('modal-close-btn').addEventListener('click', closeModal);
 document.getElementById('entry-overlay').addEventListener('click', e => {

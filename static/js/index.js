@@ -19,6 +19,7 @@ CALENDAR_DATA.forEach(entry => {
     type: entry.photo ? "photo" : "audio",
     transcript: entry.transcript || "尚無語音轉譯內容",
     photo: entry.photo || null,
+    audio: entry.audio || "",
     ai_response: entry.ai_response || "",
     status: entry.status || "",
   };
@@ -192,10 +193,29 @@ function openEntry(key, day) {
   }
   document.getElementById("modal-transcript").textContent = entry.transcript || "尚無轉譯內容。";
 
+  // 設定音訊來源
+  const audio    = document.getElementById("modal-audio");
+  const playBtn  = document.getElementById("modal-play-btn");
+  const playIcon = document.getElementById("modal-play-icon");
+  const playText = document.getElementById("modal-play-text");
+
+  // 重置播放狀態
+  audio.pause();
+  audio.src = entry.audio || "";
+  playIcon.textContent = "play_arrow";
+  playText.textContent = "播放語音";
+  playBtn.disabled = !entry.audio;
+
   showOverlay("entry-overlay", "entry-modal", "translateY(100%)", "translateY(0)");
 }
 
 function closeEntry() {
+  const audio = document.getElementById("modal-audio");
+  if (audio) { audio.pause(); }
+  const icon = document.getElementById("modal-play-icon");
+  const text = document.getElementById("modal-play-text");
+  if (icon) icon.textContent = "play_arrow";
+  if (text) text.textContent = "播放語音";
   hideOverlay("entry-overlay", "entry-modal", "translateY(100%)");
 }
 
@@ -288,5 +308,29 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("modal-close-btn").addEventListener("click", closeEntry);
   document.getElementById("entry-overlay").addEventListener("click", e => {
     if (e.target === e.currentTarget) closeEntry();
+  });
+
+  // 播放語音
+  const modalAudio   = document.getElementById("modal-audio");
+  const modalPlayBtn = document.getElementById("modal-play-btn");
+  const modalPlayIcon = document.getElementById("modal-play-icon");
+  const modalPlayText = document.getElementById("modal-play-text");
+
+  modalPlayBtn.addEventListener("click", () => {
+    if (!modalAudio.src) return;
+    if (modalAudio.paused) {
+      modalAudio.play();
+      modalPlayIcon.textContent = "pause";
+      modalPlayText.textContent = "暫停";
+    } else {
+      modalAudio.pause();
+      modalPlayIcon.textContent = "play_arrow";
+      modalPlayText.textContent = "播放語音";
+    }
+  });
+
+  modalAudio.addEventListener("ended", () => {
+    modalPlayIcon.textContent = "play_arrow";
+    modalPlayText.textContent = "播放語音";
   });
 });
