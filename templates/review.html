@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>動態回顧 — 聲影日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../static/css/index.css"/>
+<link rel="stylesheet" href="../static/css/review.css"/>
+<link rel="stylesheet" href="../static/css/nav.css"/>
+<link rel="stylesheet" href="../static/css/header.css"/>
+</head>
+<body>
+
+<div id="headerback-placeholder" 
+     data-title="動態回顧" 
+     data-icon="history_edu" 
+     data-back="/index/">
+</div>
+
+<main>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-yesterday" onclick="switchTab('yesterday')">昨天</button>
+    <button class="tab-btn" id="tab-lastyear" onclick="switchTab('lastyear')">去年的今天</button>
+  </div>
+  <div id="panel-yesterday"></div>
+  <div id="panel-lastyear" style="display:none;"></div>
+</main>
+
+<div id="entry-overlay">
+  <div id="entry-modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-date-text" id="modal-date"></span>
+      <button class="modal-close" id="modal-close-btn">
+        <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <div class="modal-photo-wrap">
+      <span class="material-symbols-outlined" style="font-size:40px;opacity:.3;" id="modal-photo-placeholder">image</span>
+      <img id="modal-photo-img" style="display:none;" alt="日記照片"/>
+    </div>
+    <button class="modal-play-btn">
+      <span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;">play_arrow</span>
+      播放語音
+    </button>
+    <div class="modal-transcript-wrap">
+      <div class="modal-transcript-title">語音轉譯內容</div>
+      <div class="modal-transcript-text" id="modal-transcript"></div>
+    </div>
+  </div>
+</div>
+
+<div id="nav-placeholder"></div>
+<script>
+  window.REVIEW_DATA = {{ review_data_json|safe }};
+</script>
+
+<script src="/static/js/nav.js?v=2"></script>
+<script src="../static/js/headerback.js"></script>
+<script src="../static/js/review.js"></script>
+</body>
+</html>
