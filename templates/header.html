@@ -1,0 +1,101 @@
+<header id="main-header">
+  <button class="header-btn" id="btn-settings" aria-label="設定">
+    <span class="material-symbols-outlined" style="font-size:28px;">settings</span>
+  </button>
+  <div class="header-title">
+    <span class="material-symbols-outlined" style="font-size:26px;font-variation-settings:'FILL' 1;">mic_none</span>
+    聲影日記
+  </div>
+  <button class="header-btn" id="btn-notif" aria-label="通知">
+    <span class="material-symbols-outlined" style="font-size:28px;">notifications</span>
+    <span class="notif-badge" id="notif-badge"></span>
+  </button>
+</header>
+
+<div id="settings-overlay" role="dialog" aria-label="設定">
+  <div id="settings-panel">
+    <div class="settings-header">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">settings</span>
+      <span class="settings-title">設定</span>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-section-title">顯示</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">字體大小</div>
+            <div class="settings-row-sub" id="font-size-label">標準（100%）</div>
+          </div>
+          <div class="font-stepper">
+            <button class="font-stepper-btn" id="font-dec" aria-label="縮小字體">−</button>
+            <span class="font-stepper-val" id="font-val">4</span>
+            <button class="font-stepper-btn" id="font-inc" aria-label="放大字體">+</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">深色模式</div>
+            <div class="settings-row-sub">夜間保護視力</div>
+          </div>
+          <button class="toggle" id="toggle-dark" role="switch" aria-checked="false"></button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">高對比度</div>
+            <div class="settings-row-sub">提升文字清晰度</div>
+          </div>
+          <button class="toggle" id="toggle-contrast" role="switch" aria-checked="false"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">佈景主題</div>
+        <div class="theme-options">
+          <button class="theme-chip active" data-theme="green">翠綠</button>
+          <button class="theme-chip" data-theme="blue">海藍</button>
+          <button class="theme-chip" data-theme="purple">薰衣草</button>
+          <button class="theme-chip" data-theme="warm">暖橙</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">提醒</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">每日記錄提醒</div>
+            <div class="settings-row-sub">每天上午 9:00</div>
+          </div>
+          <button class="toggle on" id="toggle-reminder" role="switch" aria-checked="true"></button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">聲音回饋</div>
+            <div class="settings-row-sub">錄音完成提示音</div>
+          </div>
+          <button class="toggle on" id="toggle-sound" role="switch" aria-checked="true"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">關於</div>
+        <div class="settings-row">
+          <div class="settings-row-label">版本</div>
+          <div class="settings-row-sub">v1.0.0-beta</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="notif-overlay" role="dialog" aria-label="通知">
+  <div id="notif-panel">
+    <div class="notif-header">
+      <div class="notif-header-left">
+        <span class="material-symbols-outlined" style="font-size:26px;font-variation-settings:'FILL' 1;color:white;">notifications</span>
+        <span class="notif-header-title">通知</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="notif-clear-btn" id="btn-notif-clear">全部已讀</button>
+        <button class="notif-clear-btn" id="btn-notif-close" style="font-size:22px;padding:0 4px;">✕</button>
+      </div>
+    </div>
+    <div class="notif-list" id="notif-list"></div>
+  </div>
+</div>

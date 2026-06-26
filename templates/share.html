@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>聲影日記 — {{ diary.title }}</title>
+
+    <!-- Open Graph（LINE / Facebook 預覽） -->
+    <meta property="og:title" content="{{ diary.title }}" />
+    <meta property="og:description" content="{{ first_person_text }}" />
+    {% if diary.photo %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ diary.photo.url }}" />
+    {% endif %}
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:type" content="article" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/index.css" />
+    <link rel="stylesheet" href="/static/css/nav.css" />
+    <link rel="stylesheet" href="/static/css/header.css" />
+    <link rel="stylesheet" href="/static/css/share.css" />
+  </head>
+  <body>
+    {% if not is_preview %}
+    <div id="header-placeholder"></div>
+    {% endif %}
+
+    <main class="{% if is_preview %}preview-mode{% endif %}">
+      <!-- 分享卡片 -->
+      <div class="share-card" id="share-card">
+        {% if diary.photo %}
+        <div class="share-card-photo">
+          <img src="{{ diary.photo.url }}" alt="日記照片" crossorigin="anonymous" />
+        </div>
+        {% else %}
+        <div class="share-card-photo share-card-photo--empty">
+          <span class="material-symbols-outlined">image</span>
+        </div>
+        {% endif %}
+
+        <div class="share-card-body">
+          <div class="share-card-title">{{ diary.title }}</div>
+          <p class="share-card-text">{{ first_person_text }}</p>
+
+          <div class="share-card-meta">
+            <span class="share-streak">
+              <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1;vertical-align:middle;color:#e97345;">local_fire_department</span>
+              已連續記錄 <strong>{{ streak_days }}</strong> 天
+            </span>
+            <span class="share-date">{{ diary.created_at|date:"Y年n月j日" }}</span>
+          </div>
+
+          <div class="share-hashtags">
+            {% for tag in hashtags %}<span class="share-tag">{{ tag }}</span>{% endfor %}
+          </div>
+        </div>
+
+        <div class="share-card-brand">
+          <img src="/static/img/logo.jpg.png" alt="聲影日記" style="height:22px;width:22px;object-fit:contain;border-radius:4px;" />
+          聲影日記
+        </div>
+      </div>
+
+      <!-- 操作按鈕 -->
+      <div class="share-actions">
+        <div class="share-row">
+          <button class="btn-share-action btn-line" id="btn-share-line">
+            <span class="material-symbols-outlined">chat_bubble</span>
+            LINE 分享
+          </button>
+          <button class="btn-share-action btn-fb" id="btn-share-fb">
+            <span class="material-symbols-outlined">thumb_up</span>
+            Facebook
+          </button>
+        </div>
+        <div class="share-row">
+          <button class="btn-share-action btn-secondary" id="btn-save-img">
+            <span class="material-symbols-outlined">download</span>
+            儲存圖片
+          </button>
+          <button class="btn-share-action btn-secondary" id="btn-copy-link">
+            <span class="material-symbols-outlined">link</span>
+            複製連結
+          </button>
+        </div>
+      </div>
+
+      <p class="share-feedback" id="share-feedback" style="display:none;"></p>
+
+
+    {% if not is_preview %}
+    <div id="nav-placeholder"></div>
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/header.js"></script>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+      window.SHARE_DATA = {
+        pageUrl: "{{ request.build_absolute_uri }}",
+        isPreview: {{ is_preview|yesno:"true,false" }},
+      };
+    </script>
+    <script src="/static/js/share.js"></script>
+  </body>
+</html>

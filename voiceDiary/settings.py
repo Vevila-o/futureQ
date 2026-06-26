@@ -133,3 +133,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 OPENAI_API_KEY  = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL    = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
 OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+
+_default_origins = (
+    'http://127.0.0.1:8000,'
+    'http://localhost:8000,'
+    'https://*.ngrok-free.app,'
+    'https://*.ngrok.io'
+)
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _default_origins).split(',')
