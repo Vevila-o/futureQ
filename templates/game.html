@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <title>憶智防線 - 首頁</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../static/css/index.css">
+  <link rel="stylesheet" href="../static/css/nav.css">
+  <link rel="stylesheet" href="../static/css/header.css">
+  <link rel="stylesheet" href="../static/css/game.css">
+</head>
+<body>
+
+<div id="header-placeholder"></div>
+
+<main>
+
+  <!-- 問候語 -->
+  <section class="home-greeting">
+    <h2 class="welcome-name">早安，玉蘭！</h2>
+    <p class="welcome-sub">今天也要保持大腦活力喔。</p>
+  </section>
+
+  <!-- 每日建議卡片 -->
+  <a href="/market/" style="text-decoration:none;display:block;">
+    <div class="home-quest-card">
+      <div class="home-quest-icon">
+        <span class="material-symbols-outlined" style="font-size:40px;font-variation-settings:'FILL' 1;color:var(--primary);">lightbulb</span>
+      </div>
+      <div class="home-quest-text">
+        <span class="home-quest-label">每日建議</span>
+        <span class="home-quest-title">完成一場菜市場遊戲</span>
+      </div>
+      <span class="material-symbols-outlined home-quest-arrow">chevron_right</span>
+    </div>
+  </a>
+
+  <!-- 大腦訓練遊戲 -->
+  <section class="home-section">
+    <div class="home-section-header">
+      <h3 class="home-section-title">大腦訓練遊戲</h3>
+      <a href="/games/" class="home-section-link">查看全部</a>
+    </div>
+
+    <a href="/market/" style="text-decoration:none;display:block;">
+      <div class="home-game-btn">
+        <div class="home-game-icon">
+          <span class="material-symbols-outlined" style="font-size:48px;">shopping_cart</span>
+        </div>
+        <span class="home-game-name">菜市場</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- 我的成績 -->
+  <section class="home-section">
+    <div class="home-section-header">
+      <h3 class="home-section-title">我的成績</h3>
+    </div>
+
+    <!-- 統計數字 -->
+    <div class="score-stats">
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">emoji_events</span>
+        <span class="score-stat-num">320</span>
+        <span class="score-stat-label">最高分</span>
+      </div>
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">history</span>
+        <span class="score-stat-num">12</span>
+        <span class="score-stat-label">累計次數</span>
+      </div>
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">local_fire_department</span>
+        <span class="score-stat-num">3</span>
+        <span class="score-stat-label">連續天數</span>
+      </div>
+    </div>
+
+    <!-- 最近紀錄 -->
+    <div class="score-recent-title">最近紀錄</div>
+    <div class="score-record-list">
+      <div class="score-record-item">
+        <div class="score-record-left">
+          <span class="material-symbols-outlined" style="color:var(--primary);">shopping_cart</span>
+          <div>
+            <p class="score-record-name">菜市場</p>
+            <p class="score-record-date">今天</p>
+          </div>
+        </div>
+        <span class="score-record-score">280 分</span>
+      </div>
+      <div class="score-record-item">
+        <div class="score-record-left">
+          <span class="material-symbols-outlined" style="color:var(--primary);">shopping_cart</span>
+          <div>
+            <p class="score-record-name">菜市場</p>
+            <p class="score-record-date">昨天</p>
+          </div>
+        </div>
+        <span class="score-record-score">320 分</span>
+      </div>
+      <div class="score-record-item">
+        <div class="score-record-left">
+          <span class="material-symbols-outlined" style="color:var(--primary);">shopping_cart</span>
+          <div>
+            <p class="score-record-name">菜市場</p>
+            <p class="score-record-date">2 天前</p>
+          </div>
+        </div>
+        <span class="score-record-score">210 分</span>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<div id="nav-placeholder"></div>
+
+<script src="../static/js/header.js"></script>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/game.js"></script>
+
+</body>
+</html>

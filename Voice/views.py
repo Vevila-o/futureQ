@@ -653,6 +653,10 @@ def dashboard(request):
     
     return render(request, "dashboard.html", context)
 
+#遊戲首頁
+def game_page(request):
+    return render(request, 'game.html')
+
 
 # 共用元件
 def header_partial(request):

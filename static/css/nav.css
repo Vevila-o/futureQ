@@ -62,7 +62,7 @@
   font-weight: 700;
 }
 .home-circle {
-  background-color: #7baf8e;
+  background-color: var(--primary);
   width: 64px;
   height: 64px;
   border-radius: 9999px;

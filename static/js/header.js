@@ -110,6 +110,8 @@ function initHeaderLogic() {
     document.documentElement.style.setProperty('--primary', t.primary);
     document.documentElement.style.setProperty('--secondary-container', t.secondary);
     document.documentElement.style.setProperty('--on-secondary-container', t.onSecondary);
+    document.documentElement.style.setProperty('--surface-tint', t.surfaceTint);  // 新增
+    document.documentElement.style.setProperty('--icon-color', t.iconColor);      // 新增
   }
 
   function setupToggle(id, cb) {
