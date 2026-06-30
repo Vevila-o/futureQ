@@ -12,9 +12,9 @@
 </head>
 <body>
 
-<div id="headerback-placeholder" 
-     data-title="聲影日記" 
-     data-icon="mic_none" 
+<div id="headerback-placeholder"
+     data-title="聲影日記"
+     data-icon="mic_none"
      data-back="back">
 </div>
 
@@ -30,47 +30,99 @@
          src="https://lh3.googleusercontent.com/aida-public/AB6AXuC582P2Qi2kHL6dHPLQoLpzaJ91bM1giacgetF0KuhaIJv9pLHFo7Ys_2NJ86cHjYCw_R6HQ5crYgky_XjuPLLZ0ubZEhZWNu5HwzqeiFTlf_p9r8TBrkBfL1yrB_Bl8ydBrZSFTYO5xtJyY27y-cvmu3nPSIq7X_f_2fGBIECLNx-KYtxQaY7xyuBSo7Ll4Wu7afd1Ad302KtUNAeYkt0WEJkF-YgBk_e_D501HFd21jOju15qG-ZHNSQlcLTo6bPbyGtOjs_KEjCG">
   </div>
 
-  <div class="record-status">
-    <span class="status-dot" id="status-dot"></span>
-    <span class="status-label" id="status-label">尚未開始</span>
+  <!-- 狀態 + 計時器 單行 -->
+  <div class="record-info-row">
+    <div class="record-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">尚未開始</span>
+    </div>
+    <div class="record-timer-group">
+      <span class="record-timer" id="record-timer">03:00</span>
+      <span class="record-limit">限制三分鐘</span>
+    </div>
   </div>
-  <div class="record-timer" id="record-timer">03:00</div>
-  <p class="record-limit">時長限制三分鐘</p>
 
-  <div class="record-controls" id="record-controls"></div>
-
+  <!-- 波形 / 播放器（合為一體） -->
   <div class="waveform" id="waveform">
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
+    <div id="wave-bars">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+    <div id="wave-player" style="display:none">
+      <button class="wave-play-btn" id="wave-play-btn" type="button" aria-label="播放">
+        <span class="material-symbols-outlined">play_arrow</span>
+      </button>
+      <div class="wave-player-body">
+        <div class="wave-progress-track" id="wave-progress-track">
+          <div class="wave-progress-fill" id="wave-progress-fill"></div>
+        </div>
+        <div class="wave-times">
+          <span id="wave-current-time">0:00</span>
+          <span id="wave-total-time">0:00</span>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-player" preload="none" style="display:none"></audio>
+  </div>
+
+  <!-- Hold-to-record 操作區 -->
+  <div class="hold-record-section">
+    <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="長按錄音">
+      <span class="material-symbols-outlined" id="hold-mic-icon">mic</span>
+    </button>
+    <p class="hold-hint" id="hold-hint">長按開始錄音</p>
+    <button class="btn-restart" id="btn-restart" type="button" style="display:none">重新錄製</button>
   </div>
 
   <button class="btn-save" id="btn-save" disabled style="display:none;">保存錄音</button>
-  <div class="audio-preview" id="audio-preview" style="display:none; margin-top:16px;">
-  <p style="font-weight:700; margin-bottom:8px;">錄音預聽</p>
-  <audio id="audio-player" controls style="width:100%;"></audio>
-</div>
 
-<form style="display:none;">
-  {% csrf_token %}
-</form>
+  <form style="display:none;">
+    {% csrf_token %}
+  </form>
   <form id="audio-form" method="POST" action="{% url 'update_diary_audio' %}" enctype="multipart/form-data" style="display:none;">
-  {% csrf_token %}
-  <input type="hidden" name="diary_id" id="diary-id">
-  <input type="hidden" name="transcription" id="transcription-input">
-  <input type="file" name="audio_file" id="audio-file-input">
-</form>
+    {% csrf_token %}
+    <input type="hidden" name="diary_id" id="diary-id">
+    <input type="hidden" name="transcription" id="transcription-input">
+    <input type="file" name="audio_file" id="audio-file-input">
+  </form>
 
 </main>
+
+<!-- 長按錄音時的全螢幕 Overlay -->
+<div class="voice-overlay" id="voice-overlay">
+  <div class="ol-photo">
+    <img id="ol-photo-img" src="" alt="">
+  </div>
+  <!-- 暫停 / 完成按鈕：弧狀區域上方 -->
+  <div class="ol-zones-above">
+    <div class="ol-zone ol-pause" id="ol-zone-pause">
+      <span class="material-symbols-outlined">pause</span>
+      <span>暫停</span>
+    </div>
+    <div class="ol-zone ol-complete" id="ol-zone-complete">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>完成</span>
+    </div>
+  </div>
+  <!-- 弧狀區域：只含麥克風指示器 -->
+  <div class="ol-arc">
+    <div class="ol-mic-indicator">
+      <span class="ol-mic-pulse"></span>
+      <span class="material-symbols-outlined">mic</span>
+    </div>
+    <p class="ol-arc-hint">放開手指暫停 · 滑上方完成</p>
+  </div>
+</div>
 
 <!-- Loading Overlay（Whisper 處理中） -->
 <div id="loading-overlay" style="

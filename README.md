@@ -23,6 +23,8 @@
 
 聲影日記是一個專為長者設計的語音日記系統。使用者可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），由 OpenAI API 生成日記標題與 AI 溫暖回應，並以本地認知分析演算法評估六個認知維度。首頁月曆顯示歷史日記，點擊可回放語音；動態回顧頁可瀏覽昨天與去年的日記。
 
+錄音頁採用**長按拖曳手勢**（類似微信語音輸入）：長按麥克風開始錄音，同時全螢幕模糊背景出現，照片保持清晰，底部弧狀白色區域顯示操作選項；滑向上方的「暫停」或「完成」按鈕後放開即觸發對應動作，直接放開則預設暫停。錄音完成後波形區域原地轉為內嵌迷你播放器，可試聽後再保存。
+
 ---
 
 ## 技術清單
@@ -76,7 +78,7 @@ voiceDiary/
 │   │   ├── nav.css                # 底部導覽列
 │   │   ├── header.css             # 頁首樣式
 │   │   ├── photo.css              # 上傳照片頁
-│   │   ├── voice.css              # 錄音頁
+│   │   ├── voice.css              # 錄音頁（含長按 overlay、弧狀選項區、內嵌播放器）
 │   │   ├── finish.css             # 完成頁
 │   │   ├── review.css             # 動態回顧頁
 │   │   ├── dashboard.css          # 儀表板頁
@@ -88,7 +90,7 @@ voiceDiary/
 │   │   ├── header.js              # 首頁頁首
 │   │   ├── headerback.js          # 含返回鍵頁首
 │   │   ├── photo.js               # 照片上傳邏輯（上傳時重命名為 voice_photo.jpg）
-│   │   ├── voice.js               # 錄音邏輯（含返回警告、loading overlay）
+│   │   ├── voice.js               # 錄音邏輯（長按拖曳手勢、全螢幕 overlay、內嵌播放器、返回警告）
 │   │   ├── finish.js              # AI 對話 + 分享邏輯（錄音時隱藏略過按鈕）
 │   │   ├── review.js              # 動態回顧邏輯 + 語音播放
 │   │   ├── dashboard.js           # 儀表板圖表邏輯
@@ -103,7 +105,7 @@ voiceDiary/
 ├── templates/                     # HTML 頁面
 │   ├── index.html                 # 首頁（月曆 + 語音播放 Modal）
 │   ├── photo.html                 # 上傳照片
-│   ├── voice.html                 # 錄音（含 loading overlay）
+│   ├── voice.html                 # 錄音（長按手勢、全螢幕 overlay、弧狀操作區、內嵌播放器、loading overlay）
 │   ├── finish.html                # 完成 + AI 對話
 │   ├── review.html                # 動態回顧（含語音播放 Modal）
 │   ├── dashboard.html             # 認知分析儀表板
@@ -157,8 +159,12 @@ voiceDiary/
 上傳照片 (/uploadPhoto/)
     ↓ 選擇照片（自動重命名為 voice_photo.jpg）→ 儲存 → 建立 DiaryEntry
 錄音 (/voice/?diary_id=...)
+    ↓ 長按麥克風按鈕 → 全螢幕模糊背景出現（照片保持清晰）
+    ↓ 底部弧狀白色區域 + 上方浮現「暫停」「完成」按鈕
+    ↓ 滑向「暫停」放開 → 暫停 ／ 滑向「完成」放開 → 結束錄音
+    ↓ 直接放開（不滑動）→ 預設暫停
+    ↓ 錄音完成 → 波形區原地變成迷你播放器（播放鍵 + 進度條 + 時間）可試聽
     ↓ 錄音中離開 → 警告「錄音將丟失」
-    ↓ 暫停後出現「保存錄音」按鈕
     ↓ 點擊「保存錄音」→ 顯示 loading overlay（齒輪旋轉）
     ↓ Whisper 轉文字 + AI 生成標題（10 字內含 emoji）+ AI 溫暖回應
 完成頁面 (/finish/?diary_id=...)
