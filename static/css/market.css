@@ -1,0 +1,503 @@
+/* =========================================
+   market.css — 整理菜籃遊戲頁面
+   依賴：index.css（CSS 變數）、nav.css、header.css
+
+   RWD 三個斷點：
+     Base    : < 480px  (小手機)
+     @480px+ : ≥ 480px  (大手機 / 平板)
+     @768px+ : ≥ 768px  (桌機 / 筆電)
+   ========================================= */
+
+:root {
+  --mkt-yellow:    #f5a623;
+  --mkt-orange:    #ff914d;
+  --mkt-red:       #e53935;
+  --mkt-warm:      #c2185b;
+}
+
+/* ── 全頁佈局 ── */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 96px;
+  overflow: hidden;
+}
+
+/* =========================================
+   階段標記
+   ========================================= */
+.mkt-stage-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+@media (min-width: 480px) { .mkt-stage-badge { font-size: 14px; padding: 5px 14px; } }
+@media (min-width: 768px) { .mkt-stage-badge { font-size: 16px; padding: 6px 18px; } }
+
+/* =========================================
+   進度條
+   ========================================= */
+.mkt-progress-section {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mkt-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+@media (min-width: 480px) { .mkt-progress-info { font-size: 14px; } }
+@media (min-width: 768px) { .mkt-progress-info { font-size: 16px; } }
+
+.mkt-progress-bar-bg {
+  height: 10px;
+  background: var(--surface-container-high);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1.5px solid var(--outline-variant);
+}
+@media (min-width: 480px) { .mkt-progress-bar-bg { height: 12px; } }
+@media (min-width: 768px) { .mkt-progress-bar-bg { height: 16px; } }
+
+.mkt-progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+}
+
+/* =========================================
+   第四階段規則提示
+   ========================================= */
+.mkt-rule-hint {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.mkt-rule-hint .material-symbols-outlined { font-size: 18px; color: var(--primary); }
+@media (min-width: 480px) { .mkt-rule-hint { font-size: 15px; padding: 9px 14px; } }
+@media (min-width: 768px) { .mkt-rule-hint { font-size: 17px; padding: 11px 16px; border-radius: 14px; } }
+
+/* =========================================
+   遊戲主區
+   ========================================= */
+.mkt-game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+}
+@media (min-width: 480px) { .mkt-game-area { gap: 16px; } }
+@media (min-width: 768px) { .mkt-game-area { gap: 20px; } }
+
+/* ── 食材名稱（卡片上方）── */
+.mkt-item-name {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--on-surface);
+  text-align: center;
+  letter-spacing: .5px;
+}
+@media (min-width: 480px) { .mkt-item-name { font-size: 28px; } }
+@media (min-width: 768px) { .mkt-item-name { font-size: 34px; } }
+
+/* ── 卡片外層 ── */
+.mkt-card-wrap {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  position: relative;
+  z-index: 10;
+}
+.mkt-card-wrap.dragging { cursor: grabbing; }
+
+/* ── 圓形食材卡片 ── */
+.mkt-card {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--outline-variant);
+  box-shadow: 0 4px 0 0 var(--surface-container-high),
+              0 2px 12px rgba(0,0,0,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mktFloat 3s ease-in-out infinite;
+  transition: opacity .15s;
+}
+@media (min-width: 480px) { .mkt-card { width: 240px; height: 240px; border-width: 4px; } }
+@media (min-width: 768px) {
+  .mkt-card { width: 300px; height: 300px; border-width: 4px;
+              box-shadow: 0 6px 0 0 var(--surface-container-high), 0 4px 20px rgba(0,0,0,.1); }
+}
+
+@keyframes mktFloat {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-8px); }
+}
+
+/* 拖曳中：縮小 + 半透明，露出下方籃子 */
+.mkt-card-wrap.dragging .mkt-card {
+  animation: none;
+  opacity: 0.35;
+  transform: scale(0.6);
+  box-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
+
+/* ── 食材 emoji ── */
+.mkt-item-emoji {
+  font-size: 80px;
+  line-height: 1;
+  font-variation-settings: initial;
+  display: block;
+  text-align: center;
+}
+@media (min-width: 480px) { .mkt-item-emoji { font-size: 108px; } }
+@media (min-width: 768px) { .mkt-item-emoji { font-size: 136px; } }
+
+/* ── 說明文字 ── */
+.mkt-instruction {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-align: center;
+}
+@media (min-width: 480px) { .mkt-instruction { font-size: 17px; } }
+@media (min-width: 768px) { .mkt-instruction { font-size: 19px; } }
+
+/* =========================================
+   籃子區
+   ─────────────────────────────────────────
+   設計參考原稿：
+   · 正方形容器（aspect-ratio: 1）
+   · 🧺 emoji 大圖填滿內部
+   · 分類標籤以 absolute pill 貼在底部懸浮
+   · 籃子本體統一中性色，顏色只在 pill 上
+   ========================================= */
+.mkt-baskets {
+  flex-shrink: 0;
+  display: grid;
+  gap: 12px;
+  /* 給懸浮 pill 留空間，避免被 main overflow:hidden 裁切 */
+  padding-bottom: 28px;
+}
+@media (min-width: 480px) { .mkt-baskets { gap: 14px; padding-bottom: 30px; } }
+@media (min-width: 768px) { .mkt-baskets { gap: 18px; padding-bottom: 36px; } }
+
+.mkt-baskets[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.mkt-baskets[data-count="3"] { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ── 單個籃子：正方形容器 ── */
+.mkt-basket {
+  position: relative;          /* 讓 pill 可以 absolute 定位 */
+  aspect-ratio: 1;             /* 正方形，高度 = 寬度 */
+  min-height: 110px;           /* 確保觸控目標夠大 */
+  background: var(--surface-container);
+  border-radius: 20px;
+  border: 2.5px solid var(--outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+  overflow: visible;           /* 讓 pill 可以超出邊界顯示 */
+}
+@media (min-width: 480px) { .mkt-basket { border-radius: 24px; min-height: 130px; } }
+@media (min-width: 768px) { .mkt-basket { border-radius: 28px; min-height: 160px; } }
+
+/* ── 🧺 大圖 emoji ── */
+.mkt-basket-visual {
+  font-size: 68px;
+  line-height: 1;
+  font-variation-settings: initial;
+}
+@media (min-width: 480px) { .mkt-basket-visual { font-size: 88px; } }
+@media (min-width: 768px) { .mkt-basket-visual { font-size: 112px; } }
+
+/* ── 懸浮 pill 標籤（貼在籃子底部外緣）── */
+.mkt-basket-label {
+  position: absolute;
+  bottom: -17px;               /* 超出籃子底部，產生懸浮感 */
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  padding: 7px 18px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.22);
+  /* 顏色由各分類 class 決定 */
+}
+@media (min-width: 480px) { .mkt-basket-label { padding: 8px 20px; bottom: -19px; } }
+@media (min-width: 768px) { .mkt-basket-label { padding: 10px 26px; bottom: -22px; } }
+
+.mkt-basket-cat-emoji {
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: initial;
+}
+@media (min-width: 480px) { .mkt-basket-cat-emoji { font-size: 22px; } }
+@media (min-width: 768px) { .mkt-basket-cat-emoji { font-size: 26px; } }
+
+.mkt-basket-cat-text {
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;              /* 白字，在彩色 pill 上 */
+  line-height: 1;
+}
+@media (min-width: 480px) { .mkt-basket-cat-text { font-size: 20px; } }
+@media (min-width: 768px) { .mkt-basket-cat-text { font-size: 22px; } }
+
+/* ── 各分類的 pill 背景色 ── */
+.mkt-basket--green  .mkt-basket-label { background: var(--primary); }
+.mkt-basket--orange .mkt-basket-label { background: var(--mkt-orange); }
+.mkt-basket--warm   .mkt-basket-label { background: var(--mkt-warm); }
+.mkt-basket--red    .mkt-basket-label { background: var(--mkt-red); }
+.mkt-basket--yellow .mkt-basket-label { background: var(--mkt-yellow); }
+
+/* ── 各分類的籃子底色 ── */
+.mkt-basket--green  { background: rgba(54,  104, 76,  0.12); border-color: rgba(54,  104, 76,  0.4); }
+.mkt-basket--orange { background: rgba(255, 145, 77,  0.13); border-color: rgba(255, 145, 77,  0.45); }
+.mkt-basket--warm   { background: rgba(194, 24,  91,  0.10); border-color: rgba(194, 24,  91,  0.38); }
+.mkt-basket--red    { background: rgba(229, 57,  53,  0.11); border-color: rgba(229, 57,  53,  0.4); }
+.mkt-basket--yellow { background: rgba(245, 166, 35,  0.13); border-color: rgba(245, 166, 35,  0.45); }
+
+/* ── 拖曳懸停：虛線框放大 ── */
+.mkt-basket.drop-target {
+  border-style: dashed;
+  border-width: 3px;
+  transform: scale(1.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+}
+
+/* ── 答對：閃綠光 ── */
+.mkt-basket.flash-correct {
+  border-color: var(--primary) !important;
+  border-style: solid !important;
+  box-shadow: 0 0 24px rgba(54,104,76,.5);
+  transform: scale(1.04);
+}
+
+/* ── 答錯：閃黃光（不用紅色，降低挫折感）── */
+.mkt-basket.flash-wrong {
+  border-color: var(--mkt-yellow) !important;
+  border-style: solid !important;
+  box-shadow: 0 0 24px rgba(245,166,35,.45);
+}
+
+/* =========================================
+   階段說明 Overlay
+   ========================================= */
+.mkt-announce-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mkt-announce-box {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 28px 20px 24px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.3);
+}
+@media (min-width: 480px) { .mkt-announce-box { padding: 32px 28px 28px; border-radius: 28px; } }
+@media (min-width: 768px) { .mkt-announce-box { max-width: 480px; padding: 40px 36px 34px; gap: 14px; } }
+
+.mkt-announce-char {
+  font-size: 48px;
+  animation: mktBob 2s ease-in-out infinite;
+}
+@media (min-width: 480px) { .mkt-announce-char { font-size: 56px; } }
+@media (min-width: 768px) { .mkt-announce-char { font-size: 64px; } }
+
+@keyframes mktBob {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-6px); }
+}
+
+.mkt-announce-stage {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: .5px;
+}
+@media (min-width: 768px) { .mkt-announce-stage { font-size: 15px; } }
+
+.mkt-announce-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--on-surface);
+  text-align: center;
+}
+@media (min-width: 480px) { .mkt-announce-title { font-size: 24px; } }
+@media (min-width: 768px) { .mkt-announce-title { font-size: 28px; } }
+
+.mkt-announce-desc {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  text-align: center;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+@media (min-width: 480px) { .mkt-announce-desc { font-size: 16px; } }
+@media (min-width: 768px) { .mkt-announce-desc { font-size: 18px; } }
+
+.mkt-announce-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 2px 0;
+}
+
+.mkt-announce-pill {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+@media (min-width: 480px) { .mkt-announce-pill { font-size: 15px; } }
+@media (min-width: 768px) { .mkt-announce-pill { font-size: 17px; padding: 8px 20px; } }
+
+.mkt-announce-btn {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity .15s, transform .1s;
+}
+@media (min-width: 480px) { .mkt-announce-btn { height: 56px; font-size: 18px; border-radius: 16px; } }
+@media (min-width: 768px) { .mkt-announce-btn { height: 64px; font-size: 20px; border-radius: 18px; margin-top: 6px; } }
+.mkt-announce-btn:active { opacity: .85; transform: scale(.98); }
+
+/* =========================================
+   遊戲結束 Overlay
+   ========================================= */
+.mkt-end-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mkt-end-box {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 28px 20px 24px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.3);
+}
+@media (min-width: 480px) { .mkt-end-box { padding: 36px 28px 28px; border-radius: 28px; max-width: 480px; gap: 12px; } }
+@media (min-width: 768px) { .mkt-end-box { padding: 44px 36px 36px; gap: 14px; } }
+
+.mkt-end-icon { font-size: 56px; }
+@media (min-width: 480px) { .mkt-end-icon { font-size: 64px; } }
+@media (min-width: 768px) { .mkt-end-icon { font-size: 80px; } }
+
+.mkt-end-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--on-surface);
+}
+@media (min-width: 480px) { .mkt-end-title { font-size: 24px; } }
+@media (min-width: 768px) { .mkt-end-title { font-size: 28px; } }
+
+.mkt-end-score {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--primary);
+}
+@media (min-width: 480px) { .mkt-end-score { font-size: 34px; } }
+@media (min-width: 768px) { .mkt-end-score { font-size: 40px; } }
+
+.mkt-end-msg {
+  font-size: 15px;
+  color: var(--on-surface-variant);
+  text-align: center;
+  margin-bottom: 4px;
+}
+@media (min-width: 480px) { .mkt-end-msg { font-size: 17px; } }
+@media (min-width: 768px) { .mkt-end-msg { font-size: 19px; } }
+
+.mkt-end-btn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--primary);
+  color: var(--on-primary);
+  transition: opacity .15s, transform .1s;
+}
+@media (min-width: 480px) { .mkt-end-btn { height: 54px; font-size: 17px; border-radius: 16px; } }
+@media (min-width: 768px) { .mkt-end-btn { height: 62px; font-size: 19px; border-radius: 18px; } }
+.mkt-end-btn:active { opacity: .85; transform: scale(.98); }
+
+.mkt-end-btn-sec {
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+}

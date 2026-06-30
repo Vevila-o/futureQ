@@ -653,6 +653,14 @@ def dashboard(request):
     
     return render(request, "dashboard.html", context)
 
+#遊戲首頁
+def game_page(request):
+    return render(request, 'game.html')
+
+#商城首頁
+def market_page(request):
+    return render(request, 'market.html')
+
 
 # 共用元件
 def header_partial(request):
