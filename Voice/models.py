@@ -199,3 +199,33 @@ class AiConversation(models.Model):
             if self.round_count >= self.MAX_ROUNDS:
                 self.is_finished = True
         self.save(update_fields=["messages", "round_count", "is_finished", "updated_at"])
+
+
+# 大腦訓練遊戲紀錄（例如：整理菜籃）
+class GameSession(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="使用者"
+    )
+
+    game_name = models.CharField("遊戲名稱", max_length=50, default="菜市場")
+
+    score = models.IntegerField("總分", default=0)
+    total_questions = models.IntegerField("總題數", default=0)
+    accuracy = models.DecimalField("正確率(%)", max_digits=5, decimal_places=2, default=0)
+    avg_reaction_time = models.DecimalField("平均反應時間(秒)", max_digits=6, decimal_places=2, default=0)
+    hesitation_count = models.IntegerField("猶豫次數", default=0)
+
+    played_at = models.DateTimeField("遊玩時間", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-played_at"]
+        verbose_name = "遊戲紀錄"
+        verbose_name_plural = "遊戲紀錄"
+
+    def __str__(self):
+        date = self.played_at.strftime("%Y/%m/%d") if self.played_at else "未建立日期"
+        return f"{date}｜{self.game_name}｜{self.score} 分"

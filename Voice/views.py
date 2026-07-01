@@ -3,8 +3,9 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import DiaryEntry, AiConversation
+from .models import DiaryEntry, AiConversation, GameSession
 from django.contrib.auth import get_user_model
+from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.files.base import ContentFile
@@ -655,11 +656,77 @@ def dashboard(request):
 
 #遊戲首頁
 def game_page(request):
-    return render(request, 'game.html')
+    User = get_user_model()
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if target_user is None:
+        target_user = User.objects.first()
+
+    sessions = GameSession.objects.filter(user=target_user).order_by('-played_at')
+
+    highest_score = sessions.aggregate(Max('score'))['score__max'] or 0
+    total_count = sessions.count()
+
+    # 連續天數：從今天往前推算，每天都有至少一筆紀錄才算連續
+    played_dates = {timezone.localtime(s.played_at).date() for s in sessions}
+    today = timezone.localdate()
+    streak_days = 0
+    day = today
+    while day in played_dates:
+        streak_days += 1
+        day -= timedelta(days=1)
+
+    recent_records = []
+    for s in sessions[:5]:
+        played_date = timezone.localtime(s.played_at).date()
+        days_ago = (today - played_date).days
+        if days_ago == 0:
+            date_label = "今天"
+        elif days_ago == 1:
+            date_label = "昨天"
+        else:
+            date_label = f"{days_ago} 天前"
+
+        recent_records.append({
+            "game_name": s.game_name,
+            "date_label": date_label,
+            "score": s.score,
+        })
+
+    return render(request, 'game.html', {
+        "highest_score": highest_score,
+        "total_count": total_count,
+        "streak_days": streak_days,
+        "recent_records": recent_records,
+    })
 
 #商城首頁
 def market_page(request):
     return render(request, 'market.html')
+
+#儲存遊戲成績（正確率、反應時間、猶豫次數等）
+@csrf_exempt
+def save_game_result(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    data = json.loads(request.body)
+
+    User = get_user_model()
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if target_user is None:
+        target_user = User.objects.first()
+
+    session = GameSession.objects.create(
+        user=target_user,
+        game_name=data.get("game_name", "菜市場"),
+        score=data.get("score", 0),
+        total_questions=data.get("total_questions", 0),
+        accuracy=data.get("accuracy", 0),
+        avg_reaction_time=data.get("avg_reaction_time", 0),
+        hesitation_count=data.get("hesitation_count", 0),
+    )
+
+    return JsonResponse({"success": True, "id": session.id})
 
 
 # 共用元件

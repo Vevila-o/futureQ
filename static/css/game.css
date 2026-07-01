@@ -298,3 +298,10 @@
   font-weight: 900;
   color: var(--primary);
 }
+
+.score-record-empty {
+  padding: 20px 18px;
+  text-align: center;
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-surface-variant);
+}

@@ -146,6 +146,21 @@ const STAGE4_POOL = [
 ];
 
 // ──────────────────────────────────────────
+// 計分規則
+// ──────────────────────────────────────────
+const BASE_POINTS        = 10;   // 一般階段：答對一題的基礎分數
+const FINAL_STAGE_POINTS = 30;   // 第 4（最後）階段：答對一題的基礎分數
+const HESITATION_TIME_MS = 4000; // 反應時間超過此門檻，視為猶豫
+
+// 連續答對（combo）加乘倍率
+function getComboMultiplier(streak) {
+  if (streak >= 5) return 2.0;
+  if (streak >= 3) return 1.5;
+  if (streak >= 2) return 1.2;
+  return 1.0;
+}
+
+// ──────────────────────────────────────────
 // 遊戲狀態
 // ──────────────────────────────────────────
 let gs = {
@@ -154,6 +169,12 @@ let gs = {
   totalScore:    0,
   isAnimating:   false,
   stages:        [],
+
+  comboStreak:      0,   // 目前連續答對次數
+  records:          [],  // 每一題的作答紀錄（正確率／反應時間／猶豫狀態）
+  questionStartAt:  0,   // 本題開始時間（ms）
+  wrongAttempts:    0,   // 本題答錯次數
+  dragTargets:      null,// 本題拖曳期間曾停留過的籃子（Set），用來判斷猶豫
 };
 
 // ──────────────────────────────────────────
@@ -192,6 +213,8 @@ function initGame() {
   gs.questionIndex = 0;
   gs.totalScore    = 0;
   gs.isAnimating   = false;
+  gs.comboStreak   = 0;
+  gs.records       = [];
   endOverlay.style.display = 'none';
   showAnnounce(0);
 }
@@ -265,6 +288,10 @@ function showQuestion() {
   itemEmoji.textContent = item.emoji;
   itemName.textContent  = item.name;
 
+  gs.questionStartAt = performance.now();
+  gs.wrongAttempts    = 0;
+  gs.dragTargets      = new Set();
+
   resetCard();
   renderBaskets(currentBaskets);
 }
@@ -311,11 +338,33 @@ function handleAnswer(droppedIdx) {
   const correct = droppedIdx === item.basket;
 
   if (correct) {
-    gs.totalScore++;
+    const reactionTimeMs = performance.now() - gs.questionStartAt;
+
+    gs.comboStreak++;
+    const basePoints = gs.stageIndex === 3 ? FINAL_STAGE_POINTS : BASE_POINTS;
+    const multiplier = getComboMultiplier(gs.comboStreak);
+    const points      = Math.round(basePoints * multiplier);
+    gs.totalScore += points;
+
+    const hesitant = gs.wrongAttempts > 0
+      || gs.dragTargets.size > 1
+      || reactionTimeMs > HESITATION_TIME_MS;
+
+    gs.records.push({
+      stage:        gs.stageIndex + 1,
+      reactionTime: reactionTimeMs / 1000,
+      hesitant,
+      wrongAttempts: gs.wrongAttempts,
+      combo:        gs.comboStreak,
+      points,
+    });
+
     playCorrectSound();
     flashBasket(droppedIdx, 'correct');
     flyCardToBasket(droppedIdx, advanceQuestion);
   } else {
+    gs.comboStreak = 0;
+    gs.wrongAttempts++;
     playWrongSound();
     flashBasket(droppedIdx, 'wrong');
     snapCardBack(() => { gs.isAnimating = false; });
@@ -390,20 +439,50 @@ function endStage() {
 // 遊戲結束
 // ──────────────────────────────────────────
 function showEndScreen() {
-  const total = gs.stages.reduce((sum, s) => sum + s.totalQ, 0), score = gs.totalScore;
-  const pct   = Math.round((score / total) * 100);
+  const totalQuestions  = gs.stages.reduce((sum, s) => sum + s.totalQ, 0);
+  const firstTryCorrect = gs.records.filter(r => r.wrongAttempts === 0).length;
+  const accuracy        = Math.round((firstTryCorrect / totalQuestions) * 100);
+  const avgReactionTime = gs.records.reduce((sum, r) => sum + r.reactionTime, 0) / gs.records.length;
+  const hesitationCount = gs.records.filter(r => r.hesitant).length;
+
   let icon, msg;
-  if      (pct >= 90) { icon = '🏆'; msg = '太厲害了！大腦超靈活！'; }
-  else if (pct >= 70) { icon = '🎉'; msg = '表現很棒，繼續加油！'; }
-  else if (pct >= 50) { icon = '😊'; msg = '不錯喔，再多練習幾次！'; }
-  else                { icon = '💪'; msg = '多玩幾次，一定可以進步！'; }
+  if      (accuracy >= 90) { icon = '🏆'; msg = '太厲害了！大腦超靈活！'; }
+  else if (accuracy >= 70) { icon = '🎉'; msg = '表現很棒，繼續加油！'; }
+  else if (accuracy >= 50) { icon = '😊'; msg = '不錯喔，再多練習幾次！'; }
+  else                     { icon = '💪'; msg = '多玩幾次，一定可以進步！'; }
 
   document.getElementById('endIcon').textContent  = icon;
-  document.getElementById('endScore').textContent = `答對 ${score} / ${total} 題`;
+  document.getElementById('endScore').textContent = `總分 ${gs.totalScore} 分`;
   document.getElementById('endMsg').textContent   = msg;
+  document.getElementById('endAccuracy').textContent     = `${accuracy}%`;
+  document.getElementById('endReactionTime').textContent = `${avgReactionTime.toFixed(1)} 秒`;
+  document.getElementById('endHesitation').textContent   = `${hesitationCount} 次`;
+
   progressFill.style.width = '100%';
   progressPct.textContent  = '100%';
   endOverlay.style.display = 'flex';
+
+  saveGameResult({
+    game_name:       '菜市場',
+    score:           gs.totalScore,
+    total_questions: totalQuestions,
+    accuracy:        accuracy,
+    avg_reaction_time: Number(avgReactionTime.toFixed(2)),
+    hesitation_count: hesitationCount,
+  });
+}
+
+// ──────────────────────────────────────────
+// 上傳成績（正確率／反應時間／猶豫狀態）
+// ──────────────────────────────────────────
+function saveGameResult(payload) {
+  if (window.location.protocol === 'file:') return; // 本地開檔測試時不送出
+
+  fetch('/api/save-game-result/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
 }
 
 // ──────────────────────────────────────────
@@ -449,10 +528,11 @@ function getBasketAt(x, y) {
 }
 
 function highlightBasketAt(x, y) {
-  basketsEl.querySelectorAll('.mkt-basket').forEach(b => {
+  basketsEl.querySelectorAll('.mkt-basket').forEach((b, i) => {
     const r = b.getBoundingClientRect();
-    b.classList.toggle('drop-target',
-      x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
+    const over = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    b.classList.toggle('drop-target', over);
+    if (over && gs.dragTargets) gs.dragTargets.add(i);
   });
 }
 

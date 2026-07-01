@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User,DiaryEntry, CognitiveAnalysis, AiConversation
+from .models import User,DiaryEntry, CognitiveAnalysis, AiConversation, GameSession
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -82,3 +82,29 @@ class AiConversationAdmin(admin.ModelAdmin):
     ordering      = ('-created_at',)
 
 admin.site.register(AiConversation, AiConversationAdmin)
+
+
+# 大腦訓練遊戲紀錄
+class GameSessionAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'game_name',
+        'score',
+        'total_questions',
+        'accuracy',
+        'avg_reaction_time',
+        'hesitation_count',
+        'played_at',
+    )
+
+    list_filter = (
+        'game_name',
+        'played_at',
+    )
+
+    ordering = (
+        '-played_at',
+    )
+
+admin.site.register(GameSession, GameSessionAdmin)
