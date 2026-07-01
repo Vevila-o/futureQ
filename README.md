@@ -60,7 +60,7 @@ voiceDiary/
 │   └── asgi.py
 │
 ├── Voice/                         # 主要 App
-│   ├── models.py                  # 資料表定義（User、DiaryEntry 等）
+│   ├── models.py                  # 資料表定義（User、DiaryEntry、GameSession 等）
 │   ├── views.py                   # 頁面與 API 邏輯
 │   ├── utils.py                   # 本地認知分析演算法（六維度評分）
 │   ├── admin.py                   # 後台管理設定
@@ -83,7 +83,9 @@ voiceDiary/
 │   │   ├── review.css             # 動態回顧頁
 │   │   ├── dashboard.css          # 儀表板頁
 │   │   ├── member.css             # 會員頁
-│   │   └── share.css              # 分享頁
+│   │   ├── share.css              # 分享頁
+│   │   ├── game.css               # 遊戲首頁（我的成績統計）
+│   │   └── market.css             # 整理菜籃遊戲頁
 │   ├── js/
 │   │   ├── index.js               # 首頁月曆邏輯 + 日記 Modal 語音播放
 │   │   ├── nav.js                 # 底部導覽列動態 + 路由
@@ -95,7 +97,9 @@ voiceDiary/
 │   │   ├── review.js              # 動態回顧邏輯 + 語音播放
 │   │   ├── dashboard.js           # 儀表板圖表邏輯
 │   │   ├── share.js               # 分享頁邏輯（LINE/FB/儲存圖片/複製連結）
-│   │   └── recorder.js            # 備用錄音模組
+│   │   ├── recorder.js            # 備用錄音模組
+│   │   ├── game.js                # 遊戲首頁互動（愛心按讚等）
+│   │   └── market.js              # 整理菜籃遊戲邏輯（計分、連續答對加乘、反應時間/猶豫紀錄）
 │   └── img/                       # 靜態圖片資源
 │
 ├── media/                         # 使用者上傳的檔案（不上傳 git）
@@ -112,6 +116,8 @@ voiceDiary/
 │   ├── loading.html               # 計算等待畫面（logo + 旋轉齒輪）
 │   ├── member.html                # 會員頁面（個人資料 + 連續天數）
 │   ├── share.html                 # 分享頁（卡片 + OG tags + 操作按鈕）
+│   ├── game.html                  # 遊戲首頁（問候語、每日建議、我的成績統計）
+│   ├── market.html                # 整理菜籃遊戲（拖曳分類、四階段）
 │   ├── nav.html                   # 底部導覽列（共用元件）
 │   ├── header.html                # 首頁頁首（共用元件）
 │   └── headerback.html            # 含返回鍵頁首（共用元件）
@@ -135,6 +141,8 @@ voiceDiary/
 | `/loading/` | 計算等待畫面（Whisper 處理期間的安撫畫面）|
 | `/share/` | 日記分享頁（第一人稱內文、hashtag、OG 預覽、儲存圖片）|
 | `/share/?preview=1` | 同上，無 header / nav，供 LINE / Facebook 接收方瀏覽 |
+| `/game/` | 遊戲首頁（我的成績：最高分 / 累計次數 / 連續天數 / 最近紀錄，依 `GameSession` 動態計算）|
+| `/market/` | 整理菜籃遊戲（拖曳分類，四階段，答對計分 + 連續答對加乘）|
 | `/admin/` | Django 後台 |
 | **API** | |
 | `/saveDiary/` | 儲存照片、建立日記（POST）|
@@ -143,6 +151,7 @@ voiceDiary/
 | `/share/` | 日記分享頁（GET，帶 `diary_id`）|
 | `/api/ai-chat/` | AI 文字對話（POST，目前前端未使用）|
 | `/api/upload-chat-voice/` | AI 語音對話（Whisper + GPT + 存 AiConversation，POST）|
+| `/api/save-game-result/` | 儲存一場遊戲的成績（總分、正確率、平均反應時間、猶豫次數，POST）|
 | **共用元件** | |
 | `/nav/` | 底部導覽列 HTML |
 | `/header/` | 首頁頁首 HTML |
@@ -244,6 +253,21 @@ voiceDiary/
 | is_finished | BooleanField | 對話是否結束 |
 | created_at | DateTimeField | 建立時間 |
 | updated_at | DateTimeField | 更新時間 |
+
+### GameSession（大腦訓練遊戲紀錄）
+
+每場遊戲（目前為「整理菜籃」）結束後由前端呼叫 `/api/save-game-result/` 寫入一筆。
+
+| 欄位 | 類型 | 說明 |
+|---|---|---|
+| user | ForeignKey → User | 遊玩的使用者 |
+| game_name | CharField | 遊戲名稱（預設「菜市場」）|
+| score | IntegerField | 總分（答對 +10，最後階段 +30，連續答對有加乘）|
+| total_questions | IntegerField | 本場總題數 |
+| accuracy | DecimalField | 正確率（%，以每題「第一次就答對」計算）|
+| avg_reaction_time | DecimalField | 平均反應時間（秒）|
+| hesitation_count | IntegerField | 猶豫次數（答錯重來 / 拖曳中猶豫切換籃子 / 反應過久）|
+| played_at | DateTimeField | 遊玩時間 |
 
 ---
 
@@ -372,6 +396,7 @@ CSRF_TRUSTED_ORIGINS=https://你的網域.ngrok-free.app
 - 聲影日記紀錄
 - 認知分析結果
 - AI 對話紀錄
+- 遊戲成績紀錄（GameSession）
 
 ---
 
