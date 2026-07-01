@@ -37,6 +37,7 @@ urlpatterns = [
     path('share/', voice_views.share_page, name='share_page'),
     path('game/', voice_views.game_page, name='game_page'),
     path('market/', voice_views.market_page, name='market_page'),
+    path('community/', voice_views.community_page, name='community_page'),
     # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'),
 
     # 儲存聲影日記
@@ -44,8 +45,9 @@ urlpatterns = [
     path('updateDiaryAudio/', voice_views.update_diary_audio, name='update_diary_audio'),
     
     # 三次對話
-    path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'), # 第一次對話
+    path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'),
     path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
+    path('api/voice-reply/', voice_views.api_voice_reply, name='api_voice_reply'),
 
     # 共用元件
     path('header/', voice_views.header_partial, name='header_partial'),
