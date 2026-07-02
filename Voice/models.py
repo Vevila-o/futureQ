@@ -229,8 +229,7 @@ class GameSession(models.Model):
     def __str__(self):
         date = self.played_at.strftime("%Y/%m/%d") if self.played_at else "未建立日期"
         return f"{date}｜{self.game_name}｜{self.score} 分"
-
-
+    
 class VoiceReply(models.Model):
     diary = models.ForeignKey(
         DiaryEntry, on_delete=models.CASCADE, related_name="voice_replies", verbose_name="對應日記"
