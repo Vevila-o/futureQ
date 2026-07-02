@@ -3,7 +3,7 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import DiaryEntry, AiConversation, GameSession
+from .models import DiaryEntry, AiConversation, GameSession, VoiceReply
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
@@ -727,6 +727,71 @@ def save_game_result(request):
     )
 
     return JsonResponse({"success": True, "id": session.id})
+
+
+# 語音加油 API
+@csrf_exempt
+def api_voice_reply(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "只接受 POST"}, status=405)
+
+    diary_id = request.POST.get("diary_id")
+    audio_file = request.FILES.get("audio_file")
+    sender_name = (request.POST.get("sender_name", "") or "").strip() or "匿名朋友"
+
+    if not diary_id:
+        return JsonResponse({"status": "error", "message": "缺少 diary_id"}, status=400)
+    if not audio_file:
+        return JsonResponse({"status": "error", "message": "缺少音訊檔"}, status=400)
+
+    diary = get_object_or_404(DiaryEntry, pk=diary_id)
+    reply = VoiceReply.objects.create(
+        diary=diary,
+        audio_file=audio_file,
+        sender_name=sender_name,
+    )
+
+    return JsonResponse({
+        "status": "ok",
+        "reply_id": reply.id,
+        "audio_url": reply.audio_file.url,
+        "created_at": reply.created_at.strftime("%Y/%m/%d %H:%M"),
+    })
+
+
+# 社群動態頁
+def community_page(request):
+    entries = DiaryEntry.objects.filter(
+        status="done"
+    ).prefetch_related("voice_replies").order_by("-created_at")[:20]
+
+    diary_list = []
+    for entry in entries:
+        replies = list(entry.voice_replies.all())
+        diary_list.append({
+            "id": entry.id,
+            "title": entry.title or "聲影日記",
+            "photo": entry.photo.url if entry.photo else "",
+            "text": (entry.transcription or entry.diary_text or "")[:80],
+            "date": entry.created_at.strftime("%Y年%m月%d日"),
+            "reply_count": len(replies),
+            "replies": [
+                {
+                    "id": r.id,
+                    "sender": r.sender_name,
+                    "audio_url": r.audio_file.url,
+                    "time": r.created_at.strftime("%m/%d %H:%M"),
+                }
+                for r in replies
+            ],
+        })
+
+    auto_expand_id = request.GET.get("diary_id", "")
+
+    return render(request, "community.html", {
+        "diary_list_json": json.dumps(diary_list, cls=DjangoJSONEncoder, ensure_ascii=False),
+        "auto_expand_id": auto_expand_id,
+    })
 
 
 # 共用元件

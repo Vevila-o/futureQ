@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
         activePage = "dashboard";
       } else if (path.includes("member")) {
         activePage = "member";
+      } else if (path.includes("community")) {
+        activePage = "community";
       } else if (path.includes("game") || path.includes("market")) {
         activePage = "game";
 
@@ -49,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "dashboard": "/dashboard/",
         "member": "/member/",
         "game": "/game/",
+        "community": "/community/",
       };
 
       document.querySelectorAll("[data-page]").forEach(btn => {

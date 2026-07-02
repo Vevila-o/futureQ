@@ -229,3 +229,20 @@ class GameSession(models.Model):
     def __str__(self):
         date = self.played_at.strftime("%Y/%m/%d") if self.played_at else "未建立日期"
         return f"{date}｜{self.game_name}｜{self.score} 分"
+
+
+class VoiceReply(models.Model):
+    diary = models.ForeignKey(
+        DiaryEntry, on_delete=models.CASCADE, related_name="voice_replies", verbose_name="對應日記"
+    )
+    audio_file = models.FileField("語音加油檔案", upload_to="voice_replies")
+    sender_name = models.CharField("送出者暱稱", max_length=30, blank=True, default="匿名朋友")
+    created_at = models.DateTimeField("送出時間", auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = "語音加油"
+        verbose_name_plural = "語音加油"
+
+    def __str__(self):
+        return f"日記 {self.diary_id} 的語音加油（{self.sender_name}）"
