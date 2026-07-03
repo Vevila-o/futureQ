@@ -16,203 +16,7 @@
     <link rel="stylesheet" href="/static/css/nav.css" />
     <link rel="stylesheet" href="/static/css/finish.css" />
     <link rel="stylesheet" href="/static/css/header.css" />
-    <style>
-      /* ==========================================
-      ✨ 終極強制對稱排版（擊碎外部 CSS 干擾，保護聊天室外觀）
-      ========================================== */
-
-      main {
-        max-width: 600px !important;
-        width: 100% !important;
-        margin: 0 auto !important;
-        padding: 16px 16px 120px 16px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        box-sizing: border-box !important;
-      }
-
-      .ai-zone {
-        width: 100% !important;
-        padding: 16px !important;
-        box-sizing: border-box !important;
-      }
-
-      .chat-box {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 16px !important;
-        width: 100% !important;
-        margin-bottom: 16px !important;
-        max-height: 400px !important;
-        overflow-y: auto !important;
-        padding: 8px 4px !important;
-      }
-
-      .chat-row {
-        display: flex !important;
-        gap: 12px !important;
-        align-items: center !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-      }
-
-      /* 🤖 機器人橫列：強制靠左 */
-      .chat-row.ai-row {
-        justify-content: flex-start !important;
-        flex-direction: row !important;
-      }
-
-      /* 🥊 使用者橫列：強制靠右 */
-      .chat-row.user-row {
-        justify-content: flex-end !important;
-        flex-direction: row !important;
-      }
-
-      .ai-avatar,
-      .user-avatar {
-        width: 40px !important;
-        height: 40px !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
-      }
-      .ai-avatar {
-        background-color: var(--primary, #36684c) !important;
-        color: #fff !important;
-      }
-      .user-avatar {
-        background-color: #e0e0e0 !important;
-        color: #555 !important;
-      }
-
-      /* 💬 修正泡泡擠壓變形與邊距 */
-      .ai-bubble,
-      .user-bubble {
-        position: relative !important;
-        padding: 10px 16px !important;
-        border-radius: 20px !important;
-        max-width: 65% !important;
-        width: auto !important;
-        word-break: break-all !important;
-        background-color: #f0f0f0 !important;
-        color: #333 !important;
-        font-family: "Noto Sans TC", sans-serif !important;
-        font-size: calc(1rem * var(--fs-scale, 1)) !important;
-        font-weight: 700 !important;
-        line-height: 1.4 !important;
-        margin: 0 !important;
-      }
-
-      /* 🤖 AI 箭頭朝左 */
-      .ai-bubble {
-        margin-left: 8px !important;
-      }
-      .ai-bubble::before {
-        content: "" !important;
-        position: absolute !important;
-        top: 50% !important;
-        left: -7px !important;
-        right: auto !important;
-        transform: translateY(-50%) !important;
-        border-width: 6px 8px 6px 0 !important;
-        border-style: solid !important;
-        border-color: transparent #f0f0f0 transparent transparent !important;
-      }
-      .ai-bubble::after { display: none !important; }
-
-      /* 🥊 人類箭頭朝右 */
-      .user-bubble {
-        margin-right: 8px !important;
-      }
-      .user-bubble::after {
-        content: "" !important;
-        position: absolute !important;
-        top: 50% !important;
-        right: -7px !important;
-        left: auto !important;
-        transform: translateY(-50%) !important;
-        border-width: 6px 0 6px 8px !important;
-        border-style: solid !important;
-        border-color: transparent transparent transparent #f0f0f0 !important;
-      }
-      .user-bubble::before { display: none !important; }
-
-      /* 🎙️ 語音操作區全新樣式 */
-      .voice-zone {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 8px !important;
-        width: 100% !important;
-        margin-top: 12px !important;
-      }
-      
-      .btn-voice-record {
-        background-color: var(--primary, #36684c) !important;
-        color: white !important;
-        border: none !important;
-        padding: 12px 24px !important;
-        border-radius: 30px !important;
-        font-family: "Noto Sans TC", sans-serif !important;
-        font-size: calc(1.1rem * var(--fs-scale, 1)) !important;
-        font-weight: 700 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        transition: all 0.2s ease !important;
-        width: 80% !important;
-      }
-
-      .btn-voice-record.recording {
-        background-color: #d32f2f !important;
-        animation: pulse 1.5s infinite !important;
-      }
-
-      .btn-voice-record:disabled {
-        background-color: #ccc !important;
-        cursor: not-allowed !important;
-        box-shadow: none !important;
-      }
-
-      .voice-status-text {
-        font-family: "Noto Sans TC", sans-serif !important;
-        font-size: calc(0.9rem * var(--fs-scale, 1)) !important;
-        color: #666 !important;
-        font-weight: 700 !important;
-      }
-
-      @keyframes pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
-        70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
-      }
-
-      .typing-bubble {
-        display: flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-        padding: 12px 18px !important;
-      }
-      .typing-bubble span {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #aaa;
-        display: inline-block;
-        animation: typing-dot 1.2s infinite ease-in-out;
-      }
-      .typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
-      .typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes typing-dot {
-        0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
-        40%            { transform: scale(1);   opacity: 1;   }
-      }
-    </style>
+    <link rel="stylesheet" href="/static/css/share.css" />
   </head>
   <body>
     <script>window.DIARY_ID = "{{ diary.id }}";</script>
@@ -220,10 +24,40 @@
 
     <main>
       <h2 class="congrats-title">恭喜完成！</h2>
-      <p class="congrats-sub">今天的記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
-      <p class="congrats-date" id="congrats-date"></p>
+      <p class="congrats-sub">記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
 
-      <div class="summary-card" style="width: 100% !important; box-sizing: border-box !important;">
+            <!-- 分享卡片 -->
+      <div class="share-card" id="share-card">
+        {% if diary.photo %}
+        <div class="share-card-photo">
+          <img src="{{ diary.photo.url }}" alt="日記照片" crossorigin="anonymous" />
+        </div>
+        {% else %}
+        <div class="share-card-photo share-card-photo--empty">
+          <span class="material-symbols-outlined">image</span>
+        </div>
+        {% endif %}
+
+        <div class="share-card-body">
+          <div class="share-card-title">{{ diary.title }}</div>
+          <p class="share-card-text">{{ first_person_text }}</p>
+
+          <div class="share-card-meta">
+            <span class="share-date">{{ diary.created_at|date:"Y年n月j日" }}</span>
+          </div>
+
+          <div class="share-hashtags">
+            {% for tag in hashtags %}<span class="share-tag">{{ tag }}</span>{% endfor %}
+          </div>
+        </div>
+
+        <div class="share-card-brand">
+          <img src="/static/img/logo.jpg.png" alt="聲影日記" style="height:22px;width:22px;object-fit:contain;border-radius:4px;" />
+          聲影日記
+        </div>
+      </div>
+
+      {% comment %} <div class="summary-card" style="width: 100% !important; box-sizing: border-box !important;">
         <div class="summary-photo">
           <img alt="日記照片" src="{% if diary.photo %}{{ diary.photo.url }}{% endif %}" />
         </div>
@@ -239,7 +73,7 @@
             {% if diary %}{{ diary.created_at|date:"g:i A" }}{% endif %}
           </div>
         </div>
-      </div>
+      </div> {% endcomment %}
 
       <div class="ai-zone" id="ai-zone">
         <div class="chat-box" id="chat-box">
@@ -279,5 +113,6 @@
     <script src="/static/js/nav.js"></script>
     <script src="/static/js/headerback.js"></script>
     <script src="/static/js/finish.js"></script>
+    <script src="/static/js/share.js"></script>
   </body>
 </html>

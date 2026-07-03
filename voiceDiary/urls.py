@@ -25,6 +25,11 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    # 登入 / 登出
+    path('', voice_views.login_view, name='login_root'),
+    path('login/', voice_views.login_view, name='login_view'),
+    path('logout/', voice_views.logout_view, name='logout_view'),
+
     # 頁面
     path('index/', voice_views.voiceIndex, name="index"),
     path('dashboard/', voice_views.dashboard, name='dashboard'),
@@ -53,6 +58,7 @@ urlpatterns = [
     path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'),
     path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
     path('api/voice-reply/', voice_views.api_voice_reply, name='api_voice_reply'),
+    path('api/voice-reply/<int:reply_id>/transcribe/', voice_views.api_voice_reply_transcribe, name='api_voice_reply_transcribe'),
 
     # 共用元件
     path('header/', voice_views.header_partial, name='header_partial'),

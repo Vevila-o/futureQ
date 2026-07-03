@@ -62,6 +62,32 @@
         </div>
       </div>
 
+      {% if is_preview %}
+      <!-- 語音加油區塊（開放給非本系統用戶，透過分享連結進來錄音） -->
+      <div class="voice-reply-section" id="voice-reply-section">
+        <div class="voice-reply-header">
+          <span class="material-symbols-outlined" style="font-size:28px;font-variation-settings:'FILL' 1;color:var(--primary);">favorite</span>
+          <span class="voice-reply-title">留下語音加油</span>
+        </div>
+        <p class="voice-reply-sub">長按麥克風，錄下您的鼓勵話語（最多 10 秒）</p>
+        <div class="voice-reply-record-area">
+          <button class="vr-mic-btn" id="vr-mic-btn" type="button" aria-label="長按錄音">
+            <span class="material-symbols-outlined" id="vr-mic-icon">mic</span>
+          </button>
+          <div class="vr-hint" id="vr-hint">長按開始錄音</div>
+          <div class="vr-timer" id="vr-timer" style="display:none;">00:00 / 00:10</div>
+        </div>
+        <div class="vr-preview" id="vr-preview" style="display:none;">
+          <audio id="vr-audio-player" controls style="width:100%;border-radius:12px;"></audio>
+          <button class="vr-send-btn" id="vr-send-btn" type="button">
+            <span class="material-symbols-outlined">send</span>送出語音加油
+          </button>
+          <button class="vr-redo-btn" id="vr-redo-btn" type="button">重新錄製</button>
+        </div>
+        <div class="vr-feedback" id="vr-feedback" style="display:none;"></div>
+      </div>
+      {% endif %}
+
       <!-- 操作按鈕 -->
       <div class="share-actions">
         <div class="share-row">
@@ -89,30 +115,6 @@
       <p class="share-feedback" id="share-feedback" style="display:none;"></p>
 
       {% if not is_preview %}
-      <!-- 語音加油區塊 -->
-      <div class="voice-reply-section" id="voice-reply-section">
-        <div class="voice-reply-header">
-          <span class="material-symbols-outlined" style="font-size:28px;font-variation-settings:'FILL' 1;color:var(--primary);">favorite</span>
-          <span class="voice-reply-title">留下語音加油</span>
-        </div>
-        <p class="voice-reply-sub">長按麥克風，錄下您的鼓勵話語（最多 10 秒）</p>
-        <div class="voice-reply-record-area">
-          <button class="vr-mic-btn" id="vr-mic-btn" type="button" aria-label="長按錄音">
-            <span class="material-symbols-outlined" id="vr-mic-icon">mic</span>
-          </button>
-          <div class="vr-hint" id="vr-hint">長按開始錄音</div>
-          <div class="vr-timer" id="vr-timer" style="display:none;">00:00 / 00:10</div>
-        </div>
-        <div class="vr-preview" id="vr-preview" style="display:none;">
-          <audio id="vr-audio-player" controls style="width:100%;border-radius:12px;"></audio>
-          <button class="vr-send-btn" id="vr-send-btn" type="button">
-            <span class="material-symbols-outlined">send</span>送出語音加油
-          </button>
-          <button class="vr-redo-btn" id="vr-redo-btn" type="button">重新錄製</button>
-        </div>
-        <div class="vr-feedback" id="vr-feedback" style="display:none;"></div>
-      </div>
-
       <div class="share-back-row">
         <button class="btn-back-home" id="btn-back-home">回首頁</button>
       </div>

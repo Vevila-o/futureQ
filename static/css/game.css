@@ -229,12 +229,27 @@
   gap: 4px;
 }
 
+.achivement {
+  background: #344f41;
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+
 .score-stat-icon {
   font-size: 28px;
   color: var(--primary);
   font-variation-settings: 'FILL' 1;
 }
-
+.achivement-icon {
+  font-size: 28px;
+  color: white;
+  font-variation-settings: 'FILL' 1;
+}
 .score-stat-num {
   font-size: calc(24px * var(--fs-scale));
   font-weight: 900;
@@ -242,10 +257,23 @@
   line-height: 1.1;
 }
 
+.achivement-score{
+  font-size: calc(24px * var(--fs-scale));
+  font-weight: 900;
+  color: white;
+  line-height: 1.1;
+}
+
 .score-stat-label {
   font-size: calc(12px * var(--fs-scale));
   font-weight: 700;
   color: var(--on-surface-variant);
+}
+
+.achivment-label {
+  font-size: calc(12px * var(--fs-scale));
+  font-weight: 700;
+  color: rgb(207, 207, 207);
 }
 
 /* 最近紀錄 */

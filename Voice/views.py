@@ -3,8 +3,8 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import DiaryEntry, AiConversation, GameSession, VoiceReply
-from django.contrib.auth import get_user_model
+from .models import DiaryEntry, AiConversation, GameSession, VoiceReply, Diarypost
+from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -16,12 +16,47 @@ from django.conf import settings
 # 🌐 ✨ 引入 OpenAI 官方庫
 from openai import OpenAI
 
+# 登入頁
+def login_view(request):
+    next_url = request.POST.get('next') or request.GET.get('next') or '/index/'
+
+    if request.user.is_authenticated:
+        return redirect(next_url)
+
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect(next_url)
+        error = '帳號或密碼錯誤，請再試一次'
+
+    return render(request, 'login.html', {
+        'error': error,
+        'next': next_url,
+    })
+
+
+# 登出
+def logout_view(request):
+    logout(request)
+    return redirect('login_view')
+
+
 # 1. 聲影日記首頁
 def voiceIndex(request):
     today = timezone.localdate()
 
-    # 查詢目前月份的日記
+    User = get_user_model()
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if not target_user:
+        target_user = User.objects.first()
+
+    # 查詢目前月份的日記（只查自己的）
     entries = DiaryEntry.objects.filter(
+        user=target_user,
         created_at__year=today.year,
         created_at__month=today.month,
     ).order_by("created_at")
@@ -52,6 +87,7 @@ def voiceIndex(request):
     print("月曆資料：", calendar_entries)
 
     has_today_diary = DiaryEntry.objects.filter(
+        user=target_user,
         created_at__date=today,
         status="done",
     ).exists()
@@ -266,7 +302,9 @@ def upload_chat_voice(request):
 # 會員頁
 def member_page(request):
     User = get_user_model()
-    user = User.objects.first()
+    user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if not user:
+        user = User.objects.first()
 
     diary_count = DiaryEntry.objects.filter(user=user).count() if user else 0
 
@@ -300,24 +338,47 @@ def loading_page(request):
     return render(request, "loading.html")
 
 
-# 分享頁
-def share_page(request):
-    diary_id = request.GET.get('diary_id')
-    diary = get_object_or_404(DiaryEntry, pk=diary_id)
-
-    user = diary.user
+def _compute_streak_days(user):
+    if not user:
+        return 0
     streak_days = 0
-    if user:
-        today = timezone.localdate()
-        check = today
-        if not DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
-            check = today - timedelta(days=1)
-        while DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
-            streak_days += 1
-            check -= timedelta(days=1)
+    today = timezone.localdate()
+    check = today
+    if not DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
+        check = today - timedelta(days=1)
+    while DiaryEntry.objects.filter(user=user, created_at__date=check, status="done").exists():
+        streak_days += 1
+        check -= timedelta(days=1)
+    return streak_days
 
+
+def _classify_diary_category(client, text):
+    category_labels = dict(Diarypost.Category.choices)  # {"food": "食", ...}
+
+    try:
+        cat_res = client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "請把以下日記內容歸類到「食、衣、住、行、育、樂」六個分類中最符合的一個，只回一個字（食/衣/住/行/育/樂），不要其他說明。"},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=5,
+            temperature=0.3
+        )
+        label = cat_res.choices[0].message.content.strip()
+        for value, display in category_labels.items():
+            if display in label:
+                return value
+    except Exception as e:
+        print(f"貼文分類 AI 生成失敗: {e}")
+
+    return ""
+
+
+def _generate_share_content(diary):
     first_person_text = diary.transcription or ""
     hashtags = ["#聲影日記", "#每日記錄", "#長者生活"]
+    category = ""
 
     try:
         if settings.OPENAI_API_KEY and diary.transcription:
@@ -344,8 +405,31 @@ def share_page(request):
                 temperature=0.7
             )
             hashtags = tag_res.choices[0].message.content.strip().split()[:3]
+
+            category = _classify_diary_category(client, diary.transcription)
     except Exception as e:
-        print(f"分享頁 AI 生成失敗: {e}")
+        print(f"分享內容 AI 生成失敗: {e}")
+
+    if diary.transcription:
+        Diarypost.objects.update_or_create(
+            diary_title=diary,
+            defaults={
+                "user": diary.user,
+                "post": first_person_text,
+                "category": category,
+            },
+        )
+
+    return first_person_text, hashtags
+
+
+# 分享頁
+def share_page(request):
+    diary_id = request.GET.get('diary_id')
+    diary = get_object_or_404(DiaryEntry, pk=diary_id)
+
+    streak_days = _compute_streak_days(diary.user)
+    first_person_text, hashtags = _generate_share_content(diary)
 
     is_preview = request.GET.get('preview') == '1'
 
@@ -364,15 +448,20 @@ def voice_page(request):
 
 
 def finish_page(request):
-    request.session['chat_count'] = 0  
+    request.session['chat_count'] = 0
 
     diary_id = request.GET.get('diary_id')
     diary = None
+    first_person_text = ""
+    hashtags = []
     if diary_id:
         diary = get_object_or_404(DiaryEntry, id=diary_id)
+        first_person_text, hashtags = _generate_share_content(diary)
 
     return render(request, 'finish.html', {
-        'diary': diary
+        'diary': diary,
+        'first_person_text': first_person_text,
+        'hashtags': hashtags,
     })
 
 # 動態回顧頁
@@ -385,11 +474,18 @@ def review_page(request):
     except ValueError:
         last_year_day = today.replace(year=today.year - 1, day=28)
 
+    User = get_user_model()
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if not target_user:
+        target_user = User.objects.first()
+
     yesterday_entries = DiaryEntry.objects.filter(
+        user=target_user,
         created_at__date=yesterday
     ).order_by("-created_at")
 
     lastyear_entries = DiaryEntry.objects.filter(
+        user=target_user,
         created_at__date=last_year_day
     ).order_by("-created_at")
 
@@ -759,9 +855,39 @@ def api_voice_reply(request):
     })
 
 
+# 語音加油一鍵轉文字
+@csrf_exempt
+def api_voice_reply_transcribe(request, reply_id):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "只接受 POST"}, status=405)
+
+    reply = get_object_or_404(VoiceReply, pk=reply_id)
+
+    if reply.transcribed_text:
+        return JsonResponse({"status": "ok", "text": reply.transcribed_text})
+
+    try:
+        model = whisper.load_model("base")
+        result = model.transcribe(reply.audio_file.path, language="zh")
+        text = result.get("text", "").strip() or "（沒有聽清楚語音內容）"
+
+        reply.transcribed_text = text
+        reply.save(update_fields=["transcribed_text"])
+
+        return JsonResponse({"status": "ok", "text": text})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
 # 社群動態頁
 def community_page(request):
+    User = get_user_model()
+    target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
+    if not target_user:
+        target_user = User.objects.first()
+
     entries = DiaryEntry.objects.filter(
+        user=target_user,
         status="done"
     ).prefetch_related("voice_replies").order_by("-created_at")[:20]
 
@@ -781,6 +907,7 @@ def community_page(request):
                     "sender": r.sender_name,
                     "audio_url": r.audio_file.url,
                     "time": r.created_at.strftime("%m/%d %H:%M"),
+                    "transcribed_text": r.transcribed_text,
                 }
                 for r in replies
             ],

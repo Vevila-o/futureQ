@@ -81,7 +81,7 @@ class DiaryEntry(models.Model):
         "AI 溫暖回應",
         blank=True
     )
-
+    
     status = models.CharField(
         "分析狀態",
         max_length=20,
@@ -236,6 +236,7 @@ class VoiceReply(models.Model):
     )
     audio_file = models.FileField("語音加油檔案", upload_to="voice_replies")
     sender_name = models.CharField("送出者暱稱", max_length=30, blank=True, default="匿名朋友")
+    transcribed_text = models.TextField("語音轉文字", blank=True, default="")
     created_at = models.DateTimeField("送出時間", auto_now_add=True)
 
     class Meta:
@@ -245,3 +246,50 @@ class VoiceReply(models.Model):
 
     def __str__(self):
         return f"日記 {self.diary_id} 的語音加油（{self.sender_name}）"
+
+
+# AI 貼文產生
+class Diarypost(models.Model):
+    class Category(models.TextChoices):
+        FOOD          = "food",          "食"
+        CLOTHING      = "clothing",      "衣"
+        HOUSING       = "housing",       "住"
+        TRANSPORT     = "transport",     "行"
+        EDUCATION     = "education",     "育"
+        ENTERTAINMENT = "entertainment", "樂"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="使用者"
+    )
+
+    diary_title = models.ForeignKey(
+        DiaryEntry, on_delete=models.CASCADE,
+        related_name="diary_posts",
+        verbose_name="對應日記"
+    )
+
+    post = models.TextField(
+        "AI貼文",
+        blank=True
+    )
+
+    category = models.CharField(
+        "分類標籤",
+        max_length=20,
+        choices=Category.choices,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField("建立時間", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "AI 貼文"
+        verbose_name_plural = "AI 貼文"
+
+    def __str__(self):
+        return f"日記 {self.diary_title_id} 的貼文（{self.get_category_display() or '未分類'}）"
+

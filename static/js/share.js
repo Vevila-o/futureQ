@@ -108,10 +108,13 @@ function fallbackCopy() {
   showFeedback('連結已複製！');
 }
 
-// 回首頁
-document.getElementById('btn-back-home').addEventListener('click', () => {
-  window.location.href = '/index/';
-});
+// 回首頁（preview 模式沒有此按鈕）
+const btnBackHome = document.getElementById('btn-back-home');
+if (btnBackHome) {
+  btnBackHome.addEventListener('click', () => {
+    window.location.href = '/index/';
+  });
+}
 
 window.addEventListener('scroll', () => {
   const header = document.getElementById('main-header');

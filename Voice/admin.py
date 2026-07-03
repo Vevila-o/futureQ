@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User,DiaryEntry, CognitiveAnalysis, AiConversation, GameSession
+from .models import User,DiaryEntry, CognitiveAnalysis, AiConversation, GameSession,VoiceReply, Diarypost
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -108,3 +108,48 @@ class GameSessionAdmin(admin.ModelAdmin):
     )
 
 admin.site.register(GameSession, GameSessionAdmin)
+
+
+# 社群回復語音
+class VoiceReplyAdmin(admin.ModelAdmin):
+    list_display = (
+        'diary',
+        'audio_file',
+        'transcribed_text',
+        'sender_name',
+        'created_at',
+    )
+
+    list_filter = (
+        'diary',
+        'created_at',
+    )
+
+    ordering = (
+        'diary',
+    )
+
+admin.site.register(VoiceReply, VoiceReplyAdmin)
+
+
+# AI 貼文
+class DiarypostAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'diary_title',
+        'category',
+        'post',
+        'created_at',
+    )
+
+    list_filter = (
+        'category',
+        'created_at',
+    )
+
+    ordering = (
+        '-created_at',
+    )
+
+admin.site.register(Diarypost, DiarypostAdmin)

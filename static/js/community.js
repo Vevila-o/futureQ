@@ -55,19 +55,57 @@
       return '<p class="community-card-no-replies">還沒有語音加油，快把這篇日記分享出去吧！</p>';
     }
     return replies.map(function (r) {
+      var hasText = !!r.transcribed_text;
       return (
         '<div class="reply-bubble-row">' +
           '<div class="reply-avatar"><span class="material-symbols-outlined">person</span></div>' +
           '<div class="reply-bubble">' +
             '<div class="reply-sender">' + escHtml(r.sender) + '</div>' +
-            '<button class="reply-play-btn" data-audio-url="' + escHtml(r.audio_url) + '">' +
-              '<span class="material-symbols-outlined">play_arrow</span>播放語音' +
-            '</button>' +
+            '<div class="reply-btn-row">' +
+              '<button class="reply-play-btn" data-audio-url="' + escHtml(r.audio_url) + '">' +
+                '<span class="material-symbols-outlined">play_arrow</span>播放語音' +
+              '</button>' +
+              '<button class="reply-transcribe-btn" data-reply-id="' + r.id + '"' + (hasText ? ' style="display:none;"' : '') + '>' +
+                '<span class="material-symbols-outlined">subtitles</span>一鍵轉文字' +
+              '</button>' +
+            '</div>' +
+            '<p class="reply-transcript" id="reply-transcript-' + r.id + '"' + (hasText ? '' : ' style="display:none;"') + '>' + escHtml(r.transcribed_text || '') + '</p>' +
           '</div>' +
         '</div>' +
         '<div class="reply-time">' + escHtml(r.time) + '</div>'
       );
     }).join('');
+  }
+
+  function handleTranscribe(btn) {
+    var replyId = btn.dataset.replyId;
+    if (!replyId || btn.disabled) return;
+
+    btn.disabled = true;
+    var originalHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined">progress_activity</span>轉換中...';
+
+    fetch('/api/voice-reply/' + replyId + '/transcribe/', { method: 'POST' })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.status === 'ok') {
+          var textEl = document.getElementById('reply-transcript-' + replyId);
+          if (textEl) {
+            textEl.textContent = data.text;
+            textEl.style.display = 'block';
+          }
+          btn.style.display = 'none';
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+          alert('轉文字失敗，請再試一次');
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        alert('網路錯誤，請稍後再試');
+      });
   }
 
   function buildCard(diary) {
@@ -121,8 +159,15 @@
       }
     });
 
-    // 播放按鈕（事件委派）
+    // 播放 / 轉文字按鈕（事件委派）
     card.addEventListener('click', function (e) {
+      var transcribeBtn = e.target.closest('.reply-transcribe-btn');
+      if (transcribeBtn) {
+        e.stopPropagation();
+        handleTranscribe(transcribeBtn);
+        return;
+      }
+
       var btn = e.target.closest('.reply-play-btn');
       if (!btn) return;
       e.stopPropagation();

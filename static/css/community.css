@@ -197,6 +197,12 @@ main {
   color: var(--on-secondary-container);
 }
 
+.reply-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .reply-play-btn {
   display: flex;
   align-items: center;
@@ -219,6 +225,39 @@ main {
 .reply-play-btn .material-symbols-outlined {
   font-size: 22px;
   font-variation-settings: 'FILL' 1;
+}
+
+.reply-transcribe-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.reply-transcribe-btn:active:not(:disabled) { opacity: 0.7; }
+.reply-transcribe-btn:disabled { opacity: 0.6; cursor: default; }
+
+.reply-transcribe-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.reply-transcript {
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-secondary-container);
+  line-height: 1.6;
+  background: rgba(255,255,255,0.5);
+  border-radius: 12px;
+  padding: 8px 12px;
 }
 
 .reply-time {
