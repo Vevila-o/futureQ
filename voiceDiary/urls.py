@@ -37,6 +37,10 @@ urlpatterns = [
     path('share/', voice_views.share_page, name='share_page'),
     path('game/', voice_views.game_page, name='game_page'),
     path('market/', voice_views.market_page, name='market_page'),
+    
+    # 🌟 成功接通！成就頁面的路徑
+    path('achievements/', voice_views.achievements_page, name='achievements_page'),
+    
     path('api/save-game-result/', voice_views.save_game_result, name='save_game_result'),
     path('community/', voice_views.community_page, name='community_page'),
     # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'),
@@ -54,6 +58,9 @@ urlpatterns = [
     path('header/', voice_views.header_partial, name='header_partial'),
     path('headerback/', voice_views.headerback_partial, name='headerback_partial'),
     path('nav/', voice_views.nav_partial, name='nav_partial'),
+
+    #點數商城
+    path('shop/', voice_views.shop_page, name='shop_page'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

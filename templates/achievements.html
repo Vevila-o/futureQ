@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <title>憶智防線 - 我的成就</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../static/css/index.css">
+  <link rel="stylesheet" href="../static/css/header.css">
+  <style>
+    /* 🟢 統一配色：與 game.html 保持一致 */
+    body {
+      background-color: #F4F7F5;
+      margin: 0;
+    }
+
+    /* 🛠️ 推頂修正：留出足夠的頂部空間，讓卡片完美滑動且不被固定的 Header 遮擋 */
+    .achieve-container {
+      padding: 0 16px;
+      margin-top: 90px !important;
+    }
+    
+    .achieve-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 50px;
+    }
+
+    /* 🥇 已解鎖卡片 */
+    .achieve-card {
+      background-color: #EBF7F2;
+      border: 1.5px solid #C2E7D9;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.04);
+    }
+
+    /* 🔒 未解鎖卡片（低飽和灰綠色） */
+    .achieve-card.locked {
+      background-color: #E2E8E5;
+      border: 1.5px solid #CBD5D0;
+    }
+
+    /* 勳章圓圈 */
+    .medal-badge-box {
+      background: white;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(45, 106, 79, 0.06);
+      flex-shrink: 0;
+    }
+
+    /* 未解鎖的勳章置灰 */
+    .achieve-card.locked .medal-badge-box {
+      background: #CBD5D0;
+      box-shadow: none;
+    }
+    .achieve-card.locked .material-symbols-outlined {
+      filter: grayscale(100%);
+      opacity: 0.4;
+    }
+
+    /* 文字排版 */
+    .achieve-text-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+    .achieve-date {
+      font-size: 13px;
+      color: #718096;
+      margin: 0;
+    }
+    .achieve-name {
+      font-size: 18px;
+      font-weight: 900;
+      color: #2D6A4F;
+      margin: 2px 0 0 0;
+    }
+    .achieve-card.locked .achieve-name {
+      color: #52635B;
+    }
+    .achieve-sub {
+      font-size: 14px;
+      color: #52B788;
+      margin: 2px 0 0 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 🟢 核心修正：改為動態插入點，將全域通知面板與按鈕開關完美連線！ -->
+<div id="header-placeholder"></div>
+
+<main class="achieve-container">
+  <div class="achieve-list">
+    
+    <div class="achieve-card">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #FFB300; font-variation-settings: 'FILL' 1;">military_tech</span>
+      </div>
+      <div class="achieve-text-info">
+        <p class="achieve-date">2026/5/10</p>
+        <h4 class="achieve-name">第一次登入</h4>
+        <p class="achieve-sub">歡迎加入憶智防線</p>
+      </div>
+    </div>
+
+    <div class="achieve-card">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #FFB300; font-variation-settings: 'FILL' 1;">military_tech</span>
+      </div>
+      <div class="achieve-text-info">
+        <p class="achieve-date">2026/5/10</p>
+        <h4 class="achieve-name">第一次完成遊戲</h4>
+        <p class="achieve-sub">萬事起頭難！</p>
+      </div>
+    </div>
+
+    <div class="achieve-card">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #FFB300; font-variation-settings: 'FILL' 1;">military_tech</span>
+      </div>
+      <div class="achieve-text-info">
+        <p class="achieve-date">2026/5/11</p>
+        <h4 class="achieve-name">第一次完成聲影日記</h4>
+        <p class="achieve-sub">今天發生了甚麼故事~</p>
+      </div>
+    </div>
+
+    <div class="achieve-card locked">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #7A7A7A;">lock</span>
+      </div>
+      <div class="achieve-text-info">
+        <h4 class="achieve-name">連續登入三天</h4>
+      </div>
+    </div>
+
+    <div class="achieve-card locked">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #7A7A7A;">lock</span>
+      </div>
+      <div class="achieve-text-info">
+        <h4 class="achieve-name">完成三種認知遊戲</h4>
+      </div>
+    </div>
+
+    <div class="achieve-card locked">
+      <div class="medal-badge-box">
+        <span class="material-symbols-outlined" style="font-size: 34px; color: #7A7A7A;">lock</span>
+      </div>
+      <div class="achieve-text-info">
+        <h4 class="achieve-name">完成一次每日任務</h4>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../static/js/header.js"></script>
+<script src="../static/js/achievements.js"></script>
+
+<!-- 💡 蓋台魔法腳本：負責將動態 Header 修改為專屬返回箭頭與我的成就標題 -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      // 1. 強制修正左側按鈕為返回箭頭（連回遊戲首頁）
+      const leftBtn = document.querySelector('.header-btn:first-child') || document.getElementById('btn-back-arrow');
+      if (leftBtn) {
+        leftBtn.outerHTML = `
+          <a href="/game/" class="header-btn" id="btn-back-arrow" aria-label="返回首頁" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size:28px; color: #1E4D2B !important;">arrow_back</span>
+          </a>
+        `;
+      }
+
+      // 2. 修正中央標題為「我的成就」並換上 military_tech 勳章圖標
+      const headerTitleElement = document.querySelector('.header-title');
+      if (headerTitleElement) {
+        headerTitleElement.innerHTML = `
+          <span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">military_tech</span>
+          我的成就
+        `;
+      }
+    }, 50); // 稍微延時 50 毫秒，等 header.js 把骨架注入後完美覆蓋
+  });
+</script>
+
+</body>
+</html>

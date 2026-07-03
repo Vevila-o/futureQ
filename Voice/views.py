@@ -803,3 +803,19 @@ def headerback_partial(request):
 
 def nav_partial(request):
     return render(request, "nav.html")
+
+    # 🌟 成功接通！成就頁面的後端渲染邏輯
+def achievements_page(request):
+    # 這裡可以算一下解鎖了幾個，我們先預設傳送 3 個過去
+    context = {
+        'unlocked_achievements_count': 3
+    }
+    return render(request, 'achievements.html', context)
+
+    # 🌟 成功接通！點數商城的後端渲染邏輯
+def shop_page(request):
+    # 這裡未來可以從資料庫撈取長輩實際的健康點數，目前我們先預設給 120 點供前端測試
+    context = {
+        'user_points': 120
+    }
+    return render(request, 'shop.html', context)

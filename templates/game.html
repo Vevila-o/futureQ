@@ -9,9 +9,83 @@
   <link rel="stylesheet" href="../static/css/nav.css">
   <link rel="stylesheet" href="../static/css/header.css">
   <link rel="stylesheet" href="../static/css/game.css">
+  <style>
+    /* 2x2 四宮格成績與成就排列 */
+    .score-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .score-stats-grid .score-stat-card {
+      width: 100%;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    /* 🛠️ 專屬優化：讓我的成就超連結卡片完美承襲 score-stat-card 的薄荷綠底色與外觀 */
+    .achieve-entry-card {
+      text-decoration: none;
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+    }
+    .achieve-entry-card:active {
+      transform: scale(0.96);
+    }
+
+    /* 右下角商城懸浮按鈕 CSS 樣式 */
+    .floating-market-btn {
+      position: fixed;
+      bottom: 110px; /* 向上微調，避開最底部的導覽列 */
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #FFB300, #F57C00); /* 亮眼的金黃/暖橘漸層 */
+      border-radius: 50%;
+      box-shadow: 0 6px 16px rgba(245, 124, 0, 0.4);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      animation: floatBounce 3s ease-in-out infinite;
+    }
+
+    /* 按鈕內部的文字與圖標垂直排版 */
+    .market-btn-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+    }
+
+    .market-btn-text {
+      font-size: 13px;
+      font-weight: 900;
+      margin-top: -1px;
+      letter-spacing: 0.5px;
+    }
+
+    /* 輕微上下漂浮的動畫 */
+    @keyframes floatBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* 點擊時的按壓回饋效果 */
+    .floating-market-btn:active {
+      transform: scale(0.92);
+      box-shadow: 0 3px 8px rgba(245, 124, 0, 0.3);
+    }
+  </style>
 </head>
 <body>
 
+<!-- Header 動態插入點 -->
 <div id="header-placeholder"></div>
 
 <main>
@@ -52,33 +126,44 @@
     </a>
   </section>
 
-  <!-- 我的成績 -->
+  <!-- 我的成績（2x2 佈局） -->
   <section class="home-section">
     <div class="home-section-header">
       <h3 class="home-section-title">我的成績</h3>
     </div>
 
-    <!-- 統計數字 -->
-    <div class="score-stats">
+    <div class="score-stats-grid">
+      <!-- 最高分 -->
       <div class="score-stat-card">
         <span class="material-symbols-outlined score-stat-icon">emoji_events</span>
         <span class="score-stat-num">{{ highest_score }}</span>
         <span class="score-stat-label">最高分</span>
       </div>
+      
+      <!-- 累計次數 -->
       <div class="score-stat-card">
         <span class="material-symbols-outlined score-stat-icon">history</span>
         <span class="score-stat-num">{{ total_count }}</span>
         <span class="score-stat-label">累計次數</span>
       </div>
+      
+      <!-- 連續天數 -->
       <div class="score-stat-card">
         <span class="material-symbols-outlined score-stat-icon">local_fire_department</span>
         <span class="score-stat-num">{{ streak_days }}</span>
         <span class="score-stat-label">連續天數</span>
       </div>
+
+      <!-- 🌾 我的成就：完美繼承 score-stat-card，並動態黏上「個」字 -->
+      <a href="/achievements/" class="score-stat-card achieve-entry-card">
+        <span class="material-symbols-outlined score-stat-icon">military_tech</span>
+        <span class="score-stat-num">{{ unlocked_achievements_count }}個</span>
+        <span class="score-stat-label">我的成就 ➔</span>
+      </a>
     </div>
 
     <!-- 最近紀錄 -->
-    <div class="score-recent-title">最近紀錄</div>
+    <div class="score-recent-title" style="margin-top: 25px;">最近紀錄</div>
     <div class="score-record-list">
       {% for record in recent_records %}
       <div class="score-record-item">
@@ -92,7 +177,7 @@
         <span class="score-record-score">{{ record.score }} 分</span>
       </div>
       {% empty %}
-      <p class="score-record-empty">還沒有遊戲紀錄，快去玩一場吧！</p>
+      <p class="score-record-empty">還擺有遊戲紀錄，快去玩一場吧！</p>
       {% endfor %}
     </div>
 
@@ -100,11 +185,36 @@
 
 </main>
 
+<!-- 右下角點數商城懸浮按鈕 -->
+<a href="/shop/" class="floating-market-btn" aria-label="點數商城">
+  <div class="market-btn-content">
+    <span class="material-symbols-outlined" style="font-size: 38px; font-variation-settings: 'FILL' 1;">storefront</span>
+    <span class="market-btn-text">逛商城</span>
+  </div>
+</a>
+
+<!-- 導覽列動態插入點 -->
 <div id="nav-placeholder"></div>
 
 <script src="../static/js/header.js"></script>
 <script src="../static/js/nav.js"></script>
 <script src="../static/js/game.js"></script>
+
+<!-- 💡 用 JS 即時改寫 Header 的標題與圖標為遊戲專屬手把 -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 透過延遲機制，確保基礎 header.js 渲染至 placeholder 後再進行文字與圖標的精準覆蓋
+    setTimeout(() => {
+      const headerTitleElement = document.querySelector('.header-title');
+      if (headerTitleElement) {
+        headerTitleElement.innerHTML = `
+          <span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">sports_esports</span>
+          遊戲
+        `;
+      }
+    }, 50);
+  });
+</script>
 
 </body>
 </html>
