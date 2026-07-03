@@ -1,4 +1,40 @@
-// js/header.js
+// static/js/header.js
+
+// 🚨 終極無間斷巡邏防線：每 100 毫秒（0.1秒）死死盯著畫面
+// 不管是重整、返回、假換頁，只要發現畫面的「標題文字」跟「目前網址」對不起來，立刻強制肉體修正！
+setInterval(() => {
+  forceCorrectHeaderTitle();
+}, 100);
+
+// 強制比對與修正標題的核心邏輯
+function forceCorrectHeaderTitle() {
+  const currentPath = window.location.pathname;
+  const headerTitleElement = document.querySelector('.header-title');
+
+  // 如果 fetch 還沒完成，畫面上找不到標題物件，就直接跳出等下一次巡邏
+  if (!headerTitleElement) return;
+
+  // 取得目前畫面上純文字（去掉空白）
+  const currentText = headerTitleElement.textContent.trim();
+
+  if (currentPath.includes('/shop/')) {
+    // 如果網址是商城，但畫面上的字不是「點數商城」，就強制導正
+    if (currentText !== "點數商城") {
+      headerTitleElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">storefront</span>點數商城`;
+    }
+  } else if (currentPath.includes('/achievements/')) {
+    // 如果網址是成就，但畫面上的字不是「我的成就」，重整後非同步載入完會在這裡被攔截修正！
+    if (currentText !== "我的成就") {
+      headerTitleElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">military_tech</span>我的成就`;
+    }
+  } else {
+    // 🎤 Boss 這裡改好了！其他所有主頁面、日記、遊戲頁面，如果字不是「聲影日記」，一律強制鎖定為麥克風圖標！
+    if (currentText !== "聲影日記") {
+      headerTitleElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">mic</span>聲影日記`;
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   fetch("/header/")
     .then(response => {
@@ -8,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(data => {
       document.getElementById("header-placeholder").innerHTML = data;
       initHeaderLogic(); // HTML 載入完成後，初始化所有設定與通知功能
+      forceCorrectHeaderTitle(); // 載入完當下立刻校正一次
     })
     .catch(error => console.error("載入 Header 發生錯誤:", error));
 });
@@ -22,14 +59,16 @@ function initHeaderLogic() {
     { id: 5, type:"family", unread:false, icon:"💌", title:"女兒傳了訊息", desc:"林小玲：「媽，記得吃藥喔～我下週五回來看你！」", time:"昨天" },
     { id: 6, type:"reminder", unread:false, icon:"📸", title:"相片上傳成功", desc:"你在 6月14日 上傳的書法展照片已儲存完成。", time:"2 天前" }
   ];
-  let readIds = new Set();
+  
+  let readIds = new Set(JSON.parse(localStorage.getItem('notif-read-ids') || '[]'));
 
   function renderNotifications() {
     const list = document.getElementById("notif-list");
     const unreadCount = NOTIFICATIONS.filter(n => n.unread && !readIds.has(n.id)).length;
     const badge = document.getElementById("notif-badge");
-    badge.classList.toggle("hidden", unreadCount === 0);
+    if (badge) badge.classList.toggle("hidden", unreadCount === 0);
 
+    if (!list) return;
     list.innerHTML = "";
     if (NOTIFICATIONS.length === 0) {
       list.innerHTML = `<div class="notif-empty"><span class="material-symbols-outlined" style="font-size:40px;opacity:.3;">notifications_none</span>目前沒有通知</div>`;
@@ -48,7 +87,11 @@ function initHeaderLogic() {
           <div class="notif-time">${n.time}</div>
         </div>
       `;
-      item.addEventListener("click", () => { readIds.add(n.id); renderNotifications(); });
+      item.addEventListener("click", () => { 
+        readIds.add(n.id); 
+        localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
+        renderNotifications(); 
+      });
       list.appendChild(item);
     });
   }
@@ -57,6 +100,7 @@ function initHeaderLogic() {
   function openNotifications() {
     renderNotifications();
     const overlay = document.getElementById("notif-overlay");
+    if (!overlay) return;
     overlay.style.display = "flex";
     requestAnimationFrame(() => {
       overlay.classList.add("open");
@@ -64,16 +108,19 @@ function initHeaderLogic() {
     });
     setTimeout(() => {
       NOTIFICATIONS.forEach(n => readIds.add(n.id));
+      localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
       renderNotifications();
     }, 1500);
   }
   function closeNotifications() {
     const overlay = document.getElementById("notif-overlay");
+    if (!overlay) return;
     overlay.classList.remove("visible");
     setTimeout(() => { overlay.classList.remove("open"); overlay.style.display = "none"; }, 250);
   }
   function openSettings() {
     const overlay = document.getElementById("settings-overlay");
+    if (!overlay) return;
     overlay.style.display = "flex";
     requestAnimationFrame(() => {
       overlay.classList.add("open");
@@ -82,6 +129,7 @@ function initHeaderLogic() {
   }
   function closeSettings() {
     const overlay = document.getElementById("settings-overlay");
+    if (!overlay) return;
     overlay.classList.remove("visible");
     setTimeout(() => { overlay.classList.remove("open"); overlay.style.display = "none"; }, 250);
   }
@@ -93,10 +141,15 @@ function initHeaderLogic() {
 
   function applyFont() {
     document.documentElement.style.setProperty("--fs-scale", FONT_STEPS[fontIdx]);
-    document.getElementById("font-val").textContent = fontIdx + 1;
-    document.getElementById("font-size-label").textContent = `${FONT_LABELS[fontIdx]}（${Math.round(FONT_STEPS[fontIdx]*100)}%）`;
-    document.getElementById("font-dec").disabled = (fontIdx === 0);
-    document.getElementById("font-inc").disabled = (fontIdx === FONT_STEPS.length - 1);
+    const fontVal = document.getElementById("font-val");
+    const fontSizeLabel = document.getElementById("font-size-label");
+    if (fontVal) fontVal.textContent = fontIdx + 1;
+    if (fontSizeLabel) fontSizeLabel.textContent = `${FONT_LABELS[fontIdx]}（${Math.round(FONT_STEPS[fontIdx]*100)}%）`;
+    
+    const fontDec = document.getElementById("font-dec");
+    const fontInc = document.getElementById("font-inc");
+    if (fontDec) fontDec.disabled = (fontIdx === 0);
+    if (fontInc) fontInc.disabled = (fontIdx === FONT_STEPS.length - 1);
   }
 
   const THEMES = {
@@ -110,8 +163,8 @@ function initHeaderLogic() {
     document.documentElement.style.setProperty('--primary', t.primary);
     document.documentElement.style.setProperty('--secondary-container', t.secondary);
     document.documentElement.style.setProperty('--on-secondary-container', t.onSecondary);
-    document.documentElement.style.setProperty('--surface-tint', t.surfaceTint);  // 新增
-    document.documentElement.style.setProperty('--icon-color', t.iconColor);      // 新增
+    if (t.surfaceTint) document.documentElement.style.setProperty('--surface-tint', t.surfaceTint);
+    if (t.iconColor) document.documentElement.style.setProperty('--icon-color', t.iconColor);
   }
 
   function setupToggle(id, cb) {
@@ -125,16 +178,35 @@ function initHeaderLogic() {
   }
 
   // 4. 綁定所有的事件監聽器
-  document.getElementById("btn-notif").addEventListener("click", openNotifications);
-  document.getElementById("notif-overlay").addEventListener("click", e => { if (e.target === e.currentTarget) closeNotifications(); });
-  document.getElementById("btn-notif-close").addEventListener("click", closeNotifications);
-  document.getElementById("btn-notif-clear").addEventListener("click", () => { NOTIFICATIONS.forEach(n => readIds.add(n.id)); renderNotifications(); });
+  const btnNotif = document.getElementById("btn-notif");
+  if (btnNotif) btnNotif.addEventListener("click", openNotifications);
+  
+  const notifOverlay = document.getElementById("notif-overlay");
+  if (notifOverlay) notifOverlay.addEventListener("click", e => { if (e.target === e.currentTarget) closeNotifications(); });
+  
+  const btnNotifClose = document.getElementById("btn-notif-close");
+  if (btnNotifClose) btnNotifClose.addEventListener("click", closeNotifications);
+  
+  const btnNotifClear = document.getElementById("btn-notif-clear");
+  if (btnNotifClear) {
+    btnNotifClear.addEventListener("click", () => { 
+      NOTIFICATIONS.forEach(n => readIds.add(n.id)); 
+      localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
+      renderNotifications(); 
+    });
+  }
 
-  document.getElementById("btn-settings").addEventListener("click", openSettings);
-  document.getElementById("settings-overlay").addEventListener("click", e => { if (e.target === e.currentTarget) closeSettings(); });
+  const btnSettings = document.getElementById("btn-settings");
+  if (btnSettings) btnSettings.addEventListener("click", openSettings);
+  
+  const settingsOverlay = document.getElementById("settings-overlay");
+  if (settingsOverlay) settingsOverlay.addEventListener("click", e => { if (e.target === e.currentTarget) closeSettings(); });
 
-  document.getElementById("font-dec").addEventListener("click", () => { if (fontIdx > 0) { fontIdx--; applyFont(); localStorage.setItem('app-font', fontIdx); } });
-  document.getElementById("font-inc").addEventListener("click", () => { if (fontIdx < FONT_STEPS.length - 1) { fontIdx++; applyFont(); localStorage.setItem('app-font', fontIdx); } });
+  const fontDec = document.getElementById("font-dec");
+  if (fontDec) fontDec.addEventListener("click", () => { if (fontIdx > 0) { fontIdx--; applyFont(); localStorage.setItem('app-font', fontIdx); } });
+  
+  const fontInc = document.getElementById("font-inc");
+  if (fontInc) fontInc.addEventListener("click", () => { if (fontIdx < FONT_STEPS.length - 1) { fontIdx++; applyFont(); localStorage.setItem('app-font', fontIdx); } });
 
   setupToggle("toggle-dark", on => { document.body.classList.toggle("dark", on); localStorage.setItem('app-dark', on ? '1' : '0'); });
   setupToggle("toggle-contrast", on => document.body.classList.toggle("high-contrast", on));
@@ -150,11 +222,11 @@ function initHeaderLogic() {
     });
   });
 
+  const mainHeader = document.getElementById("main-header");
   window.addEventListener("scroll", () => {
-    document.getElementById("main-header").classList.toggle("scrolled", window.scrollY > 10);
+    if (mainHeader) mainHeader.classList.toggle("scrolled", window.scrollY > 10);
   }, { passive: true });
 
-  // 5. 讀取之前的 LocalStorage 設定
   const savedTheme = localStorage.getItem('app-theme') || 'green';
   applyTheme(savedTheme);
   const savedChip = document.querySelector(`.theme-chip[data-theme="${savedTheme}"]`);
