@@ -13,13 +13,13 @@
       margin: 0;
     }
 
-    /* 🛠️ 頂部空間修正，避免被全域 Header 遮擋 */
+    /* 🛠️ 頂部空間修正 */
     .shop-container {
       padding: 0 16px;
       margin-top: 90px !important;
     }
 
-    /* 🪙 目前點數資產卡片 - 深農綠色漸層 */
+    /* 🪙 目前點數資產卡片 */
     .points-display-card {
       background: linear-gradient(135deg, #1E4D2B, #3A7D44);
       border-radius: 24px;
@@ -45,7 +45,7 @@
       color: #FFD700;
     }
 
-    /* 🏷️ 大字體分類卡片區塊 */
+    /* 🏷️ 分類卡片區塊 */
     .category-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -67,7 +67,6 @@
       gap: 8px;
       transition: all 0.2s ease;
     }
-    /* 啟動時的農會深綠色高亮樣式 */
     .category-card.active {
       background-color: #EBF5EE;
       border-color: #3A7D44;
@@ -75,14 +74,13 @@
       box-shadow: 0 4px 12px rgba(58, 125, 68, 0.1);
     }
 
-    /* 🛍️ 商品列表雙欄佈局 */
+    /* 🛍️ 商品列表佈局 */
     .shop-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
       margin-bottom: 40px;
     }
-
     .product-card {
       background: white;
       border: 1.5px solid #E2E8E5;
@@ -98,12 +96,9 @@
     .product-card:active {
       transform: scale(0.95);
     }
-
-    /* 控制分類隱藏 */
     .product-card.hidden {
       display: none !important;
     }
-
     .product-icon-box {
       width: 76px;
       height: 76px;
@@ -114,7 +109,6 @@
       justify-content: center;
       margin-bottom: 12px;
     }
-
     .product-name {
       font-size: 17px;
       font-weight: 900;
@@ -126,7 +120,6 @@
       align-items: center;
       justify-content: center;
     }
-
     .product-sub {
       font-size: 12px;
       color: #718096;
@@ -155,17 +148,85 @@
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(58, 125, 68, 0.15);
     }
-    /* 點數不足時的置灰樣式 */
     .exchange-btn.disabled {
       background-color: #CBD5D0;
       color: #7A7A7A;
       box-shadow: none;
     }
+
+    /* 新增：客製化中央精美彈窗 CSS 樣式 */
+    .custom-dialog-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(30, 41, 35, 0.4); /* 暗色半透明背景 */
+      backdrop-filter: blur(4px); /*  一點點背景模糊的效果 */
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 24px;
+    }
+    .custom-dialog-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .custom-dialog-box {
+      background-color: white;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 340px;
+      padding: 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .custom-dialog-overlay.active .custom-dialog-box {
+      transform: scale(1);
+    }
+    .dialog-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .dialog-message {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1E4D2B;
+      line-height: 1.5;
+      white-space: pre-line;
+      margin: 0 0 20px 0;
+    }
+    .dialog-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .dialog-btn {
+      flex: 1;
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 900;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+    }
+    .dialog-btn-cancel {
+      background-color: #E2E8E5;
+      color: #52635B;
+    }
+    .dialog-btn-confirm {
+      background-color: #3A7D44;
+      color: white;
+    }
   </style>
 </head>
 <body>
 
-<!-- 動態插入點：接通全域通知電路 -->
+<!-- 動態插入點 -->
 <div id="header-placeholder"></div>
 
 <main class="shop-container">
@@ -182,7 +243,7 @@
   <!-- 分類切換卡片 -->
   <div class="category-tabs">
     <div class="category-card active" data-target="food">
-      <span></span> 廚房食品
+      <span></span> 民生食品
     </div>
     <div class="category-card" data-target="living">
       <span></span> 生活百貨
@@ -192,61 +253,43 @@
   <!-- 商品雙欄網格 -->
   <div class="shop-grid">
     
-    <!-- 【廚房食品】台南16號 - 越光米 (120點) -->
     <div class="product-card" data-cat="food" data-cost="120">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🌾</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🌾</span></div>
       <h4 class="product-name">台南16號 越光米</h4>
       <p class="product-sub">米粒飽滿晶澈、香甜Q彈，食味值更勝日本米</p>
       <button class="exchange-btn">120 點</button>
     </div>
 
-    <!-- 【廚房食品】農好蓬萊麵 (250點) -->
     <div class="product-card" data-cat="food" data-cost="250">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🍜</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🍜</span></div>
       <h4 class="product-name">農好蓬萊麵<br>(蔥香肉燥風味/箱)</h4>
       <p class="product-sub">使用正港台灣米 ➕添加15%國產米穀粉，口感更升級！</p>
       <button class="exchange-btn">250 點</button>
     </div>
 
-    <!-- 【生活百貨】皂青春無患子皂 (30點) -->
     <div class="product-card" data-cat="living" data-cost="30">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🧼</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🧼</span></div>
       <h4 class="product-name">皂青春無患子皂</h4>
       <p class="product-sub">清新自然香氣，適合各種膚質日常使用</p>
       <button class="exchange-btn">30 點</button>
     </div>
 
-    <!-- 【廚房食品】CAS夢田越光米(包) (150點) -->
     <div class="product-card" data-cat="food" data-cost="150">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🍚</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🍚</span></div>
       <h4 class="product-name">CAS夢田越光米(包)</h4>
       <p class="product-sub">每一粒越光米都晶瑩剔透，口感細緻</p>
       <button class="exchange-btn">150 點</button>
     </div>
 
-    <!-- 【生活百貨】柑橘洗衣精 (60點) -->
     <div class="product-card" data-cat="living" data-cost="60">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🍊</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🍊</span></div>
       <h4 class="product-name">柑橘洗衣精</h4>
       <p class="product-sub">溫和不刺激，守護全家肌膚</p>
       <button class="exchange-btn">60 點</button>
     </div>
 
-    <!-- 【生活百貨】柚香酵素洗衣球 (90點) -->
     <div class="product-card" data-cat="living" data-cost="90">
-      <div class="product-icon-box">
-        <span style="font-size: 42px;">🧺</span>
-      </div>
+      <div class="product-icon-box"><span style="font-size: 42px;">🧺</span></div>
       <h4 class="product-name">柚香酵素洗衣球</h4>
       <p class="product-sub">搭配酵素潔淨力，輕鬆去除污漬，清爽潔淨每一天</p>
       <button class="exchange-btn">90 點</button>
@@ -255,26 +298,34 @@
   </div>
 </main>
 
-<script src="../static/js/header.js"></script>
-<script src="../static/js/shop.js?v=4"></script>
+<!-- 新增：網頁內置精美中央對話視窗 HTML 骨架 -->
+<div id="custom-dialog" class="custom-dialog-overlay">
+  <div class="custom-dialog-box">
+    <div id="dialog-icon" class="dialog-icon">💡</div>
+    <p id="dialog-message" class="dialog-message">提示訊息</p>
+    <div id="dialog-buttons" class="dialog-buttons">
+      <button id="dialog-btn-cancel" class="dialog-btn dialog-btn-cancel">取消</button>
+      <button id="dialog-btn-confirm" class="dialog-btn dialog-btn-confirm">確認</button>
+    </div>
+  </div>
+</div>
 
-<!-- 修正 Header 為左側箭頭與點數商城標題 -->
+<script src="../static/js/header.js"></script>
+<!-- 提升快取防禦小尾巴到 ?v=5 -->
+<script src="../static/js/shop.js?v=5"></script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // 🛠️ 1. 動態修正動態載入的 Header（加上返回箭頭、修改標題字與 storefront 圖標）
+    // 修正動態 Header 標題與圖標
     setTimeout(() => {
-      // 修正左側按鈕：將原本可能被設定為選單或其他圖標的按鈕換成「返回箭頭」
-      const leftBtn = document.querySelector('.header-btn:first-child') || document.getElementById('btn-back-arrow') || document.getElementById('btn-settings');
+      const leftBtn = document.querySelector('.header-btn:first-child') || document.getElementById('btn-back-arrow');
       if (leftBtn) {
-        // 強制修正屬性與外觀
         leftBtn.outerHTML = `
           <a href="/game/" class="header-btn" id="btn-back-arrow" aria-label="返回首頁" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
             <span class="material-symbols-outlined" style="font-size:28px; color: #1E4D2B !important;">arrow_back</span>
           </a>
         `;
       }
-
-      // 修正中央標題：文字換成點數商城，並塞入 storefront 商店圖標
       const headerTitleElement = document.querySelector('.header-title');
       if (headerTitleElement) {
         headerTitleElement.innerHTML = `
@@ -282,9 +333,8 @@
           點數商城
         `;
       }
-    }, 50); // 延遲 50 毫秒，等 header.js 渲染至 placeholder 後完美覆蓋
+    }, 50);
 
-    // 2. 自動排序與分類邏輯
     const tabs = document.querySelectorAll('.category-card');
     const grid = document.querySelector('.shop-grid');
     const products = Array.from(document.querySelectorAll('.product-card'));

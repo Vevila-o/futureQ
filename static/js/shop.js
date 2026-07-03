@@ -1,13 +1,49 @@
 // static/js/shop.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('憶智防線：點數商城前端 JS 載入成功！');
+    console.log('憶智防線：點數商城精美自訂彈窗版載入成功！');
 
-    // 🪙 核心改動：選取所有按鈕，不阻擋灰色按鈕，這樣它才能接收點擊事件！
     const exchangeButtons = document.querySelectorAll('.exchange-btn');
     const pointsElement = document.getElementById('user-points');
     
-    // 初始化按鈕顏色狀態的函數 (一進來或扣完點都會執行)
+    // 獲取自訂彈窗相關元件
+    const dialogOverlay = document.getElementById('custom-dialog');
+    const dialogIcon = document.getElementById('dialog-icon');
+    const dialogMessage = document.getElementById('dialog-message');
+    const dialogBtnCancel = document.getElementById('dialog-btn-cancel');
+    const dialogBtnConfirm = document.getElementById('dialog-btn-confirm');
+
+    // 封裝彈窗顯示控制的 Promise 機制，讓程式碼像 confirm 一樣好讀
+    function showCustomDialog({ icon, message, showCancel = true }) {
+        return new Promise((resolve) => {
+            dialogIcon.textContent = icon;
+            dialogMessage.textContent = message;
+            
+            if (showCancel) {
+                dialogBtnCancel.style.display = 'block';
+                dialogBtnConfirm.style.width = 'auto';
+            } else {
+                dialogBtnCancel.style.display = 'none';
+                dialogBtnConfirm.style.width = '100%'; // 提示成功時按鈕撐滿
+            }
+
+            dialogOverlay.classList.add('active');
+
+            // 處理點擊按鈕
+            const handleConfirm = () => { cleanUp(); resolve(true); };
+            const handleCancel = () => { cleanUp(); resolve(false); };
+            
+            function cleanUp() {
+                dialogBtnConfirm.removeEventListener('click', handleConfirm);
+                dialogBtnCancel.removeEventListener('click', handleCancel);
+                dialogOverlay.classList.remove('active');
+            }
+
+            dialogBtnConfirm.addEventListener('click', handleConfirm);
+            dialogBtnCancel.addEventListener('click', handleCancel);
+        });
+    }
+
     function refreshButtonStyles(currentPoints) {
         document.querySelectorAll('.product-card').forEach(card => {
             const cardCost = parseInt(card.getAttribute('data-cost')) || 0;
@@ -22,44 +58,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 網頁載入時，先根據後端傳入的點數初始化一次按鈕外觀
     if (pointsElement) {
         let initialPoints = parseInt(pointsElement.innerText) || 0;
         refreshButtonStyles(initialPoints);
     }
     
-    // 綁定各個按鈕的點擊監聽事件 (沿用你原本的迴圈綁定隊形)
     exchangeButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', async function(e) {
             e.stopPropagation();
             
             const productCard = this.closest('.product-card');
             const productName = productCard.querySelector('.product-name').innerText.replace('\n', '');
             const cost = parseInt(productCard.getAttribute('data-cost')) || 0;
-            
-            // 抓取目前畫面上最新剩餘點數
             const currentPoints = pointsElement ? (parseInt(pointsElement.innerText) || 0) : 0;
 
-            // 🔴 情況 A：如果使用者點到的是點數不足的「灰色按鈕」
+            // 情況 A：點數不足
             if (this.classList.contains('disabled')) {
-                const shortOf = cost - currentPoints; // 計算相差點數
-                alert(`❌ 點數不足唷！\n【${productName}】需要 ${cost} 點，您目前有 ${currentPoints} 點（還差 ${shortOf} 點）。\n\n快去玩遊戲或記錄聲影日記賺取點數吧！💪`);
-                return; // 直接攔截阻擋，不往下走兌換流程
+                const shortOf = cost - currentPoints;
+                showCustomDialog({
+                    icon: '❌',
+                    message: `點數不足唷！\n【${productName}】需要 ${cost} 點，您目前有 ${currentPoints} 點（還差 ${shortOf} 點）。\n\n快去玩遊戲賺點數吧！💪`,
+                    showCancel: false
+                });
+                return;
             }
             
-            // 🟢 情況 B：點到正常亮綠色按鈕 (執行確認兌換與動態扣點)
-            const confirmExchange = confirm(`確認要消耗 ${cost} 點兌換【${productName}】嗎？`);
+            // 情況 B：點數足夠，跳出確認彈窗
+            const confirmExchange = await showCustomDialog({
+                icon: '🛒',
+                message: `確認要消耗 ${cost} 點兌換\n【${productName}】嗎？`,
+                showCancel: true
+            });
             
             if (confirmExchange) {
+                const updatedPoints = currentPoints - cost;
                 if (pointsElement) {
-                    const newPoints = currentPoints - cost;
-                    pointsElement.innerText = `${newPoints} 點`; // 更新總點數顯示
-                    
-                    // 核心：扣完點後，即時刷新所有商品按鈕外觀（讓不夠錢的自動變灰）
-                    refreshButtonStyles(newPoints);
+                    pointsElement.innerText = `${updatedPoints} 點`;
+                    refreshButtonStyles(updatedPoints);
                 }
                 
-                alert(`🎉 兌換成功！已扣除 ${cost} 點。`);
+                // 成功之後跳出成功提示
+                await showCustomDialog({
+                    icon: '🎉',
+                    message: `兌換成功！已扣除 ${cost} 點。`,
+                    showCancel: false
+                });
             }
         });
     });
