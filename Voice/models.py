@@ -277,6 +277,13 @@ class Diarypost(models.Model):
         blank=True
     )
 
+    card_image = models.ImageField(
+        "分享卡片圖片",
+        upload_to="share_cards",
+        blank=True,
+        null=True,
+    )
+
     category = models.CharField(
         "分類標籤",
         max_length=20,

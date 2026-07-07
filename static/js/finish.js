@@ -301,21 +301,59 @@
     }
   }
 
-  // LINE / Facebook 分享 → 前往分享頁
+  // LINE / Facebook 分享 → 把分享卡片轉成圖片上傳後，前往分享頁
   var shareUrl = "/share/?diary_id=" + (window.DIARY_ID || "");
+  var loadingOverlay = document.getElementById("loading-overlay");
+
+  function goToSharePage() {
+    window.location.href = shareUrl;
+  }
+
+  function generateAndUploadCardImage() {
+    var shareCard = document.getElementById("share-card");
+    if (!shareCard || !window.html2canvas || !diaryId) {
+      return Promise.resolve();
+    }
+
+    return window.html2canvas(shareCard, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: "#ffffff",
+    })
+      .then(function (canvas) {
+        return new Promise(function (resolve) {
+          canvas.toBlob(function (blob) { resolve(blob); }, "image/png");
+        });
+      })
+      .then(function (blob) {
+        if (!blob) return;
+        var formData = new FormData();
+        formData.append("diary_id", diaryId);
+        formData.append("card_image", blob, "share_card.png");
+        return fetch("/api/save-share-card-image/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCookie("csrftoken") },
+          body: formData,
+        });
+      })
+      .catch(function (err) {
+        console.error("分享卡片轉圖片失敗:", err);
+      });
+  }
+
+  function shareViaCardImage() {
+    if (loadingOverlay) loadingOverlay.style.display = "flex";
+    generateAndUploadCardImage().then(goToSharePage);
+  }
 
   var btnShareLine = document.getElementById("btn-share-line");
   if (btnShareLine) {
-    btnShareLine.addEventListener("click", function () {
-      window.location.href = shareUrl;
-    });
+    btnShareLine.addEventListener("click", shareViaCardImage);
   }
 
   var btnShareFb = document.getElementById("btn-share-fb");
   if (btnShareFb) {
-    btnShareFb.addEventListener("click", function () {
-      window.location.href = shareUrl;
-    });
+    btnShareFb.addEventListener("click", shareViaCardImage);
   }
 
   // 完成回首頁

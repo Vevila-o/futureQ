@@ -75,12 +75,18 @@
     <audio id="audio-player" preload="none" style="display:none"></audio>
   </div>
 
-  <!-- Hold-to-record 操作區 -->
+  <!-- 點擊錄音操作區 -->
   <div class="hold-record-section">
-    <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="長按錄音">
-      <span class="material-symbols-outlined" id="hold-mic-icon">mic</span>
-    </button>
-    <p class="hold-hint" id="hold-hint">長按開始錄音</p>
+    <div class="record-btn-row" id="record-btn-row">
+      <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="開始錄音">
+        <span class="material-symbols-outlined" id="hold-mic-icon">mic</span>
+      </button>
+      <button class="btn-complete" id="btn-complete" type="button" style="display:none;" aria-label="完成錄音">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>完成</span>
+      </button>
+    </div>
+    <p class="hold-hint" id="hold-hint">點擊開始錄音</p>
     <button class="btn-restart" id="btn-restart" type="button" style="display:none">重新錄製</button>
   </div>
 
@@ -97,32 +103,6 @@
   </form>
 
 </main>
-
-<!-- 長按錄音時的全螢幕 Overlay -->
-<div class="voice-overlay" id="voice-overlay">
-  <div class="ol-photo">
-    <img id="ol-photo-img" src="" alt="">
-  </div>
-  <!-- 暫停 / 完成按鈕：弧狀區域上方 -->
-  <div class="ol-zones-above">
-    <div class="ol-zone ol-pause" id="ol-zone-pause">
-      <span class="material-symbols-outlined">pause</span>
-      <span>暫停</span>
-    </div>
-    <div class="ol-zone ol-complete" id="ol-zone-complete">
-      <span class="material-symbols-outlined">check_circle</span>
-      <span>完成</span>
-    </div>
-  </div>
-  <!-- 弧狀區域：只含麥克風指示器 -->
-  <div class="ol-arc">
-    <div class="ol-mic-indicator">
-      <span class="ol-mic-pulse"></span>
-      <span class="material-symbols-outlined">mic</span>
-    </div>
-    <p class="ol-arc-hint">放開手指暫停 · 滑上方完成</p>
-  </div>
-</div>
 
 <!-- Loading Overlay（Whisper 處理中） -->
 <div id="loading-overlay" style="

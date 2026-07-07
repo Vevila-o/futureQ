@@ -138,102 +138,15 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Hold-to-record UI ── */
+/* ── Click-to-record UI ── */
 .hold-record-section {
   display: flex; flex-direction: column; align-items: center;
   gap: 10px; margin-bottom: 16px;
 }
 
-/* ── Recording overlay ── */
-.voice-overlay {
-  position: fixed; inset: 0; z-index: 500;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.22s ease;
-  backdrop-filter: blur(14px) brightness(0.65);
-  -webkit-backdrop-filter: blur(14px) brightness(0.65);
-  background: rgba(0, 0, 0, 0.25);
-}
-.voice-overlay.active { opacity: 1; }
-
-.ol-photo {
-  position: absolute;
-  top: 72px; left: 24px; right: 24px;
-  height: 170px;
-  border-radius: 20px; overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
-}
-.ol-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* zones 浮在弧狀上方 */
-.ol-zones-above {
-  position: absolute;
-  bottom: 175px;
-  left: 0; right: 0;
-  display: flex;
-  justify-content: space-evenly;
-  padding: 0 36px;
-}
-
-.ol-zone {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 5px; width: 112px; height: 84px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 2px solid var(--outline-variant);
-  color: var(--on-surface-variant);
-  font-size: calc(13px * var(--fs-scale)); font-weight: 700;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-.ol-zone .material-symbols-outlined { font-size: 30px; }
-
-.ol-zone.highlighted.ol-pause {
-  background: #fff3e0; border-color: #e9a13d; color: #e9a13d;
-  transform: scale(1.1);
-}
-.ol-zone.highlighted.ol-complete {
-  background: var(--secondary-container); border-color: var(--primary); color: var(--primary);
-  transform: scale(1.1);
-}
-
-/* 弧狀底部區域（僅含麥克風指示器） */
-.ol-arc {
-  position: absolute;
-  bottom: 0; left: -30px; right: -30px;
-  height: 165px;
-  background: var(--surface);
-  border-radius: 50% 50% 0 0 / 55px 55px 0 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 8px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-}
-
-.ol-arc-hint {
-  font-size: calc(12px * var(--fs-scale));
-  color: var(--on-surface-variant);
-  text-align: center;
-}
-
-.ol-mic-indicator {
-  position: relative;
+.record-btn-row {
   display: flex; align-items: center; justify-content: center;
-  width: 54px; height: 54px;
-}
-.ol-mic-indicator .material-symbols-outlined {
-  font-size: 32px; color: var(--error); position: relative; z-index: 1;
-}
-.ol-mic-pulse {
-  position: absolute; inset: -6px; border-radius: 50%;
-  background: rgba(179, 38, 30, 0.18);
-  animation: ol-mic-pulse 1.4s ease-in-out infinite;
-}
-@keyframes ol-mic-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.4); opacity: 0; }
+  gap: 24px;
 }
 
 .hold-mic-btn {
@@ -245,21 +158,29 @@ main {
   box-shadow: 0 4px 18px rgba(0,0,0,0.18);
   transition: transform 0.12s, box-shadow 0.12s, background 0.15s, border-color 0.15s, color 0.15s;
   user-select: none; -webkit-user-select: none;
-  touch-action: none;
 }
 .hold-mic-btn .material-symbols-outlined { font-size: 40px; }
-.hold-mic-btn.pressing {
-  transform: scale(0.88);
+.hold-mic-btn:active {
+  transform: scale(0.92);
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .hold-mic-btn.btn-paused {
   background: var(--surface); color: var(--primary);
 }
-.hold-mic-btn.btn-ended {
-  background: var(--surface);
-  border-color: var(--outline-variant); color: var(--on-surface-variant);
-  cursor: default;
+
+.btn-complete {
+  width: 84px; height: 84px; border-radius: 50%;
+  border: 3px solid var(--primary);
+  background: var(--secondary-container); color: var(--primary);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  font-size: calc(12px * var(--fs-scale)); font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  transition: transform 0.12s, opacity .15s;
 }
+.btn-complete .material-symbols-outlined { font-size: 28px; }
+.btn-complete:active { transform: scale(0.92); }
 
 .hold-hint {
   font-size: calc(13px * var(--fs-scale));

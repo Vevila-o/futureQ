@@ -59,6 +59,7 @@ urlpatterns = [
     path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
     path('api/voice-reply/', voice_views.api_voice_reply, name='api_voice_reply'),
     path('api/voice-reply/<int:reply_id>/transcribe/', voice_views.api_voice_reply_transcribe, name='api_voice_reply_transcribe'),
+    path('api/save-share-card-image/', voice_views.save_share_card_image, name='save_share_card_image'),
 
     # 共用元件
     path('header/', voice_views.header_partial, name='header_partial'),

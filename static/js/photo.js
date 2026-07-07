@@ -31,6 +31,18 @@ const saveBtn     = document.getElementById('btn-save');
 
 let currentPhotoDataUrl = null;
 let selectedPhotoFile = null;
+let isSaving = false;
+
+const saveIcon  = document.getElementById('btn-save-icon');
+const saveLabel = document.getElementById('btn-save-label');
+
+function setSaving(saving) {
+  isSaving = saving;
+  saveBtn.disabled = saving;
+  saveBtn.classList.toggle('is-saving', saving);
+  if (saveIcon)  saveIcon.textContent = saving ? 'progress_activity' : 'save';
+  if (saveLabel) saveLabel.textContent = saving ? '上傳中…' : '保存照片';
+}
 
 uploadZone.addEventListener('click', (e) => {
   if (e.target.closest('#btn-delete')) return;
@@ -102,10 +114,14 @@ uploadZone.addEventListener('drop', (e) => {
 saveBtn.addEventListener('click', async (e) => {
   e.preventDefault();
 
+  if (isSaving) return;
+
   if (!selectedPhotoFile) {
     showToast('請先選擇照片', true);
     return;
   }
+
+  setSaving(true);
 
   if (currentPhotoDataUrl) {
     try {
@@ -135,9 +151,11 @@ saveBtn.addEventListener('click', async (e) => {
       }, 500);
     } else {
       showToast('照片儲存失敗，請再試一次', true);
+      setSaving(false);
     }
   } catch (error) {
     showToast('連線失敗，請再試一次', true);
+    setSaving(false);
   }
 });
 

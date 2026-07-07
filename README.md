@@ -11,6 +11,7 @@
 - [專案架構](#專案架構)
 - [頁面路由](#頁面路由)
 - [使用者流程](#使用者流程)
+- [登入與後台](#登入與後台)
 - [資料庫設計](#資料庫設計)
 - [環境需求](#環境需求)
 - [快速開始](#快速開始)
@@ -21,9 +22,11 @@
 
 ## 專案介紹
 
-聲影日記是一個專為長者設計的語音日記系統。使用者可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），由 OpenAI API 生成日記標題與 AI 溫暖回應，並以本地認知分析演算法評估六個認知維度。首頁月曆顯示歷史日記，點擊可回放語音；動態回顧頁可瀏覽昨天與去年的日記。
+聲影日記是一個專為長者設計的語音日記系統。使用者登入帳號後可以上傳照片並錄製語音，系統會自動將語音轉換成文字（透過本地 Whisper 模型），由 OpenAI API 生成日記標題與 AI 溫暖回應，並以本地認知分析演算法評估六個認知維度。首頁月曆只顯示自己的歷史日記，點擊可回放語音；動態回顧頁可瀏覽自己昨天與去年的日記。
 
-錄音頁採用**長按拖曳手勢**（類似微信語音輸入）：長按麥克風開始錄音，同時全螢幕模糊背景出現，照片保持清晰，底部弧狀白色區域顯示操作選項；滑向上方的「暫停」或「完成」按鈕後放開即觸發對應動作，直接放開則預設暫停。錄音完成後波形區域原地轉為內嵌迷你播放器，可試聽後再保存。
+完成日記後，AI 會把內容改寫成第一人稱短文並分類到「食衣住行育樂」六大生活類別，存成一則貼文，分享到社群動態頁讓朋友用語音留言加油打氣。另外還有「大腦訓練遊戲」與對應的成就 / 點數商城頁面。
+
+錄音頁採用**點擊式操作**：點擊麥克風按鈕開始錄音，按鈕圖示轉為「暫停」，旁邊浮現「完成」按鈕；再次點擊麥克風可暫停 / 繼續錄音，點擊「完成」即結束錄音。錄音完成後波形區域原地轉為內嵌迷你播放器，可試聽後再保存。
 
 ---
 
@@ -33,9 +36,10 @@
 |---|---|
 | 後端框架 | Django 5.2 |
 | 資料庫 | SQLite（本地開發）|
+| 身份驗證 | Django Session-based Auth，自訂 `User` model（`AUTH_USER_MODEL = 'Voice.User'`）|
 | 語音辨識 | OpenAI Whisper（本地執行，base model）|
 | 認知分析 | 本地演算法（`Voice/utils.py`）|
-| AI 生成 | OpenAI API（標題 + 溫暖回應 + 追問對話）|
+| AI 生成 | OpenAI API（標題 + 溫暖回應 + 追問對話 + 分享貼文改寫 + 食衣住行育樂分類）|
 | 前端 | HTML / CSS / JavaScript（無框架）|
 | 音訊解碼 | FFmpeg |
 
@@ -56,11 +60,12 @@ voiceDiary/
 ├── voiceDiary/                    # Django 專案設定
 │   ├── settings.py                # 全域設定（含 CSRF_TRUSTED_ORIGINS for ngrok）
 │   ├── urls.py                    # 全域路由
+│   ├── middleware.py              # DualSessionMiddleware：/admin/ 使用獨立 session cookie
 │   ├── wsgi.py
 │   └── asgi.py
 │
 ├── Voice/                         # 主要 App
-│   ├── models.py                  # 資料表定義（User、DiaryEntry、GameSession 等）
+│   ├── models.py                  # 資料表定義（User、DiaryEntry、VoiceReply、Diarypost 等）
 │   ├── views.py                   # 頁面與 API 邏輯
 │   ├── utils.py                   # 本地認知分析演算法（六維度評分）
 │   ├── admin.py                   # 後台管理設定
@@ -77,13 +82,15 @@ voiceDiary/
 │   │   ├── index.css              # 首頁 / 共用樣式（CSS 變數、主題色）
 │   │   ├── nav.css                # 底部導覽列
 │   │   ├── header.css             # 頁首樣式
-│   │   ├── photo.css              # 上傳照片頁
-│   │   ├── voice.css              # 錄音頁（含長按 overlay、弧狀選項區、內嵌播放器）
-│   │   ├── finish.css             # 完成頁
+│   │   ├── login.css              # 登入頁
+│   │   ├── photo.css              # 上傳照片頁（含保存按鈕上傳中旋轉動畫）
+│   │   ├── voice.css              # 錄音頁（點擊式麥克風 / 完成按鈕、內嵌播放器）
+│   │   ├── finish.css             # 完成頁（含 AI 追問聊天氣泡、分享卡片預覽）
 │   │   ├── review.css             # 動態回顧頁
 │   │   ├── dashboard.css          # 儀表板頁
 │   │   ├── member.css             # 會員頁
 │   │   ├── share.css              # 分享頁
+│   │   ├── community.css          # 社群動態頁
 │   │   ├── game.css               # 遊戲首頁（我的成績統計）
 │   │   └── market.css             # 整理菜籃遊戲頁
 │   ├── js/
@@ -91,32 +98,40 @@ voiceDiary/
 │   │   ├── nav.js                 # 底部導覽列動態 + 路由
 │   │   ├── header.js              # 首頁頁首
 │   │   ├── headerback.js          # 含返回鍵頁首
-│   │   ├── photo.js               # 照片上傳邏輯（上傳時重命名為 voice_photo.jpg）
-│   │   ├── voice.js               # 錄音邏輯（長按拖曳手勢、全螢幕 overlay、內嵌播放器、返回警告）
+│   │   ├── photo.js               # 照片上傳邏輯（上傳時重命名為 voice_photo.jpg、防重複送出、保存按鈕 loading 動畫）
+│   │   ├── voice.js               # 錄音邏輯（點擊開始 / 暫停 / 完成、內嵌播放器、返回警告）
 │   │   ├── finish.js              # AI 對話 + 分享邏輯（錄音時隱藏略過按鈕）
 │   │   ├── review.js              # 動態回顧邏輯 + 語音播放
 │   │   ├── dashboard.js           # 儀表板圖表邏輯
-│   │   ├── share.js               # 分享頁邏輯（LINE/FB/儲存圖片/複製連結）
+│   │   ├── share.js               # 分享頁邏輯（LINE/FB/儲存圖片/複製連結/語音加油錄製）
+│   │   ├── community.js           # 社群動態頁邏輯（展開留言、語音加油播放）
 │   │   ├── recorder.js            # 備用錄音模組
 │   │   ├── game.js                # 遊戲首頁互動（愛心按讚等）
+│   │   ├── achievements.js        # 成就頁互動
+│   │   ├── shop.js                # 點數商城互動
 │   │   └── market.js              # 整理菜籃遊戲邏輯（計分、連續答對加乘、反應時間/猶豫紀錄）
 │   └── img/                       # 靜態圖片資源
 │
 ├── media/                         # 使用者上傳的檔案（不上傳 git）
 │   ├── audio/                     # 語音檔（.webm / .mp3）
-│   └── photo/                     # 照片（上傳時統一命名為 voice_photo.jpg）
+│   ├── photo/                     # 照片（上傳時統一命名為 voice_photo.jpg）
+│   └── voice_replies/             # 社群語音加油回覆檔
 │
 ├── templates/                     # HTML 頁面
-│   ├── index.html                 # 首頁（月曆 + 語音播放 Modal）
+│   ├── login.html                 # 登入頁
+│   ├── index.html                 # 首頁（月曆 + 語音播放 Modal，僅顯示自己的日記）
 │   ├── photo.html                 # 上傳照片
-│   ├── voice.html                 # 錄音（長按手勢、全螢幕 overlay、弧狀操作區、內嵌播放器、loading overlay）
-│   ├── finish.html                # 完成 + AI 對話
-│   ├── review.html                # 動態回顧（含語音播放 Modal）
+│   ├── voice.html                 # 錄音（點擊式麥克風 / 完成按鈕、內嵌播放器、loading overlay）
+│   ├── finish.html                # 完成頁（AI 對話 + 分享卡片預覽）
+│   ├── review.html                # 動態回顧（含語音播放 Modal，僅顯示自己的日記）
 │   ├── dashboard.html             # 認知分析儀表板
 │   ├── loading.html               # 計算等待畫面（logo + 旋轉齒輪）
 │   ├── member.html                # 會員頁面（個人資料 + 連續天數）
-│   ├── share.html                 # 分享頁（卡片 + OG tags + 操作按鈕）
+│   ├── share.html                 # 分享頁（卡片 + OG tags + 操作按鈕 + 語音加油錄製）
+│   ├── community.html             # 社群動態頁（僅顯示自己分享出去的日記與收到的語音加油）
 │   ├── game.html                  # 遊戲首頁（問候語、每日建議、我的成績統計）
+│   ├── achievements.html          # 成就頁
+│   ├── shop.html                  # 點數商城頁
 │   ├── market.html                # 整理菜籃遊戲（拖曳分類、四階段）
 │   ├── nav.html                   # 底部導覽列（共用元件）
 │   ├── header.html                # 首頁頁首（共用元件）
@@ -131,27 +146,33 @@ voiceDiary/
 
 | 路徑 | 說明 |
 |---|---|
-| `/index/` | 首頁（月曆 + 日記入口）今天已完成時顯示完成狀態 |
+| `/`、`/login/` | 登入頁（已登入會自動導向 `next` 或 `/index/`）|
+| `/logout/` | 登出，導回登入頁 |
+| `/index/` | 首頁（月曆 + 日記入口，只顯示自己的日記）今天已完成時顯示完成狀態 |
 | `/dashboard/` | 認知分析儀表板 |
 | `/uploadPhoto/` | 上傳照片 |
 | `/voice/` | 語音錄音（錄音中離開會警告） |
-| `/finish/` | 完成頁面 + AI 三輪對話 |
-| `/review/` | 動態回顧（昨天 / 去年的今天）|
+| `/finish/` | 完成頁面 + AI 三輪對話 + 分享卡片預覽 |
+| `/review/` | 動態回顧（昨天 / 去年的今天，只顯示自己的日記）|
 | `/member/` | 會員頁面（個人資料、日記數、連續天數）|
 | `/loading/` | 計算等待畫面（Whisper 處理期間的安撫畫面）|
-| `/share/` | 日記分享頁（第一人稱內文、hashtag、OG 預覽、儲存圖片）|
+| `/share/` | 日記分享頁（第一人稱內文、hashtag、OG 預覽、儲存圖片、語音加油錄製）|
 | `/share/?preview=1` | 同上，無 header / nav，供 LINE / Facebook 接收方瀏覽 |
+| `/community/` | 社群動態頁（只顯示自己分享出去的日記，以及朋友回覆的語音加油）|
 | `/game/` | 遊戲首頁（我的成績：最高分 / 累計次數 / 連續天數 / 最近紀錄，依 `GameSession` 動態計算）|
+| `/achievements/` | 成就頁 |
+| `/shop/` | 點數商城頁 |
 | `/market/` | 整理菜籃遊戲（拖曳分類，四階段，答對計分 + 連續答對加乘）|
-| `/admin/` | Django 後台 |
+| `/admin/` | Django 後台（獨立 session，見[登入與後台](#登入與後台)）|
 | **API** | |
 | `/saveDiary/` | 儲存照片、建立日記（POST）|
 | `/updateDiaryAudio/` | 更新語音檔 + Whisper 轉文字 + AI 生成標題與回應（POST）|
 | `/api/ai-first-question/` | 生成首問 + 回傳完整對話歷史（POST）|
-| `/share/` | 日記分享頁（GET，帶 `diary_id`）|
 | `/api/ai-chat/` | AI 文字對話（POST，目前前端未使用）|
 | `/api/upload-chat-voice/` | AI 語音對話（Whisper + GPT + 存 AiConversation，POST）|
 | `/api/save-game-result/` | 儲存一場遊戲的成績（總分、正確率、平均反應時間、猶豫次數，POST）|
+| `/api/voice-reply/` | 朋友對某篇日記送出語音加油（POST）|
+| `/api/voice-reply/<reply_id>/transcribe/` | 將語音加油轉成文字（POST，Whisper）|
 | **共用元件** | |
 | `/nav/` | 底部導覽列 HTML |
 | `/header/` | 首頁頁首 HTML |
@@ -162,16 +183,17 @@ voiceDiary/
 ## 使用者流程
 
 ```
+登入 (/login/)
+    ↓ 帳號密碼驗證 → 建立 session → 導向 /index/（或登入前想去的頁面）
 首頁（月曆）
     ↓ 今天已完成 → 顯示「已完成今天的紀錄」，無法重複進入
     ↓ 點擊「今天」
 上傳照片 (/uploadPhoto/)
-    ↓ 選擇照片（自動重命名為 voice_photo.jpg）→ 儲存 → 建立 DiaryEntry
+    ↓ 選擇照片（自動重命名為 voice_photo.jpg）→ 點擊「保存照片」（按鈕顯示上傳中旋轉動畫，防止重複送出）→ 儲存 → 建立 DiaryEntry
 錄音 (/voice/?diary_id=...)
-    ↓ 長按麥克風按鈕 → 全螢幕模糊背景出現（照片保持清晰）
-    ↓ 底部弧狀白色區域 + 上方浮現「暫停」「完成」按鈕
-    ↓ 滑向「暫停」放開 → 暫停 ／ 滑向「完成」放開 → 結束錄音
-    ↓ 直接放開（不滑動）→ 預設暫停
+    ↓ 點擊麥克風按鈕 → 開始錄音，按鈕圖示轉為「暫停」，旁邊浮現「完成」按鈕
+    ↓ 再次點擊麥克風 → 暫停 ／ 繼續錄音
+    ↓ 點擊「完成」→ 結束錄音（達 3 分鐘上限會自動結束）
     ↓ 錄音完成 → 波形區原地變成迷你播放器（播放鍵 + 進度條 + 時間）可試聽
     ↓ 錄音中離開 → 警告「錄音將丟失」
     ↓ 點擊「保存錄音」→ 顯示 loading overlay（齒輪旋轉）
@@ -183,12 +205,24 @@ voiceDiary/
     ↓ 使用者錄音回答 → 右側三點氣泡 → 後端 Whisper + GPT → 左側三點氣泡 → AI 回覆
     ↓ 最多三輪，對話存入 AiConversation；刷新後完整還原；達上限後按鈕鎖定
     ↓ 可略過對話
+    ↓ AI 把日記內容改寫成第一人稱短文，分類到「食衣住行育樂」六類其中一類，存成一則 Diarypost
     ↓ 點擊「LINE 分享」或「Facebook 分享」
 分享頁 (/share/?diary_id=...)
-    ↓ AI 生成第一人稱內文 + 3 個 hashtag
+    ↓ 顯示 AI 生成的第一人稱內文 + 3 個 hashtag
     ↓ 照片卡片 + LINE / Facebook 分享、儲存圖片、複製連結
+    ↓ 朋友開啟分享連結（?preview=1）可錄製「語音加油」回覆
+社群動態頁 (/community/)
+    ↓ 只顯示自己分享出去的日記，展開可看到朋友的語音加油留言（可一鍵轉文字）
 首頁（今天的日記標記在月曆上，顯示已完成狀態）
 ```
+
+---
+
+## 登入與後台
+
+- 所有頁面（`/index/`、`/review/`、`/community/` 等）都會依照目前登入的使用者過濾資料，只顯示自己的日記；若未登入則退回 `demo_elder` 帳號（若存在）供展示用。
+- `voiceDiary/middleware.py` 的 `DualSessionMiddleware` 讓 `/admin/` 使用獨立的 `admin_sessionid` cookie，跟前台的 `sessionid` 分開。這樣在瀏覽器同時開著前台跟後台時，登入其中一邊不會把另一邊的登入狀態蓋掉。
+- 新使用者預設 `is_staff = False`，無法進入 `/admin/`；要讓帳號能登入後台，需要在 Django admin 的使用者權限裡手動勾選「工作人員狀態」。
 
 ---
 
@@ -268,6 +302,30 @@ voiceDiary/
 | avg_reaction_time | DecimalField | 平均反應時間（秒）|
 | hesitation_count | IntegerField | 猶豫次數（答錯重來 / 拖曳中猶豫切換籃子 / 反應過久）|
 | played_at | DateTimeField | 遊玩時間 |
+
+### VoiceReply（語音加油）
+
+朋友在分享頁（`/share/?preview=1`）錄音回覆某篇日記時寫入一筆。
+
+| 欄位 | 類型 | 說明 |
+|---|---|---|
+| diary | ForeignKey → DiaryEntry（`related_name="voice_replies"`）| 對應日記 |
+| audio_file | FileField | 語音加油檔案（上傳至 `media/voice_replies/`）|
+| sender_name | CharField | 送出者暱稱（預設「匿名朋友」）|
+| transcribed_text | TextField | 語音轉文字結果（呼叫轉文字 API 後才有值）|
+| created_at | DateTimeField | 送出時間 |
+
+### Diarypost（AI 貼文）
+
+`share_page` / `finish_page` 產生分享內文時，會把結果連同分類標籤存一筆（同一篇日記重複產生只會更新，不會重複建立）。
+
+| 欄位 | 類型 | 說明 |
+|---|---|---|
+| user | ForeignKey → User | 貼文所屬使用者 |
+| diary_title | ForeignKey → DiaryEntry（`related_name="diary_posts"`）| 對應日記 |
+| post | TextField | AI 改寫後的第一人稱貼文內容 |
+| category | CharField（choices）| 食 / 衣 / 住 / 行 / 育 / 樂，AI 依日記內容分類 |
+| created_at | DateTimeField | 建立時間 |
 
 ---
 
@@ -397,6 +455,8 @@ CSRF_TRUSTED_ORIGINS=https://你的網域.ngrok-free.app
 - 認知分析結果
 - AI 對話紀錄
 - 遊戲成績紀錄（GameSession）
+- 語音加油紀錄（VoiceReply）
+- AI 貼文（Diarypost，可依食衣住行育樂分類篩選）
 
 ---
 

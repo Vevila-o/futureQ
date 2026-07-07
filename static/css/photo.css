@@ -143,6 +143,10 @@ main {
 }
 .btn-primary:disabled     { opacity: .4; cursor: not-allowed; }
 .btn-primary:not(:disabled):active { opacity: .8; }
+.btn-primary.is-saving     { opacity: .85; cursor: wait; }
+.btn-primary.is-saving .material-symbols-outlined { animation: btn-save-spin .8s linear infinite; }
+
+@keyframes btn-save-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .btn-outline {
   width: 100%; height: 56px; border-radius: 999px;

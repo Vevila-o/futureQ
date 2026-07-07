@@ -12,6 +12,8 @@ from django.core.files.base import ContentFile
 from django.http import JsonResponse
 import whisper
 import os
+import subprocess
+import tempfile
 from django.conf import settings
 # 🌐 ✨ 引入 OpenAI 官方庫
 from openai import OpenAI
@@ -160,37 +162,6 @@ def ai_firstQ(request):
 
     return JsonResponse({'status': 'success', 'question': question, 'remaining': 3})
 
-# 無效呼叫
-# def ai_chat_api(request):
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': '只接受 POST 請求'})
-    try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '')
-
-        # 取得目前次數，預設為 0
-        chat_count = request.session.get('chat_count', 0)
-
-        # 後端第一道防線：滿 3 次直接攔截
-        if chat_count >= 3:
-            return JsonResponse({'status': 'error', 'message': '已經達到今日問答上限（3次）囉！', 'remaining': 0})
-
-        chat_count += 1
-        request.session['chat_count'] = chat_count
-        remaining = 3 - chat_count
-
-        # 3次有問有答暖心台詞
-        ai_reply = ""
-        if chat_count == 1:
-            ai_reply = "聽起來今天過得很開心呢！可以再跟我說說，你最喜歡照片裡的哪個部分嗎？"
-        elif chat_count == 2:
-            ai_reply = "原來是和孫子一起去公園呀，那你們當時有做什麼有趣的事情嗎？"
-        elif chat_count == 3:
-            ai_reply = "這真是很溫暖的回憶，今天這件事讓你心情如何呢？"
-
-        return JsonResponse({'status': 'success', 'reply': ai_reply, 'chat_count': chat_count, 'remaining': remaining})
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 # 🎙️ ✨ 終極升級完全體：接收聊天室真實語音 ➡️ Whisper 轉文字 ➡️ OpenAI 智慧溫暖且籠統的回應
@@ -431,6 +402,9 @@ def share_page(request):
     streak_days = _compute_streak_days(diary.user)
     first_person_text, hashtags = _generate_share_content(diary)
 
+    card_post = diary.diary_posts.first()
+    card_image_url = card_post.card_image.url if card_post and card_post.card_image else ""
+
     is_preview = request.GET.get('preview') == '1'
 
     return render(request, "share.html", {
@@ -438,8 +412,28 @@ def share_page(request):
         "first_person_text": first_person_text,
         "hashtags": hashtags,
         "streak_days": streak_days,
+        "card_image_url": card_image_url,
         "is_preview": is_preview,
     })
+
+
+# 儲存分享卡片截圖（finish 頁按下分享時，前端用 html2canvas 產生後上傳）
+@csrf_exempt
+def save_share_card_image(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "只接受 POST"}, status=405)
+
+    diary_id = request.POST.get("diary_id")
+    image_file = request.FILES.get("card_image")
+    if not diary_id or not image_file:
+        return JsonResponse({"status": "error", "message": "缺少 diary_id 或圖片"}, status=400)
+
+    diary = get_object_or_404(DiaryEntry, pk=diary_id)
+    post, _ = Diarypost.objects.get_or_create(diary_title=diary, defaults={"user": diary.user})
+    post.card_image = image_file
+    post.save(update_fields=["card_image"])
+
+    return JsonResponse({"status": "ok", "card_image_url": post.card_image.url})
 
 
 # 錄音頁
@@ -528,6 +522,38 @@ def save_diary(request):
 
     return redirect("upload_photo")
 
+def _convert_audio_to_mp3(uploaded_file):
+    """把上傳的錄音（webm 等）轉成 mp3；iOS 對 webm 播放支援不完整。轉檔失敗回傳 None。"""
+    uploaded_file.seek(0)
+    suffix = os.path.splitext(uploaded_file.name or "")[1] or ".webm"
+
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as src:
+        for chunk in uploaded_file.chunks():
+            src.write(chunk)
+        src_path = src.name
+
+    dst_path = src_path + ".mp3"
+    mp3_bytes = None
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", src_path, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "192k", dst_path],
+            check=True,
+            capture_output=True,
+        )
+        with open(dst_path, "rb") as f:
+            mp3_bytes = f.read()
+    except Exception as e:
+        print(f"音檔轉換 mp3 失敗: {e}")
+    finally:
+        if os.path.exists(src_path):
+            os.remove(src_path)
+        if os.path.exists(dst_path):
+            os.remove(dst_path)
+        uploaded_file.seek(0)
+
+    return ContentFile(mp3_bytes) if mp3_bytes else None
+
+
 #儲存日記錄音
 def update_diary_audio(request):
     if request.method == "POST":
@@ -543,7 +569,11 @@ def update_diary_audio(request):
             }, status=400)
 
         try:
-            diary.audio_file = audio_file
+            mp3_file = _convert_audio_to_mp3(audio_file)
+            if mp3_file:
+                diary.audio_file.save("diary_audio.mp3", mp3_file, save=False)
+            else:
+                diary.audio_file = audio_file
             diary.status = DiaryEntry.Status.PROCESSING
             diary.save()
 
@@ -841,11 +871,13 @@ def api_voice_reply(request):
         return JsonResponse({"status": "error", "message": "缺少音訊檔"}, status=400)
 
     diary = get_object_or_404(DiaryEntry, pk=diary_id)
-    reply = VoiceReply.objects.create(
-        diary=diary,
-        audio_file=audio_file,
-        sender_name=sender_name,
-    )
+    mp3_file = _convert_audio_to_mp3(audio_file)
+    reply = VoiceReply(diary=diary, sender_name=sender_name)
+    if mp3_file:
+        reply.audio_file.save("voice_reply.mp3", mp3_file, save=False)
+    else:
+        reply.audio_file = audio_file
+    reply.save()
 
     return JsonResponse({
         "status": "ok",

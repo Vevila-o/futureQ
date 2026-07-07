@@ -28,6 +28,9 @@
 
     <main class="{% if is_preview %}preview-mode{% endif %}" data-diary-id="{{ diary.id }}">
       <!-- 分享卡片 -->
+      {% if card_image_url %}
+      <img class="share-card share-card-image" id="share-card" src="{{ card_image_url }}" alt="日記分享卡片" crossorigin="anonymous" />
+      {% else %}
       <div class="share-card" id="share-card">
         {% if diary.photo %}
         <div class="share-card-photo">
@@ -61,6 +64,7 @@
           聲影日記
         </div>
       </div>
+      {% endif %}
 
       {% if is_preview %}
       <!-- 語音加油區塊（開放給非本系統用戶，透過分享連結進來錄音） -->

@@ -56,12 +56,7 @@
   var holdMicIcon  = document.getElementById("hold-mic-icon");
   var holdHint     = document.getElementById("hold-hint");
   var btnRestart   = document.getElementById("btn-restart");
-
-  // Overlay refs
-  var voiceOverlay = document.getElementById("voice-overlay");
-  var olPhotoImg   = document.getElementById("ol-photo-img");
-  var zonePause    = document.getElementById("ol-zone-pause");
-  var zoneComplete = document.getElementById("ol-zone-complete");
+  var btnComplete  = document.getElementById("btn-complete");
 
   // Player refs (inside waveform)
   var waveBarsEl    = document.getElementById("wave-bars");
@@ -73,9 +68,6 @@
   var progressTrack = document.getElementById("wave-progress-track");
   var waveCurrentT  = document.getElementById("wave-current-time");
   var waveTotalT    = document.getElementById("wave-total-time");
-
-  var pressing = false;
-  var currentZone = null;
 
   // ── Time formatting ───────────────────────────────────────────────────────
 
@@ -105,9 +97,7 @@
     remaining--;
     if (remaining <= 0) {
       remaining = 0;
-      stopTimer();
-      state = "ended";
-      renderStatus();
+      endRecording();
       return;
     }
     renderStatus();
@@ -120,36 +110,42 @@
     elDot.classList.toggle("pulsing", state === "recording");
     if (elWave) elWave.classList.toggle("active", state === "recording");
 
-    holdBtn.classList.remove("btn-paused", "btn-ended");
+    holdBtn.classList.remove("btn-paused");
 
     if (state === "idle") {
       elLabel.textContent = "尚未開始";
       elDot.style.backgroundColor = "var(--outline-variant)";
       holdMicIcon.textContent = "mic";
-      holdHint.textContent = "長按開始錄音";
+      holdHint.textContent = "點擊開始錄音";
+      holdBtn.style.display = "flex";
+      if (btnComplete) btnComplete.style.display = "none";
       if (btnRestart) btnRestart.style.display = "none";
       showWaveBars();
     } else if (state === "recording") {
       elLabel.textContent = "錄音中";
       elDot.style.backgroundColor = "var(--error)";
-      holdMicIcon.textContent = "mic";
-      holdHint.textContent = "長按以暫停或完成";
+      holdMicIcon.textContent = "pause";
+      holdHint.textContent = "點擊暫停，或按完成結束錄音";
+      holdBtn.style.display = "flex";
+      if (btnComplete) btnComplete.style.display = "flex";
       if (btnRestart) btnRestart.style.display = "none";
       showWaveBars();
     } else if (state === "paused") {
       elLabel.textContent = "已暫停";
       elDot.style.backgroundColor = "#e9a13d";
       holdMicIcon.textContent = "mic";
-      holdHint.textContent = "長按繼續錄音";
+      holdHint.textContent = "點擊繼續錄音，或按完成結束錄音";
       holdBtn.classList.add("btn-paused");
+      holdBtn.style.display = "flex";
+      if (btnComplete) btnComplete.style.display = "flex";
       if (btnRestart) btnRestart.style.display = "inline-block";
       showWaveBars();
     } else if (state === "ended") {
       elLabel.textContent = "錄音完成";
       elDot.style.backgroundColor = "var(--primary)";
-      holdMicIcon.textContent = "check";
       holdHint.textContent = "可試聽後保存";
-      holdBtn.classList.add("btn-ended");
+      holdBtn.style.display = "none";
+      if (btnComplete) btnComplete.style.display = "none";
       if (btnRestart) btnRestart.style.display = "inline-block";
       showPlayer();
     }
@@ -169,31 +165,6 @@
     if (wavePlayerEl) wavePlayerEl.style.display = "flex";
   }
 
-  // ── Zone detection ────────────────────────────────────────────────────────
-
-  function getPos(e) {
-    if (e.touches && e.touches.length > 0) {
-      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-    if (e.changedTouches && e.changedTouches.length > 0) {
-      return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    }
-    return { x: e.clientX, y: e.clientY };
-  }
-
-  function isInEl(el, x, y) {
-    var r = el.getBoundingClientRect();
-    return x >= r.left - 12 && x <= r.right + 12 && y >= r.top - 12 && y <= r.bottom + 12;
-  }
-
-  function updateZoneHighlight(x, y) {
-    var inP = isInEl(zonePause, x, y);
-    var inC = isInEl(zoneComplete, x, y);
-    zonePause.classList.toggle("highlighted", inP);
-    zoneComplete.classList.toggle("highlighted", inC);
-    currentZone = inP ? "pause" : (inC ? "complete" : null);
-  }
-
   // ── Recording actions ─────────────────────────────────────────────────────
 
   async function startRecording() {
@@ -203,12 +174,15 @@
       recordedBlob = null;
       resetPlayer();
 
-      mediaRecorder = new MediaRecorder(activeStream);
+      var mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+                   : MediaRecorder.isTypeSupported("audio/mp4")  ? "audio/mp4"
+                   : "audio/ogg";
+      mediaRecorder = new MediaRecorder(activeStream, { mimeType: mimeType });
       mediaRecorder.ondataavailable = function (e) {
         if (e.data.size > 0) audioChunks.push(e.data);
       };
       mediaRecorder.onstop = function () {
-        recordedBlob = new Blob(audioChunks, { type: "audio/webm" });
+        recordedBlob = new Blob(audioChunks, { type: mimeType });
         initPlayer(recordedBlob);
         activeStream.getTracks().forEach(function (t) { t.stop(); });
       };
@@ -311,68 +285,23 @@
     });
   }
 
-  // ── Hold gesture handlers ─────────────────────────────────────────────────
+  // ── Click handlers ────────────────────────────────────────────────────────
 
-  holdBtn.addEventListener("touchstart", onPressStart, { passive: false });
-  holdBtn.addEventListener("mousedown",  onPressStart);
-
-  async function onPressStart(e) {
-    e.preventDefault();
-    if (state === "ended") return;
-
-    pressing = true;
-    currentZone = null;
-    holdBtn.classList.add("pressing");
-
-    // 同步照片到 overlay，顯示 overlay
-    var mainImg = document.querySelector(".prompt-photo img");
-    if (olPhotoImg && mainImg) olPhotoImg.src = mainImg.src;
-    voiceOverlay.classList.add("active");
-
+  holdBtn.addEventListener("click", function () {
     if (state === "idle") {
-      await startRecording();
-      if (!pressing && state === "recording") finishPress();
+      startRecording();
+    } else if (state === "recording") {
+      pauseRecording();
     } else if (state === "paused") {
       resumeRecording();
     }
-  }
-
-  document.addEventListener("touchmove", function (e) {
-    if (!pressing) return;
-    e.preventDefault();
-    var pos = getPos(e);
-    updateZoneHighlight(pos.x, pos.y);
-  }, { passive: false });
-
-  document.addEventListener("mousemove", function (e) {
-    if (!pressing) return;
-    updateZoneHighlight(e.clientX, e.clientY);
   });
 
-  document.addEventListener("touchend",    onPressEnd);
-  document.addEventListener("touchcancel", onPressEnd);
-  document.addEventListener("mouseup",     onPressEnd);
-
-  function onPressEnd() {
-    if (!pressing) return;
-    pressing = false;
-    finishPress();
-  }
-
-  function finishPress() {
-    holdBtn.classList.remove("pressing");
-    voiceOverlay.classList.remove("active");
-    zonePause.classList.remove("highlighted");
-    zoneComplete.classList.remove("highlighted");
-
-    if (state !== "recording") { currentZone = null; return; }
-
-    if (currentZone === "complete") {
+  if (btnComplete) {
+    btnComplete.addEventListener("click", function () {
+      if (state !== "recording" && state !== "paused") return;
       endRecording();
-    } else {
-      pauseRecording();
-    }
-    currentZone = null;
+    });
   }
 
   if (btnRestart) {
@@ -393,9 +322,13 @@
     }
     if (!recordedBlob) { alert("尚未錄到音檔"); return; }
 
+    var recordExt = recordedBlob.type.indexOf("mp4") !== -1 ? "mp4"
+                   : recordedBlob.type.indexOf("ogg") !== -1 ? "ogg"
+                   : "webm";
+
     var formData = new FormData();
     formData.append("diary_id", diaryId);
-    formData.append("audio_file", recordedBlob, "diary_audio.webm");
+    formData.append("audio_file", recordedBlob, "diary_audio." + recordExt);
     formData.append("transcription", "這裡之後會放 Whisper 語音轉文字結果");
 
     var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
