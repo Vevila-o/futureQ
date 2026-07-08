@@ -6,9 +6,42 @@
   <title>憶智防線 - 整理菜籃</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../static/css/index.css">
-
   <link rel="stylesheet" href="../static/css/header.css">
   <link rel="stylesheet" href="../static/css/market.css">
+
+  <style>
+    /* 💡 新增：橘金色點數回饋膠囊卡片樣式 */
+    .mkt-end-points-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background-color: #FFF9E6;  /* 暖心淺金黃色底 */
+      border: 2px solid #FFE082;  /* 金黃色邊框 */
+      color: #F57C00;             /* 飽滿橘金色字體，長輩看得很清楚 */
+      font-size: 26px;            /* 大字級突顯成就感 */
+      font-weight: 900;           /* 特粗體 */
+      padding: 6px 24px;
+      border-radius: 50px;        /* 完美的圓潤膠囊外觀 */
+      margin: 10px auto 16px auto;
+      box-shadow: 0 4px 12px rgba(245, 124, 0, 0.18);
+      box-sizing: border-box;
+      animation: popInBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; /* 舒適的彈跳登場動畫 */
+    }
+
+    .mkt-end-points-badge .material-symbols-outlined {
+      font-size: 28px;
+      color: #FFB300;             /* 閃亮金幣圖標 */
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* 點數卡片 Q 彈登場動畫軌道 */
+    @keyframes popInBounce {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
 </head>
 <body>
 
@@ -78,7 +111,16 @@
   <div class="mkt-end-box">
     <div class="mkt-end-icon" id="endIcon">🎉</div>
     <h2 class="mkt-end-title">遊戲結束！</h2>
+    
+    <!-- 總分顯示處 -->
     <p class="mkt-end-score" id="endScore"></p>
+    
+    <!-- 嵌入總分正下方的橘金色點數獎勵卡片 -->
+    <div class="mkt-end-points-badge" id="endPointsBadge" style="display: none;">
+      <span class="material-symbols-outlined">database</span>
+      獲得 <span id="endPointsValue">+0</span> 點
+    </div>
+
     <p class="mkt-end-msg"   id="endMsg"></p>
 
     <div class="mkt-end-stats">
@@ -96,16 +138,46 @@
       </div>
     </div>
 
-    <button class="mkt-end-btn"           id="btnReplay">再玩一次</button>
+    <button class="mkt-end-btn"                 id="btnReplay">再玩一次</button>
     <button class="mkt-end-btn mkt-end-btn-sec" id="btnBack">回到遊戲首頁</button>
   </div>
 </div>
 
-
-
 <script src="../static/js/headerback.js"></script>
-
 <script src="../static/js/market.js"></script>
+
+<!-- 自動化點數 -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const endOverlay = document.getElementById('endOverlay');
+    const endScore = document.getElementById('endScore');
+    const pointsBadge = document.getElementById('endPointsBadge');
+    const pointsValue = document.getElementById('endPointsValue');
+
+    if (endOverlay && endScore && pointsBadge && pointsValue) {
+      // 監聽結算視窗的出現狀態
+      const observer = new MutationObserver(() => {
+        if (endOverlay.style.display !== 'none') {
+          // 抓取結算文字中的總分數字
+          const scoreText = endScore.innerText || "";
+          const match = scoreText.match(/\d+/);
+          const finalScore = match ? parseInt(match[0]) : 0;
+
+          // 點數友善計算公式（基本 10 點，每 10 分換 1 點，最高 50 點）
+          const calculatedPoints = Math.max(10, Math.min(50, Math.round(finalScore * 0.1)));
+
+          // 注入數值並華麗現身
+          pointsValue.innerText = `+${calculatedPoints}`;
+          pointsBadge.style.display = 'inline-flex';
+        } else {
+          pointsBadge.style.display = 'none'; // 重新開始時重置隱藏
+        }
+      });
+
+      observer.observe(endOverlay, { attributes: true, attributeFilter: ['style'] });
+    }
+  });
+</script>
 
 </body>
 </html>

@@ -23,16 +23,19 @@
       box-sizing: border-box;
     }
 
+    /* 讓成就入口卡片點擊時有舒適的 Q 彈回饋感 */
     .achieve-entry-card {
       text-decoration: none;
       display: flex !important;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: transform 0.1s;
+      transition: transform 0.1s, background-color 0.2s ease;
+      cursor: pointer;
     }
     .achieve-entry-card:active {
       transform: scale(0.96);
+      background-color: #DDEEE4 !important; /* 點擊時顏色稍微深一點點點點 */
     }
 
     /* 右下角商城懸浮按鈕 CSS 樣式 */
@@ -153,11 +156,11 @@
         <span class="score-stat-label">連續天數</span>
       </div>
 
-      <!-- 我的成就：動態黏上「個」字 -->
-      <a href="/achievements/" class="achivement achieve-entry-card">
-        <span class="material-symbols-outlined achivement-icon">military_tech</span>
-        <span class="achivement-score">{{ unlocked_achievements_count }}個</span>
-        <span class="achivment-label ">我的成就 ➔</span>
+      <!-- 💡 完美統一版：「我的成就」圖標全面換成標準綠色，數字精確綁定後端解鎖數量 -->
+      <a href="/achievements/" class="score-stat-card achieve-entry-card">
+        <span class="material-symbols-outlined score-stat-icon" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+        <span class="score-stat-num">{{ unlocked_achievements_count }}</span>
+        <span class="score-stat-label">我的成就 ➔</span>
       </a>
     </div>
 
@@ -176,7 +179,7 @@
         <span class="score-record-score">{{ record.score }} 分</span>
       </div>
       {% empty %}
-      <p class="score-record-empty">還擺有遊戲紀錄，快去玩一場吧！</p>
+      <p class="score-record-empty">還沒有遊戲紀錄，快去玩一場吧！</p>
       {% endfor %}
     </div>
 
@@ -198,22 +201,6 @@
 <script src="../static/js/header.js"></script>
 <script src="../static/js/nav.js"></script>
 <script src="../static/js/game.js"></script>
-
-<!-- 💡 用 JS 即時改寫 Header 的標題與圖標為遊戲專屬手把 -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // 透過延遲機制，確保基礎 header.js 渲染至 placeholder 後再進行文字與圖標的精準覆蓋
-    setTimeout(() => {
-      const headerTitleElement = document.querySelector('.header-title');
-      if (headerTitleElement) {
-        headerTitleElement.innerHTML = `
-          <span class="material-symbols-outlined" style="font-size:26px; font-variation-settings:'FILL' 1;">sports_esports</span>
-          遊戲
-        `;
-      }
-    }, 50);
-  });
-</script>
 
 </body>
 </html>
