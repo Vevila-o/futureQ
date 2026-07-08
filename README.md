@@ -96,7 +96,7 @@ voiceDiary/
 │   ├── js/
 │   │   ├── index.js               # 首頁月曆邏輯 + 日記 Modal 語音播放
 │   │   ├── nav.js                 # 底部導覽列動態 + 路由
-│   │   ├── header.js              # 首頁頁首
+│   │   ├── header.js              # 共用頁首（每 0.1 秒巡邏並強制修正標題文字/圖示以避免重整或假換頁後跟網址對不起來；通知已讀狀態存入 localStorage）
 │   │   ├── headerback.js          # 含返回鍵頁首
 │   │   ├── photo.js               # 照片上傳邏輯（上傳時重命名為 voice_photo.jpg、防重複送出、保存按鈕 loading 動畫）
 │   │   ├── voice.js               # 錄音邏輯（點擊開始 / 暫停 / 完成、內嵌播放器、返回警告）
@@ -132,7 +132,7 @@ voiceDiary/
 │   ├── game.html                  # 遊戲首頁（問候語、每日建議、我的成績統計）
 │   ├── achievements.html          # 成就頁
 │   ├── shop.html                  # 點數商城頁
-│   ├── market.html                # 整理菜籃遊戲（拖曳分類、四階段）
+│   ├── market.html                # 整理菜籃遊戲（拖曳分類、四階段、結束時顯示點數回饋徽章）
 │   ├── nav.html                   # 底部導覽列（共用元件）
 │   ├── header.html                # 首頁頁首（共用元件）
 │   └── headerback.html            # 含返回鍵頁首（共用元件）
@@ -162,7 +162,7 @@ voiceDiary/
 | `/game/` | 遊戲首頁（我的成績：最高分 / 累計次數 / 連續天數 / 最近紀錄，依 `GameSession` 動態計算）|
 | `/achievements/` | 成就頁 |
 | `/shop/` | 點數商城頁 |
-| `/market/` | 整理菜籃遊戲（拖曳分類，四階段，答對計分 + 連續答對加乘）|
+| `/market/` | 整理菜籃遊戲（拖曳分類，四階段，答對計分 + 連續答對加乘；結束畫面依總分顯示點數回饋徽章，目前僅前端計算顯示，尚未寫入資料庫）|
 | `/admin/` | Django 後台（獨立 session，見[登入與後台](#登入與後台)）|
 | **API** | |
 | `/saveDiary/` | 儲存照片、建立日記（POST）|
