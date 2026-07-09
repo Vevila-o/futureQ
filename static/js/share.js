@@ -43,10 +43,9 @@ function showFeedback(msg) {
   setTimeout(() => { el.style.display = 'none'; }, 2500);
 }
 
-// LINE 分享（接收方看到的是 preview 版）
+// LINE 分享（接收方看到的是 preview 版，文案帶暖心導言＋貼文摘要，提高點連結的動機）
 document.getElementById('btn-share-line').addEventListener('click', () => {
-  const url = encodeURIComponent(buildShareUrl());
-  window.open('https://social-plugins.line.me/lineit/share?url=' + url, '_blank');
+  shareToLine(SHARE_DATA.userDisplayName, SHARE_DATA.postSummary, buildShareUrl());
 });
 
 // Facebook 分享（接收方看到的是 preview 版）
@@ -136,6 +135,16 @@ window.addEventListener('scroll', () => {
   var vrSendBtn     = document.getElementById('vr-send-btn');
   var vrRedoBtn     = document.getElementById('vr-redo-btn');
   var vrFeedback    = document.getElementById('vr-feedback');
+  var cueCard       = document.getElementById('cue-card');
+
+  document.querySelectorAll('.suggest-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      if (!cueCard) return;
+      cueCard.textContent = chip.dataset.text;
+      cueCard.style.display = 'block';
+      cueCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
 
   var MAX_SEC      = 10;
   var mediaRecorder = null;

@@ -36,7 +36,9 @@
 <script>
   window.COMMUNITY_DATA = {{ diary_list_json|safe }};
   window.COMMUNITY_AUTO_EXPAND = "{{ auto_expand_id }}";
+  window.COMMUNITY_USER_DISPLAY_NAME = "{{ user_display_name|escapejs }}";
 </script>
+<script src="/static/js/shareUtil.js"></script>
 <script src="/static/js/community.js"></script>
 </body>
 </html>

@@ -67,6 +67,16 @@
       {% endif %}
 
       {% if is_preview %}
+      {% if suggested_replies %}
+      <!-- 不知道說什麼時的提詞卡：點一句放大顯示在錄音鈕旁，照著唸即可，不會自動送出文字 -->
+      <div class="reply-suggestions">
+        <p class="suggest-title">💬 不知道說什麼嗎？可以參考：</p>
+        {% for s in suggested_replies %}
+          <button type="button" class="suggest-chip" data-text="{{ s }}">{{ s }}</button>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <!-- 語音加油區塊（開放給非本系統用戶，透過分享連結進來錄音） -->
       <div class="voice-reply-section" id="voice-reply-section">
         <div class="voice-reply-header">
@@ -74,6 +84,7 @@
           <span class="voice-reply-title">留下語音加油</span>
         </div>
         <p class="voice-reply-sub">長按麥克風，錄下您的鼓勵話語（最多 10 秒）</p>
+        <div class="cue-card" id="cue-card" style="display:none;"></div>
         <div class="voice-reply-record-area">
           <button class="vr-mic-btn" id="vr-mic-btn" type="button" aria-label="長按錄音">
             <span class="material-symbols-outlined" id="vr-mic-icon">mic</span>
@@ -136,8 +147,11 @@
       window.SHARE_DATA = {
         pageUrl: "{{ request.build_absolute_uri }}",
         isPreview: {{ is_preview|yesno:"true,false" }},
+        userDisplayName: "{{ user_display_name|escapejs }}",
+        postSummary: "{{ first_person_text|truncatechars:20|escapejs }}",
       };
     </script>
+    <script src="/static/js/shareUtil.js"></script>
     <script src="/static/js/share.js"></script>
   </body>
 </html>

@@ -3,6 +3,28 @@ import re
 
 
 # ==============================
+# Whisper 模型單例
+# 對話流程每篇日記要轉錄 4 次語音，若每次都 whisper.load_model("base")
+# 會重複載入模型、白白拖慢每一輪的回應速度，改成整個process只載入一次。
+# ==============================
+_whisper_model = None
+
+
+def get_whisper_model():
+    global _whisper_model
+    if _whisper_model is None:
+        import whisper
+        _whisper_model = whisper.load_model("base")
+    return _whisper_model
+
+
+def transcribe_audio(path):
+    """用單例 Whisper 模型轉錄中文語音，回傳辨識文字與完整結果（供品質檢查用）。"""
+    result = get_whisper_model().transcribe(path, language="zh")
+    return result.get("text", "").strip(), result
+
+
+# ==============================
 # 文字前處理
 # ==============================
 def normalize_text(text):

@@ -12,7 +12,19 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
+
+# Windows 的預設主控台編碼（cp950）無法印出 print() 裡的 emoji（🎙️、🏆…），
+# 一旦印到一半噴 UnicodeEncodeError，會直接把整支 view 帶進 except 區塊，
+# 回傳一個看起來莫名其妙的錯誤（例如聊天室錄音 API 直接回 500）。
+# 開發時強制主控台輸出用 UTF-8，避免 log 用的 emoji 把正常請求搞掛。
+if sys.platform == "win32":
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -23,8 +23,7 @@
     <div id="headerback-placeholder" data-title="聲影日記" data-icon="mic_none" data-back="/index/"></div>
 
     <main>
-      <h2 class="congrats-title">恭喜完成！</h2>
-      <p class="congrats-sub">記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
+      
 
             <!-- 分享卡片 -->
       <div class="share-card" id="share-card">
@@ -81,29 +80,6 @@
           </div>
         </div>
       </div> {% endcomment %}
-
-      <div class="ai-zone" id="ai-zone">
-        <div class="chat-box" id="chat-box">
-          <div class="chat-row ai-row">
-            <div class="ai-avatar">
-              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">smart_toy</span>
-            </div>
-            <div class="ai-bubble">{% if diary and diary.ai_response %}{{ diary.ai_response }}{% else %}今天記錄得真棒！關於今天的生活，還有什麼想跟我分享的嗎？{% endif %}</div>
-          </div>
-        </div>
-
-        <div class="voice-zone">
-          <button class="btn-voice-record" id="btn-voice">
-            <span class="material-symbols-outlined" id="voice-icon">mic</span>
-            <span id="voice-btn-text">按一下開始說話</span>
-          </button>
-          <p class="voice-status-text" id="voice-status">對話剩餘次數：3/3</p>
-        </div>
-
-        <div class="ai-actions" style="margin-top: 16px; display: flex; justify-content: flex-end">
-          <button class="btn-skip" id="btn-skip">略過對話</button>
-        </div>
-      </div>
 
       <div class="share-section" style="width: 100% !important; box-sizing: border-box !important;">
         <p class="share-label">分享這則日記</p>

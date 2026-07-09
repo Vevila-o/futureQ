@@ -50,47 +50,51 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initHeaderLogic() {
-  // 1. 通知資料與邏輯
-  const NOTIFICATIONS = [
-    { id: 1, type:"reminder", unread:true, icon:"🔔", title:"今日尚未記錄", desc:"今天還沒有日記喔，點這裡開始錄音吧！", time:"剛剛" },
-    { id: 2, type:"family", unread:true, icon:"👨‍👩‍👧", title:"家人查看了你的日記", desc:"小明在 10 分鐘前看了你 6月11日 的茉莉花記錄", time:"10 分鐘前" },
-    { id: 3, type:"memory", unread:true, icon:"✨", title:"一年前的今天", desc:"去年的 6月15日 你記錄了和老伴去陽明山踏青", time:"1 小時前" },
-    { id: 4, type:"health", unread:false, icon:"🧠", title:"認知健康週報", desc:"本週你共記錄了 5 篇日記，語言流暢度良好", time:"昨天" },
-    { id: 5, type:"family", unread:false, icon:"💌", title:"女兒傳了訊息", desc:"林小玲：「媽，記得吃藥喔～我下週五回來看你！」", time:"昨天" },
-    { id: 6, type:"reminder", unread:false, icon:"📸", title:"相片上傳成功", desc:"你在 6月14日 上傳的書法展照片已儲存完成。", time:"2 天前" }
-  ];
-  
-  let readIds = new Set(JSON.parse(localStorage.getItem('notif-read-ids') || '[]'));
+  // 1. 通知資料與邏輯（改讀後端真實資料，不再是寫死的假資料 + localStorage 已讀狀態）
+  const NOTIF_ICONS = { voice_reply: "🎈" };
+  let notifications = [];
 
-  function renderNotifications() {
+  function fetchNotifications() {
+    return fetch("/api/notifications/")
+      .then(res => res.json())
+      .then(data => {
+        notifications = data.items || [];
+        renderNotifications(data.unread_count || 0);
+      })
+      .catch(err => console.error("載入通知失敗:", err));
+  }
+
+  function renderNotifications(unreadCount) {
     const list = document.getElementById("notif-list");
-    const unreadCount = NOTIFICATIONS.filter(n => n.unread && !readIds.has(n.id)).length;
     const badge = document.getElementById("notif-badge");
-    if (badge) badge.classList.toggle("hidden", unreadCount === 0);
+    if (badge) badge.classList.toggle("hidden", !unreadCount);
 
     if (!list) return;
     list.innerHTML = "";
-    if (NOTIFICATIONS.length === 0) {
+    if (notifications.length === 0) {
       list.innerHTML = `<div class="notif-empty"><span class="material-symbols-outlined" style="font-size:40px;opacity:.3;">notifications_none</span>目前沒有通知</div>`;
       return;
     }
-    NOTIFICATIONS.forEach(n => {
-      const isUnread = n.unread && !readIds.has(n.id);
+    notifications.forEach(n => {
       const item = document.createElement("div");
-      item.className = `notif-item${isUnread?" unread":""}`;
-      const typeClass = { reminder:"type-reminder", family:"type-family", memory:"type-memory", health:"type-health" }[n.type] || "";
+      item.className = `notif-item${n.is_read ? "" : " unread"}`;
       item.innerHTML = `
-        <div class="notif-icon ${typeClass}">${n.icon}</div>
+        <div class="notif-icon">${NOTIF_ICONS[n.kind] || "🔔"}</div>
         <div class="notif-body">
-          <div class="notif-title">${n.title}</div>
-          <div class="notif-desc">${n.desc}</div>
-          <div class="notif-time">${n.time}</div>
+          <div class="notif-title">${n.message}</div>
+          <div class="notif-time">${n.created_at}</div>
         </div>
       `;
-      item.addEventListener("click", () => { 
-        readIds.add(n.id); 
-        localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
-        renderNotifications(); 
+      item.addEventListener("click", () => {
+        if (n.is_read) {
+          if (n.diary_id) window.location.href = `/community/?diary_id=${n.diary_id}`;
+          return;
+        }
+        fetch("/api/notifications/mark-read/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [n.id] }),
+        }).then(fetchNotifications);
       });
       list.appendChild(item);
     });
@@ -98,7 +102,6 @@ function initHeaderLogic() {
 
   // 2. 顯示與隱藏面板的函式
   function openNotifications() {
-    renderNotifications();
     const overlay = document.getElementById("notif-overlay");
     if (!overlay) return;
     overlay.style.display = "flex";
@@ -106,11 +109,6 @@ function initHeaderLogic() {
       overlay.classList.add("open");
       requestAnimationFrame(() => overlay.classList.add("visible"));
     });
-    setTimeout(() => {
-      NOTIFICATIONS.forEach(n => readIds.add(n.id));
-      localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
-      renderNotifications();
-    }, 1500);
   }
   function closeNotifications() {
     const overlay = document.getElementById("notif-overlay");
@@ -189,10 +187,14 @@ function initHeaderLogic() {
   
   const btnNotifClear = document.getElementById("btn-notif-clear");
   if (btnNotifClear) {
-    btnNotifClear.addEventListener("click", () => { 
-      NOTIFICATIONS.forEach(n => readIds.add(n.id)); 
-      localStorage.setItem('notif-read-ids', JSON.stringify(Array.from(readIds)));
-      renderNotifications(); 
+    btnNotifClear.addEventListener("click", () => {
+      // 「清除全部」是真的把通知刪掉、從清單消失，不是只標記已讀
+      // （標記已讀只會拿掉未讀樣式，通知本身還留在清單裡，點了感覺沒反應）
+      fetch("/api/notifications/clear/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      }).then(fetchNotifications);
     });
   }
 
@@ -245,5 +247,5 @@ function initHeaderLogic() {
     if (td) { td.classList.add('on'); td.setAttribute('aria-checked', 'true'); }
   }
 
-  renderNotifications();
+  fetchNotifications();
 }

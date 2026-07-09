@@ -178,7 +178,10 @@ class CognitiveAnalysis(models.Model):
 
 # AI 追問對話
 class AiConversation(models.Model):
-    MAX_ROUNDS = 3
+    # 聊天室流程改為：使用者總共回覆 4 次（第 1 次描述照片 + 3 次追問），
+    # round_count 語意也從「已完成的來回輪數」改為「已收到的使用者回覆數」，
+    # 由 view 層直接依訊息數量計算，這裡只保留常數供 view 判斷上限用。
+    MAX_ROUNDS = 4
 
     diary = models.OneToOneField(
         DiaryEntry,
@@ -304,6 +307,12 @@ class Diarypost(models.Model):
         blank=True,
     )
 
+    hashtags = models.JSONField("Hashtag 清單", default=list, blank=True)
+
+    # 給親友在分享 preview 頁參考用的回覆提詞（AI 依貼文內容生成 3 句），
+    # 不是使用者可送出的文字留言，VoiceReply 目前仍只收語音。
+    suggested_replies = models.JSONField("建議回覆句", default=list, blank=True)
+
     created_at = models.DateTimeField("建立時間", auto_now_add=True)
 
     class Meta:
@@ -312,4 +321,45 @@ class Diarypost(models.Model):
 
     def __str__(self):
         return f"日記 {self.diary_title_id} 的貼文（{self.get_category_display() or '未分類'}）"
+
+
+# 站內通知（目前只有「收到語音加油」一種，kind 保留給未來擴充）
+class Notification(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notifications", verbose_name="使用者"
+    )
+    kind = models.CharField("通知類型", max_length=32, default="voice_reply")
+    diary = models.ForeignKey(
+        DiaryEntry, on_delete=models.CASCADE, null=True, blank=True, verbose_name="對應日記"
+    )
+    message = models.CharField("內容", max_length=100)
+    is_read = models.BooleanField("已讀", default=False)
+    created_at = models.DateTimeField("建立時間", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "站內通知"
+        verbose_name_plural = "站內通知"
+
+    def __str__(self):
+        return f"{self.user}｜{self.message}"
+
+
+# 聊天室第 2～4 輪的暫存錄音（給使用者回放用，finalize 後刪除；
+# 若對話一直沒有 finalize，靠 cleanup_chat_audios 這個 management command 定期清孤兒檔）
+class ChatReplyAudio(models.Model):
+    conversation = models.ForeignKey(
+        AiConversation, on_delete=models.CASCADE, related_name="reply_audios", verbose_name="對應對話"
+    )
+    reply_index = models.IntegerField("第幾次回覆")  # 2 / 3 / 4
+    audio_file = models.FileField("暫存錄音", upload_to="chat_replies/")
+    created_at = models.DateTimeField("建立時間", auto_now_add=True)
+
+    class Meta:
+        ordering = ["reply_index"]
+        verbose_name = "聊天室暫存錄音"
+        verbose_name_plural = "聊天室暫存錄音"
+
+    def __str__(self):
+        return f"對話 {self.conversation_id} 第 {self.reply_index} 次回覆錄音"
 

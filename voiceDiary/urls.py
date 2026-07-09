@@ -54,12 +54,20 @@ urlpatterns = [
     path('saveDiary/', voice_views.save_diary, name='save_diary'),
     path('updateDiaryAudio/', voice_views.update_diary_audio, name='update_diary_audio'),
     
-    # 三次對話
+    # 聊天室對話（4 輪：照片辨識首問 + 3 次追問）
     path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'),
+    path('api/vision-first-question/', voice_views.vision_firstQ, name='vision_firstQ'),
     path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
+    path('api/skip-chat-round/', voice_views.skip_chat_round, name='skip_chat_round'),
+    path('api/finalize-diary/', voice_views.finalize_diary, name='finalize_diary'),
     path('api/voice-reply/', voice_views.api_voice_reply, name='api_voice_reply'),
     path('api/voice-reply/<int:reply_id>/transcribe/', voice_views.api_voice_reply_transcribe, name='api_voice_reply_transcribe'),
     path('api/save-share-card-image/', voice_views.save_share_card_image, name='save_share_card_image'),
+
+    # 站內通知
+    path('api/notifications/', voice_views.api_notifications, name='api_notifications'),
+    path('api/notifications/mark-read/', voice_views.api_notifications_mark_read, name='api_notifications_mark_read'),
+    path('api/notifications/clear/', voice_views.api_notifications_clear, name='api_notifications_clear'),
 
     # 共用元件
     path('header/', voice_views.header_partial, name='header_partial'),

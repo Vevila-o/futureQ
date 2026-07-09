@@ -21,20 +21,22 @@
 <main>
 
   <div class="prompt-header">
-    <h2 class="prompt-title">請說出您的故事</h2>
-    <p class="prompt-sub">跟我們說說這張圖片發生了什麼吧！</p>
+    <h2 class="prompt-title">跟我聊聊這張照片吧</h2>
+    <p class="prompt-sub" id="prompt-sub">AI 會陪你聊 4 段小對話，聊完會自動生成今天的日記</p>
   </div>
 
   <div class="prompt-photo">
-    <img alt="一位微笑的長者手拿茶杯坐在窗邊"
-         src="https://lh3.googleusercontent.com/aida-public/AB6AXuC582P2Qi2kHL6dHPLQoLpzaJ91bM1giacgetF0KuhaIJv9pLHFo7Ys_2NJ86cHjYCw_R6HQ5crYgky_XjuPLLZ0ubZEhZWNu5HwzqeiFTlf_p9r8TBrkBfL1yrB_Bl8ydBrZSFTYO5xtJyY27y-cvmu3nPSIq7X_f_2fGBIECLNx-KYtxQaY7xyuBSo7Ll4Wu7afd1Ad302KtUNAeYkt0WEJkF-YgBk_e_D501HFd21jOju15qG-ZHNSQlcLTo6bPbyGtOjs_KEjCG">
+    <img alt="今日照片" id="prompt-photo-img" src="">
   </div>
+
+  <!-- 對話氣泡區：第 1 句（照片首問）到第 4 輪追問都顯示在這裡 -->
+  <div class="chat-box" id="chat-box"></div>
 
   <!-- 狀態 + 計時器 單行 -->
   <div class="record-info-row">
     <div class="record-status">
       <span class="status-dot" id="status-dot"></span>
-      <span class="status-label" id="status-label">尚未開始</span>
+      <span class="status-label" id="status-label">準備中</span>
     </div>
     <div class="record-timer-group">
       <span class="record-timer" id="record-timer">03:00</span>
@@ -42,7 +44,7 @@
     </div>
   </div>
 
-  <!-- 波形 / 播放器（合為一體） -->
+  <!-- 波形 -->
   <div class="waveform" id="waveform">
     <div id="wave-bars">
       <div class="wave-bar"></div>
@@ -58,27 +60,12 @@
       <div class="wave-bar"></div>
       <div class="wave-bar"></div>
     </div>
-    <div id="wave-player" style="display:none">
-      <button class="wave-play-btn" id="wave-play-btn" type="button" aria-label="播放">
-        <span class="material-symbols-outlined">play_arrow</span>
-      </button>
-      <div class="wave-player-body">
-        <div class="wave-progress-track" id="wave-progress-track">
-          <div class="wave-progress-fill" id="wave-progress-fill"></div>
-        </div>
-        <div class="wave-times">
-          <span id="wave-current-time">0:00</span>
-          <span id="wave-total-time">0:00</span>
-        </div>
-      </div>
-    </div>
-    <audio id="audio-player" preload="none" style="display:none"></audio>
   </div>
 
   <!-- 點擊錄音操作區 -->
-  <div class="hold-record-section">
+  <div class="hold-record-section" id="hold-record-section">
     <div class="record-btn-row" id="record-btn-row">
-      <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="開始錄音">
+      <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="開始錄音" disabled>
         <span class="material-symbols-outlined" id="hold-mic-icon">mic</span>
       </button>
       <button class="btn-complete" id="btn-complete" type="button" style="display:none;" aria-label="完成錄音">
@@ -86,20 +73,15 @@
         <span>完成</span>
       </button>
     </div>
-    <p class="hold-hint" id="hold-hint">點擊開始錄音</p>
+    <p class="hold-hint" id="hold-hint">正在準備問題…</p>
     <button class="btn-restart" id="btn-restart" type="button" style="display:none">重新錄製</button>
+    <button class="btn-skip-round" id="btn-skip-round" type="button" style="display:none">這題跳過</button>
   </div>
 
-  <button class="btn-save" id="btn-save" disabled style="display:none;">保存錄音</button>
+  <button class="btn-save" id="btn-finalize" type="button" style="display:none;">生成日記</button>
 
   <form style="display:none;">
     {% csrf_token %}
-  </form>
-  <form id="audio-form" method="POST" action="{% url 'update_diary_audio' %}" enctype="multipart/form-data" style="display:none;">
-    {% csrf_token %}
-    <input type="hidden" name="diary_id" id="diary-id">
-    <input type="hidden" name="transcription" id="transcription-input">
-    <input type="file" name="audio_file" id="audio-file-input">
   </form>
 
 </main>
@@ -125,8 +107,10 @@
       font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 30;
       animation:gear-spin 1.8s linear infinite;
     ">settings</span>
-    <span style="font-size:20px;font-weight:500;letter-spacing:0.04em;color:#fff;">計算中請稍後</span>
+    <span style="font-size:20px;font-weight:500;letter-spacing:0.04em;color:#fff;">語言認知計算中請稍後</span>
   </div>
+  <h2 class="congrats-title">恭喜完成！</h2>
+    <p class="congrats-sub">記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
 </div>
 <style>
   @keyframes gear-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }

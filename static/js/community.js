@@ -23,6 +23,7 @@
 
   var diaries    = window.COMMUNITY_DATA || [];
   var autoExpId  = String(window.COMMUNITY_AUTO_EXPAND || '');
+  var userDisplayName = window.COMMUNITY_USER_DISPLAY_NAME || '朋友';
   var feed       = document.getElementById('community-feed');
   var emptyEl    = document.getElementById('community-empty');
 
@@ -114,8 +115,15 @@
       : '<span class="material-symbols-outlined">image</span>';
 
     var badgeHTML = diary.reply_count > 0
-      ? '<span class="community-reply-badge"><span class="material-symbols-outlined">favorite</span>' + diary.reply_count + ' 則加油</span>'
+      ? '<span class="community-reply-badge"><span class="material-symbols-outlined">favorite</span>' + diary.reply_count + '</span>'
       : '<span class="community-reply-badge" style="background:transparent;color:var(--on-surface-variant);opacity:.5;"><span class="material-symbols-outlined">mic_none</span>0</span>';
+
+    // 只有已經生成過分享貼文（Diarypost）才顯示分享鈕，避免分享出去卻沒有內容
+    var shareBtnHTML = diary.post_summary
+      ? '<button type="button" class="community-share-btn" data-post-summary="' + escHtml(diary.post_summary) + '" data-share-url="' + escHtml(diary.share_url) + '">' +
+          '<span class="material-symbols-outlined">ios_share</span>' +
+        '</button>'
+      : '';
 
     var card = document.createElement('div');
     card.className = 'community-card';
@@ -129,7 +137,7 @@
           '<div class="community-card-text">' + escHtml(diary.text) + '</div>' +
           '<div class="community-card-meta">' +
             '<span class="community-card-date">' + escHtml(diary.date) + '</span>' +
-            badgeHTML +
+            '<span class="community-card-actions">' + badgeHTML + shareBtnHTML + '</span>' +
           '</div>' +
         '</div>' +
         '<span class="material-symbols-outlined community-card-expand-icon">expand_more</span>' +
@@ -159,8 +167,15 @@
       }
     });
 
-    // 播放 / 轉文字按鈕（事件委派）
+    // 播放 / 轉文字 / 分享按鈕（事件委派）
     card.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.community-share-btn');
+      if (shareBtn) {
+        e.stopPropagation();
+        shareToLine(userDisplayName, shareBtn.dataset.postSummary, shareBtn.dataset.shareUrl);
+        return;
+      }
+
       var transcribeBtn = e.target.closest('.reply-transcribe-btn');
       if (transcribeBtn) {
         e.stopPropagation();

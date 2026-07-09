@@ -18,20 +18,6 @@ main {
   box-sizing: border-box;
 }
 
-.congrats-title {
-  text-align: center;
-  font-size: calc(28px * var(--fs-scale));
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 10px;
-}
-.congrats-sub {
-  text-align: center;
-  font-size: calc(15px * var(--fs-scale));
-  color: var(--on-surface-variant);
-  line-height: 1.7;
-  margin-bottom: 14px;
-}
 .congrats-date {
   text-align: center;
   font-size: calc(15px * var(--fs-scale));

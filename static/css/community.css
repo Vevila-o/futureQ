@@ -129,6 +129,35 @@ main {
   font-variation-settings: 'FILL' 1;
 }
 
+.community-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.community-share-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--primary);
+  background: var(--surface);
+  border: 1.5px solid var(--primary);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.community-share-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.community-share-btn:active {
+  opacity: 0.7;
+}
+
 .community-card-expand-icon {
   transition: transform 0.25s;
   color: var(--on-surface-variant);
