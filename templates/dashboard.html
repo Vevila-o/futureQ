@@ -159,18 +159,37 @@
       </div>
     </section>
 
-    <!-- 腦年齡卡 -->
-    <section
-      class="bg-surface-container-lowest rounded-xl p-6 border border-primary-container flex justify-between items-center">
-      <div>
-        <h2 class="text-headline-md font-headline-md text-on-surface font-bold">估算腦年齡</h2>
-        <p class="text-label-lg font-label-lg text-on-surface-variant mt-1 font-bold">基於綜合認知表現</p>
-      </div>
-      <div class="flex items-baseline gap-1">
-        <span class="text-headline-lg font-headline-lg text-primary font-bold">{{ brain_age }}</span>
-        <span class="text-label-lg font-label-lg text-primary font-bold">歲</span>
-      </div>
+    <!-- 語言活力指數卡 -->
+    {% if lvi_state == "empty" %}
+    <section class="bg-surface-container-lowest rounded-xl p-6 border border-primary-container text-center">
+      <p class="text-body-lg font-body-lg text-on-surface font-bold">還在認識你的說話習慣</p>
+      <p class="text-label-lg font-label-lg text-on-surface-variant mt-1">再記錄幾天，這裡就會出現你的語言活力指數</p>
     </section>
+    {% else %}
+    <section class="bg-surface-container-lowest rounded-xl p-6 border border-primary-container">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-headline-md font-headline-md text-on-surface font-bold">本週語言活力指數</h2>
+          <p class="text-label-lg font-label-lg text-on-surface-variant mt-1 font-bold">基於綜合認知表現</p>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-headline-lg font-headline-lg text-primary font-bold">{{ lvi }}分</span>
+        </div>
+      </div>
+      <p class="text-label-lg font-label-lg mt-3 font-bold {% if lvi_trend == 'up' %}text-primary{% elif lvi_trend == 'down' %}text-error{% else %}text-on-surface-variant{% endif %}">
+        {% if lvi_trend == "up" %}
+          ↑ 比過去多
+        {% elif lvi_trend == "down" %}
+          ↓ 比過去少一些
+        {% elif lvi_trend == "flat" %}
+          → 和過去差不多，很穩定
+        {% else %}
+          還在累積你的說話習慣
+        {% endif %}
+      </p>
+      <p class="text-label-md font-label-md text-on-surface-variant mt-2">本數值僅供語言表達趨勢追蹤，不是醫學指標，也不代表任何診斷。</p>
+    </section>
+    {% endif %}
 
     <!-- 認知能力分布圖 -->
     <section class="rounded-xl p-6 border border-[#E8E8E1] relative bg-white">

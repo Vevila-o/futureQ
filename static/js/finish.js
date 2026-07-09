@@ -363,4 +363,94 @@
       window.location.href = "/index/";
     });
   }
+
+  // ==========================================
+  // 6. 朗讀貼文（Web Speech API，本地執行，不經任何伺服器）
+  // ==========================================
+  var btnSpeak = document.getElementById("btn-speak");
+  var postEl = document.getElementById("post-content");
+  var speakLabelEl = btnSpeak ? btnSpeak.querySelector(".speak-label") : null;
+
+  // 現場 demo 用的裝置上，實際可用的中文語音名稱。
+  // 開場前用瀏覽器 console 執行一次：
+  //   speechSynthesis.getVoices().filter(v => v.lang.startsWith('zh')).forEach(v => console.log(v.name, v.lang))
+  // 把選定的名稱填在這裡，確保每次都固定用同一顆聲音。
+  var PREFERRED_VOICE = "";
+
+  if (btnSpeak && postEl && "speechSynthesis" in window) {
+    var availableVoices = [];
+
+    function loadVoices() {
+      availableVoices = speechSynthesis.getVoices();
+    }
+    loadVoices();
+    speechSynthesis.addEventListener("voiceschanged", loadVoices);
+
+    function pickChineseVoice() {
+      var byName = null;
+      var byTW = null;
+      var byZh = null;
+      for (var i = 0; i < availableVoices.length; i++) {
+        var v = availableVoices[i];
+        if (PREFERRED_VOICE && v.name === PREFERRED_VOICE) byName = byName || v;
+        if (v.lang === "zh-TW") byTW = byTW || v;
+        if (v.lang.indexOf("zh") === 0) byZh = byZh || v;
+      }
+      return byName || byTW || byZh || null;
+    }
+
+    function setSpeakLabel(text) {
+      if (speakLabelEl) speakLabelEl.textContent = text;
+    }
+
+    // AI 產生的貼文可能帶 emoji 與 hashtag，朗讀時會被讀成雜音或直接跳過，先清乾淨。
+    function cleanForSpeech(raw) {
+      return (raw || "")
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "")
+        .replace(/#[^\s#]+/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function speakPost() {
+      var text = cleanForSpeech(postEl.innerText);
+      if (!text) return;
+
+      var voice = pickChineseVoice();
+      if (!voice) {
+        setSpeakLabel("此裝置無法朗讀");
+        btnSpeak.disabled = true;
+        return;
+      }
+
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.voice = voice;
+      utter.lang = voice.lang;
+      utter.rate = 0.9;   // 長輩用，稍放慢
+      utter.pitch = 1.0;
+
+      utter.onstart = function () { setSpeakLabel("朗讀中…（再按一次停止）"); };
+      utter.onend = function () { setSpeakLabel("朗讀"); };
+      utter.onerror = function () { setSpeakLabel("朗讀"); };
+
+      speechSynthesis.speak(utter);
+    }
+
+    btnSpeak.addEventListener("click", function () {
+      if (speechSynthesis.speaking || speechSynthesis.pending) {
+        speechSynthesis.cancel();
+        setSpeakLabel("朗讀");
+        return;
+      }
+      speakPost();
+    });
+
+    window.addEventListener("beforeunload", function () {
+      speechSynthesis.cancel();
+    });
+  } else if (btnSpeak) {
+    // 裝置不支援 Web Speech API
+    btnSpeak.disabled = true;
+    if (speakLabelEl) speakLabelEl.textContent = "此裝置無法朗讀";
+  }
 })();

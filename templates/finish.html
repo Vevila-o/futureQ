@@ -40,7 +40,7 @@
 
         <div class="share-card-body">
           <div class="share-card-title">{{ diary.title }}</div>
-          <p class="share-card-text">{{ first_person_text }}</p>
+          <p class="share-card-text" id="post-content">{{ first_person_text }}</p>
 
           <div class="share-card-meta">
             <span class="share-date">{{ diary.created_at|date:"Y年n月j日" }}</span>
@@ -55,6 +55,13 @@
           <img src="/static/img/logo.jpg.png" alt="聲影日記" style="height:22px;width:22px;object-fit:contain;border-radius:4px;" />
           聲影日記
         </div>
+      </div>
+
+      <div class="speak-row">
+        <button id="btn-speak" type="button" class="btn-speak" aria-label="朗讀貼文">
+          <span class="material-symbols-outlined speak-icon">volume_up</span>
+          <span class="speak-label">朗讀</span>
+        </button>
       </div>
 
       {% comment %} <div class="summary-card" style="width: 100% !important; box-sizing: border-box !important;">

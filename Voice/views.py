@@ -627,25 +627,37 @@ def update_diary_audio(request):
             diary.save()
 
             # === 進行語言表達認知分析並儲存結果 ===
-            from Voice.utils import analyze_transcription
+            from Voice.utils import analyze_transcription, assess_sample_quality
             from .models import CognitiveAnalysis
-            
+
             try:
-                analysis_result = analyze_transcription(transcription)
-                CognitiveAnalysis.objects.create(
-                    diary=diary,
-                    fluency_score=analysis_result["fluency_score"],
-                    information_score=analysis_result["information_score"],
-                    sentence_score=analysis_result["sentence_score"],
-                    naming_score=analysis_result["naming_score"],
-                    semantic_score=analysis_result["semantic_score"],
-                    communication_score=analysis_result["communication_score"],
-                    total_score=analysis_result["total_score"],
-                    average_score=analysis_result["average_score"],
-                    risk_level=analysis_result["risk_level"],
-                    suggestion=analysis_result["suggestion"],
-                    ai_feedback=analysis_result["ai_feedback"],
-                )
+                quality = assess_sample_quality(transcription, whisper_result=result)
+
+                if quality != "ok":
+                    # 空白錄音、雜音或 Whisper 幻覺輸出：記為無效樣本，
+                    # 不建立分數，避免被誤判成「高風險」。
+                    CognitiveAnalysis.objects.create(
+                        diary=diary,
+                        is_valid=False,
+                        invalid_reason=quality,
+                    )
+                else:
+                    analysis_result = analyze_transcription(transcription)
+                    CognitiveAnalysis.objects.create(
+                        diary=diary,
+                        is_valid=True,
+                        fluency_score=analysis_result["fluency_score"],
+                        information_score=analysis_result["information_score"],
+                        sentence_score=analysis_result["sentence_score"],
+                        naming_score=analysis_result["naming_score"],
+                        semantic_score=analysis_result["semantic_score"],
+                        communication_score=analysis_result["communication_score"],
+                        total_score=analysis_result["total_score"],
+                        average_score=analysis_result["average_score"],
+                        risk_level=analysis_result["risk_level"],
+                        suggestion=analysis_result["suggestion"],
+                        ai_feedback=analysis_result["ai_feedback"],
+                    )
             except Exception as analysis_err:
                 print(f"認知能力分析儲存失敗: {analysis_err}")
 
@@ -675,8 +687,7 @@ def dashboard(request):
     from django.contrib.auth import get_user_model
     from django.db.models import Avg
     from .models import CognitiveAnalysis, DiaryEntry
-    from datetime import date
-    
+
     User = get_user_model()
     # 獲取當前登入者，若未登入，尋找 demo_elder 或第一個使用者
     target_user = request.user if request.user.is_authenticated else User.objects.filter(username="demo_elder").first()
@@ -692,7 +703,8 @@ def dashboard(request):
     if target_user:
         week_analyses = CognitiveAnalysis.objects.filter(
             diary__user=target_user,
-            diary__created_at__gte=one_week_ago
+            diary__created_at__gte=one_week_ago,
+            is_valid=True,
         )
         if week_analyses.exists():
             has_week_data = True
@@ -700,7 +712,7 @@ def dashboard(request):
         else:
             has_week_data = False
             # 如果一周內沒有資料，則退而求其次抓該使用者的所有分析紀錄
-            analyses = CognitiveAnalysis.objects.filter(diary__user=target_user)
+            analyses = CognitiveAnalysis.objects.filter(diary__user=target_user, is_valid=True)
         
     has_data = analyses.exists()
     
@@ -735,29 +747,53 @@ def dashboard(request):
         }
         total_score_avg = sum(scores.values())
         
-    # 計算腦年齡
-    actual_age = 78
-    if target_user and target_user.userbirth:
-        birth = target_user.userbirth
-        today = date.today()
-        actual_age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
-        
-    # 根據認知表現估算健康狀態與腦年齡
+    # 根據認知表現估算健康狀態建議文字
     from Voice.utils import get_risk_result
-    
+
     risk_info = get_risk_result(total_score_avg)
     risk_level = risk_info["risk_level"]
     health_message = risk_info["suggestion"]
-    
+
     if risk_level == "low":
-        health_status = "健康"
-        brain_age = max(45, actual_age - 5)
+        health_status = "流暢"
     elif risk_level == "medium":
         health_status = "中等"
-        brain_age = actual_age + 2
     else:
         health_status = "須注意"
-        brain_age = actual_age + 8
+
+    # 語言活力指數（LVI）：取代原本沒有醫學依據的「腦年齡」估算。
+    # 獨立於上面雷達圖用的 has_data 假資料 fallback，完全沒有真實紀錄時
+    # 就老實顯示空狀態，不再用預設假分數湊出一個數字。
+    from Voice.utils import calc_lvi, calc_lvi_trend
+
+    recent_qs = CognitiveAnalysis.objects.filter(
+        diary__user=target_user,
+        diary__created_at__gte=one_week_ago,
+        is_valid=True,
+    ).order_by("diary__created_at") if target_user else CognitiveAnalysis.objects.none()
+    recent_scores = [a.total_score for a in recent_qs]
+
+    if recent_scores:
+        current_avg = sum(recent_scores) / len(recent_scores)
+        data_source = "recent_7d"
+    else:
+        all_qs = CognitiveAnalysis.objects.filter(
+            diary__user=target_user, is_valid=True
+        ).order_by("diary__created_at") if target_user else CognitiveAnalysis.objects.none()
+        all_scores = [a.total_score for a in all_qs]
+        current_avg = (sum(all_scores) / len(all_scores)) if all_scores else None
+        data_source = "all_history" if all_scores else "no_data"
+
+    baseline_qs = CognitiveAnalysis.objects.filter(
+        diary__user=target_user,
+        diary__created_at__lt=one_week_ago,
+        is_valid=True,
+    ).order_by("diary__created_at") if target_user else CognitiveAnalysis.objects.none()
+    baseline_scores = [a.total_score for a in baseline_qs]
+
+    lvi = calc_lvi(current_avg)
+    lvi_trend, lvi_delta = calc_lvi_trend(current_avg, baseline_scores)
+    lvi_state = "empty" if data_source == "no_data" else "ok"
 
     # 雷達圖數據的陣列格式 (流暢度, 資訊量, 句子結構, 命名能力, 語意正確性, 整體溝通能力)
     radar_data = [
@@ -773,9 +809,13 @@ def dashboard(request):
         "has_data": has_data,
         "has_week_data": has_week_data,
         "radar_data_json": json.dumps(radar_data),
-        "brain_age": brain_age,
         "health_status": health_status,
         "health_message": health_message,
+        "lvi_state": lvi_state,
+        "lvi": lvi,
+        "lvi_trend": lvi_trend,
+        "lvi_delta": lvi_delta,
+        "data_source": data_source,
     }
     
     return render(request, "dashboard.html", context)

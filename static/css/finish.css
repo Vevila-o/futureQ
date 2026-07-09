@@ -254,6 +254,40 @@ main {
   opacity: .8;
 }
 
+/* 🔊 朗讀貼文 */
+.speak-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.btn-speak {
+  min-height: 44px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  font-size: calc(15px * var(--fs-scale));
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity .15s;
+}
+.btn-speak .speak-icon {
+  font-size: 20px;
+  font-variation-settings: 'FILL' 1;
+}
+.btn-speak:active {
+  opacity: .8;
+}
+.btn-speak:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
 /* 🎙️ 語音操作區 */
 .voice-zone {
   display: flex;

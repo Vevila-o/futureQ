@@ -52,6 +52,8 @@ class CognitiveAnalysisAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'diary',
+        'is_valid',
+        'invalid_reason',
         'fluency_score',
         'information_score',
         'sentence_score',
@@ -65,6 +67,7 @@ class CognitiveAnalysisAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        'is_valid',
         'risk_level',
     )
 

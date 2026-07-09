@@ -1,3 +1,4 @@
+import math
 import re
 
 
@@ -19,25 +20,25 @@ def get_content_length(text):
     計算實際中文字、英文字母與數字數量，
     不把標點符號算進描述長度。
     """
-    return len(re.findall(r"[\u4e00-\u9fffA-Za-z0-9]", text))
+    return len(re.findall(r"[一-鿿A-Za-z0-9]", text))
 
 
-def find_matched_words(text, word_list):
+def collapse_repetitions(text):
     """
-    找出實際命中的不同關鍵詞。
+    壓縮連續重複的字元／短語，用於計算「有效內容長度」。
 
-    較長詞優先，例如先匹配「我們」，
-    再匹配「我」，降低重複命中的情況。
+    中文有正常的疊字用法（謝謝、常常、剛剛、慢慢），
+    因此單字要連續 3 次以上、短語需整段重複，才視為口吃／跳針，
+    避免把正常疊字誤判成內容灌水。
     """
-    matched_words = []
-    remaining_text = text
+    text = re.sub(r"(.)\1{2,}", r"\1", text)           # 單字連續 3 次以上 → 收斂成 1
+    text = re.sub(r"(.{2,6}?)\1{1,}", r"\1", text)     # 2~6 字短語連續重複 → 收斂成 1
+    return text
 
-    for word in sorted(set(word_list), key=len, reverse=True):
-        if word in remaining_text:
-            matched_words.append(word)
-            remaining_text = remaining_text.replace(word, " ")
 
-    return matched_words
+def get_effective_length(text):
+    """扣除重複跳針後的實際內容長度。"""
+    return get_content_length(collapse_repetitions(text))
 
 
 def count_sentence_markers(text):
@@ -50,17 +51,115 @@ def count_sentence_markers(text):
 
 
 # ==============================
+# 樣本品質檢查
+# ==============================
+MIN_CONTENT_LENGTH = 15
+MIN_AUDIO_SECONDS = 5
+
+# Whisper 中文常見的幻覺輸出（多半來自訓練資料中的 YouTube 字幕片尾語）。
+# 命中代表這段轉錄極可能不是使用者真正說的話，不該拿去做認知分析。
+WHISPER_HALLUCINATION_PATTERNS = [
+    "謝謝觀看", "謝謝大家", "請訂閱", "請點讚", "點讚訂閱",
+    "字幕組", "中文字幕", "感謝收看", "下集再見",
+    "不吝點贊", "轉發", "打賞", "訂閱頻道", "按讚分享",
+]
+
+
+def assess_sample_quality(raw_text, whisper_result=None, audio_seconds=None):
+    """
+    判斷這段轉錄文字是否適合拿去做認知分析。
+
+    回傳 "ok" / "too_short" / "suspect_hallucination" / "low_confidence"。
+    只有 "ok" 才應該呼叫 analyze_transcription 並寫入正常的 CognitiveAnalysis；
+    其餘情況代表空錄音、雜音或 Whisper 幻覺，應該記錄為無效樣本，
+    不能被當成「本週語言表達高風險」。
+    """
+    text = normalize_text(raw_text)
+
+    if get_content_length(text) < MIN_CONTENT_LENGTH:
+        return "too_short"
+
+    for pattern in WHISPER_HALLUCINATION_PATTERNS:
+        if pattern in text:
+            return "suspect_hallucination"
+
+    if audio_seconds is not None and audio_seconds < MIN_AUDIO_SECONDS:
+        return "too_short"
+
+    # Whisper 每個 segment 都帶有信心指標，可用來抓「辨識品質低」的樣本
+    if whisper_result:
+        segments = whisper_result.get("segments") or []
+        if segments:
+            avg_logprob = sum(s.get("avg_logprob", 0) for s in segments) / len(segments)
+            no_speech = sum(s.get("no_speech_prob", 0) for s in segments) / len(segments)
+            compression = max((s.get("compression_ratio", 0) for s in segments), default=0)
+
+            if avg_logprob < -1.0:        # 辨識信心過低
+                return "low_confidence"
+            if no_speech > 0.6:           # 極可能是靜音／雜音
+                return "low_confidence"
+            if compression > 2.4:         # 重複迴圈，幻覺常見特徵
+                return "suspect_hallucination"
+
+    return "ok"
+
+
+# ==============================
+# 類別命中（單次掃描，避免跨類別重複計分）
+# ==============================
+# 字數相同時的命中優先序，數字越小優先權越高。
+CATEGORY_PRIORITY = {
+    "event": 0,
+    "location": 1,
+    "object": 2,
+    "person": 3,
+    "time": 4,
+    "emotion": 5,
+    "connector": 6,
+}
+
+
+def tag_all_categories(text, category_words):
+    """
+    在同一次掃描中比對所有類別，確保同一段字只會被歸類到一個類別，
+    避免「家人」同時被算進人物與地點（「家」）、
+    「買菜」被拆成事件（「買」）+ 物品（「菜」）重複計分。
+
+    比對順序：詞彙長度由長到短，長度相同時依 CATEGORY_PRIORITY 排序，
+    確保結果是決定性的（不受 dict 插入順序影響）。
+    """
+    pairs = [
+        (word, cat)
+        for cat, words in category_words.items()
+        for word in set(words)
+        if word
+    ]
+    pairs.sort(key=lambda p: (-len(p[0]), CATEGORY_PRIORITY.get(p[1], 99), p[0]))
+
+    remaining = text
+    matches = {cat: [] for cat in category_words}
+
+    for word, cat in pairs:
+        if word in remaining:
+            matches[cat].append(word)
+            # 用等長佔位符取代，避免被更短的詞彙從中間再次命中
+            remaining = remaining.replace(word, " " * len(word))
+
+    return matches
+
+
+# ==============================
 # 結果等級
 # ==============================
 def get_risk_result(total_score):
     """
-    六項分數最高 24 分。
+    五項獨立維度（流暢度／資訊量／句子結構／命名能力／語意完整性）加總，滿分 20。
 
     注意：
     risk_level 代表本次語言表達追蹤狀況，
     不代表失智症診斷結果。
     """
-    if total_score >= 19:
+    if total_score >= 16:
         return {
             "risk_level": "low",
             "suggestion": (
@@ -71,7 +170,7 @@ def get_risk_result(total_score):
             ),
         }
 
-    elif total_score >= 13:
+    elif total_score >= 11:
         return {
             "risk_level": "medium",
             "suggestion": (
@@ -102,6 +201,11 @@ def analyze_transcription(text):
     original_text = text or ""
     text = normalize_text(original_text)
     content_length = get_content_length(text)
+    effective_length = get_effective_length(text)
+
+    repetition_ratio = 0.0
+    if content_length > 0:
+        repetition_ratio = 1 - (effective_length / content_length)
 
     # ------------------------------
     # 關鍵詞庫
@@ -128,30 +232,40 @@ def analyze_transcription(text):
         "車站", "路上", "街上",
     ]
 
+    # 移除單字動詞（送、拿、放、買、煮、玩）：這些字太短，
+    # 常常只是別的詞（放假、買單、拿手…）裡的一部分，會被誤判成事件。
     event_words = [
         "搭公車", "搭捷運", "搭火車", "看醫生",
         "吃早餐", "吃午餐", "吃晚餐",
-        "散步", "吃飯", "聊天", "買菜",
-        "購物", "煮飯", "煮菜", "看到",
-        "遇到", "玩耍", "拍照", "運動",
+        "散步", "吃飯", "聊天", "買菜", "購物",
+        "煮飯", "煮菜", "看到", "遇到", "玩耍", "拍照", "運動",
         "走路", "旅行", "上課", "唱歌",
         "跳舞", "看電視", "看書", "喝茶",
         "喝咖啡", "打電話", "聚餐", "賞花",
-        "照顧", "幫忙", "送", "拿", "放",
-        "買", "煮", "玩",
+        "照顧", "幫忙", "拜訪", "拜拜",
+        "回家", "睡覺", "打掃", "洗衣服",
+        "掃地", "拖地", "澆水", "種花",
+        "泡茶", "看診", "復健", "按摩",
+        "做早操", "打太極", "曬太陽",
+        "逛街", "逛夜市", "去市場",
+        "帶孫子", "接孫子", "看孫子",
+        "打牌", "下棋", "打麻將",
     ]
 
+    # 移除單字物品（花、狗、貓、樹、飯、菜、藥）：改用多字詞，
+    # 避免「買菜」的「菜」、「吃飯」的「飯」被重複算成物品。
     object_words = [
         "腳踏車", "自行車", "公車", "汽車",
         "手機", "電視", "照片", "相簿",
-        "花", "小狗", "狗", "小貓", "貓",
-        "樹", "水果", "蘋果", "香蕉", "橘子",
-        "飯", "青菜", "菜", "餅乾", "蛋糕",
+        "花朵", "鮮花", "小狗", "小貓",
+        "大樹", "樹木", "水果", "蘋果", "香蕉", "橘子",
+        "白飯", "青菜", "餅乾", "蛋糕",
         "椅子", "桌子", "水槽", "杯子",
         "雨傘", "帽子", "衣服", "鞋子",
-        "錢包", "鑰匙", "眼鏡", "藥",
+        "錢包", "鑰匙", "眼鏡", "藥品", "藥物",
     ]
 
+    # 移除單字「累」：「疲累」已涵蓋，單字「累」太容易誤中其他詞。
     emotion_words = [
         "很開心", "不開心", "很高興", "很幸福",
         "開心", "高興", "快樂", "幸福",
@@ -159,7 +273,7 @@ def analyze_transcription(text):
         "輕鬆", "舒服", "期待", "驚喜",
         "難過", "傷心", "孤單", "寂寞",
         "生氣", "擔心", "緊張", "害怕",
-        "疲倦", "疲累", "累", "想念",
+        "疲倦", "疲累", "好累", "很累", "想念",
     ]
 
     time_words = [
@@ -190,20 +304,38 @@ def analyze_transcription(text):
     ]
 
     # ------------------------------
-    # 找出實際命中詞
+    # 找出實際命中詞（單次掃描，跨類別互斥）
     # ------------------------------
-    person_matches = find_matched_words(text, person_words)
-    location_matches = find_matched_words(text, location_words)
-    event_matches = find_matched_words(text, event_words)
-    object_matches = find_matched_words(text, object_words)
-    emotion_matches = find_matched_words(text, emotion_words)
-    time_matches = find_matched_words(text, time_words)
-    connector_matches = find_matched_words(text, connector_words)
+    category_words = {
+        "person": person_words,
+        "location": location_words,
+        "event": event_words,
+        "object": object_words,
+        "emotion": emotion_words,
+        "time": time_words,
+        "connector": connector_words,
+    }
+    matches = tag_all_categories(text, category_words)
+
+    person_matches = matches["person"]
+    location_matches = matches["location"]
+    event_matches = matches["event"]
+    object_matches = matches["object"]
+    emotion_matches = matches["emotion"]
+    time_matches = matches["time"]
+    connector_matches = matches["connector"]
 
     hesitation_count = sum(text.count(word) for word in hesitation_words)
     sentence_marker_count = count_sentence_markers(original_text)
 
+    # 「我／自己／本人」只是第一人稱泛稱，不算真正提到具體人物，
+    # 資訊量維度只看有實質內容的人物提及。
+    substantive_person_matches = [
+        w for w in person_matches if w not in {"我", "自己", "本人"}
+    ]
+
     has_person = len(person_matches) > 0
+    has_person_substantive = len(substantive_person_matches) > 0
     has_location = len(location_matches) > 0
     has_event = len(event_matches) > 0
     has_object = len(object_matches) > 0
@@ -213,18 +345,18 @@ def analyze_transcription(text):
 
     # ==============================
     # 1. 流暢度
-    # 綜合描述長度與猶豫語數量
+    # 用扣除重複跳針後的「有效長度」判斷，避免覆誦/口吃被誤判成內容豐富。
     # ==============================
-    if content_length == 0:
+    if effective_length == 0:
         fluency_score = 0
 
-    elif content_length < 10:
+    elif effective_length < 10:
         fluency_score = 1
 
-    elif content_length < 20:
+    elif effective_length < 20:
         fluency_score = 2
 
-    elif content_length < 35:
+    elif effective_length < 35:
         if hesitation_count >= 4:
             fluency_score = 2
         else:
@@ -238,13 +370,17 @@ def analyze_transcription(text):
         else:
             fluency_score = 4
 
+    # 重複比例過高（跳針／覆誦）額外扣分，最低扣到 0
+    if repetition_ratio >= 0.30:
+        fluency_score = max(0, fluency_score - 1)
+
     # ==============================
     # 2. 資訊量
     # 看人物、地點、事件、物品、情緒、時間
     # 出現了多少種類，不是單純計算總詞數
     # ==============================
     information_dimensions = [
-        has_person,
+        has_person_substantive,
         has_location,
         has_event,
         has_object,
@@ -254,16 +390,9 @@ def analyze_transcription(text):
 
     info_count = sum(information_dimensions)
 
-    if info_count >= 5:
-        information_score = 4
-    elif info_count >= 4:
-        information_score = 3
-    elif info_count >= 2:
-        information_score = 2
-    elif info_count == 1:
-        information_score = 1
-    else:
-        information_score = 0
+    # 命中種類越多，分數提升的邊際效益遞減；滿 4 種即滿分
+    INFO_SCORE_MAP = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4}
+    information_score = INFO_SCORE_MAP[info_count]
 
     # ==============================
     # 3. 句子結構
@@ -361,7 +490,7 @@ def analyze_transcription(text):
 
     # ==============================
     # 6. 整體溝通能力
-    # 使用加權平均，資訊與語意稍微重要一些
+    # 使用加權平均，屬於衍生的總結性指標，不重複計入總分。
     # ==============================
     weighted_score = (
         fluency_score * 0.20
@@ -371,7 +500,8 @@ def analyze_transcription(text):
         + semantic_score * 0.25
     )
 
-    communication_score = round(weighted_score)
+    # 用四捨五入（非銀行家捨入）取整數，避免 .5 的分數忽上忽下不一致
+    communication_score = int(math.floor(weighted_score + 0.5))
     communication_score = max(0, min(4, communication_score))
 
     # 空白文字一定是 0
@@ -380,6 +510,8 @@ def analyze_transcription(text):
 
     # ==============================
     # 總分
+    # 五項獨立維度加總，滿分 20；communication_score 是由這五項
+    # 加權平均出來的衍生指標，不再重複計入總分。
     # ==============================
     total_score = (
         fluency_score
@@ -387,10 +519,9 @@ def analyze_transcription(text):
         + sentence_score
         + naming_score
         + semantic_score
-        + communication_score
     )
 
-    average_score = round(total_score / 6, 2)
+    average_score = round(total_score / 5, 2)
     risk_result = get_risk_result(total_score)
 
     return {
@@ -415,6 +546,8 @@ def analyze_transcription(text):
         # 建議保留這些資料，方便開發時查看為什麼得分
         "analysis_details": {
             "content_length": content_length,
+            "effective_length": effective_length,
+            "repetition_ratio": round(repetition_ratio, 2),
             "hesitation_count": hesitation_count,
             "sentence_marker_count": sentence_marker_count,
             "person_matches": person_matches,
@@ -428,6 +561,61 @@ def analyze_transcription(text):
             "naming_count": naming_count,
         },
     }
+
+
+# ==============================
+# 語言活力指數（Language Vitality Index, LVI）
+# 取代原本的「腦年齡」估算，避免用一段沒有腦影像/訓練資料依據的
+# 年齡數字（+8/-5/+2）暗示醫學意義。
+# ==============================
+MIN_ENTRIES_FOR_BASELINE = 5    # 少於 5 筆歷史資料不做趨勢比較
+LVI_TREND_UP = "up"
+LVI_TREND_FLAT = "flat"
+LVI_TREND_DOWN = "down"
+
+
+def calc_lvi(avg_total_score, max_total=20):
+    """
+    語言活力指數（0～100）。
+
+    這不是年齡、不是醫學指標，只是把五項維度總分線性換算到 0～100，
+    方便使用者一眼看出「這週表達狀況大概落在哪裡」。
+
+    max_total 預設 20（對應 analyze_transcription 五項獨立維度加總後的滿分）。
+    """
+    if avg_total_score is None:
+        return None
+    lvi = round((avg_total_score / max_total) * 100)
+    return max(0, min(100, lvi))
+
+
+def calc_lvi_trend(current_avg, baseline_avgs, max_total=20):
+    """
+    跟個人歷史基線比較，回傳 (trend, delta)。
+
+    baseline_avgs：該使用者「更早之前」每篇日記的 total_score 清單
+                   （不含本次計算窗口內的資料）。
+    資料不足時回傳 (None, None)，前端應顯示「還在認識你的說話習慣」，
+    不要硬湊一個趨勢出來。
+
+    門檻：LVI 差距 >= 5 才算變化，避免每天的自然波動被當成趨勢。
+    """
+    if current_avg is None:
+        return (None, None)
+    if len(baseline_avgs) < MIN_ENTRIES_FOR_BASELINE:
+        return (None, None)
+
+    baseline_mean = sum(baseline_avgs) / len(baseline_avgs)
+    current_lvi = calc_lvi(current_avg, max_total)
+    baseline_lvi = calc_lvi(baseline_mean, max_total)
+    delta = current_lvi - baseline_lvi
+
+    if delta >= 5:
+        return (LVI_TREND_UP, delta)
+    elif delta <= -5:
+        return (LVI_TREND_DOWN, delta)
+    else:
+        return (LVI_TREND_FLAT, delta)
 
 
 # ==============================

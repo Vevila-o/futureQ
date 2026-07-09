@@ -128,26 +128,39 @@ class CognitiveAnalysis(models.Model):
         related_name="cognitive_analysis"
     )
 
-    fluency_score = models.IntegerField("流暢度", default=0)          # 流暢度
-    information_score = models.IntegerField("資訊量", default=0)      # 資訊量
-    sentence_score = models.IntegerField("句子結構", default=0)         # 句子結構
-    naming_score = models.IntegerField("命名能力", default=0)           # 命名能力
-    semantic_score = models.IntegerField("語意正確性", default=0)         # 語意正確性
-    communication_score = models.IntegerField("整體溝通能力", default=0)    # 整體溝通能力
+    # 這次錄音樣本是否足以進行語言表達分析。
+    # 空白錄音、雜音或 Whisper 幻覺輸出會被記為 is_valid=False，
+    # 分數欄位留空，不會被誤判成「高風險」。
+    is_valid = models.BooleanField("樣本是否有效", default=True)
+    invalid_reason = models.CharField(
+        "無效原因",
+        max_length=32,
+        blank=True,
+        default="",
+    )  # too_short / suspect_hallucination / low_confidence
 
-    total_score = models.IntegerField("總分", default=0)            # 總分
+    fluency_score = models.IntegerField("流暢度", null=True, blank=True)          # 流暢度
+    information_score = models.IntegerField("資訊量", null=True, blank=True)      # 資訊量
+    sentence_score = models.IntegerField("句子結構", null=True, blank=True)         # 句子結構
+    naming_score = models.IntegerField("命名能力", null=True, blank=True)           # 命名能力
+    semantic_score = models.IntegerField("語意正確性", null=True, blank=True)         # 語意正確性
+    communication_score = models.IntegerField("整體溝通能力", null=True, blank=True)    # 整體溝通能力
+
+    total_score = models.IntegerField("總分", null=True, blank=True)            # 總分（五項獨立維度加總，滿分 20）
     average_score = models.DecimalField(
         "平均分數",
         max_digits=4,
         decimal_places=2,
-        default=0
+        null=True,
+        blank=True,
     )                                                       # 平均分數
 
     risk_level = models.CharField(
         "風險等級",
         max_length=10,
         choices=RISK_LEVEL_CHOICES,
-        default="low"
+        null=True,
+        blank=True,
     )
 
     suggestion = models.TextField("建議內容", blank=True, default="")   # 給使用者看的提醒
