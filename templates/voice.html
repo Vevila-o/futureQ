@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>憶智防線 - 語音紀錄</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/nav.css">
+<link rel="stylesheet" href="../static/css/voice.css">
+<link rel="stylesheet" href="../static/css/header.css"/>
+</head>
+<body>
+
+<div id="headerback-placeholder"
+     data-title="聲影日記"
+     data-icon="mic_none"
+     data-back="back">
+</div>
+
+<main>
+
+  <div class="prompt-header">
+    <h2 class="prompt-title">跟我聊聊這張照片吧</h2>
+    <p class="prompt-sub" id="prompt-sub">AI 會陪你聊 4 段小對話，聊完會自動生成今天的日記</p>
+  </div>
+
+  <div class="prompt-photo">
+    <img alt="今日照片" id="prompt-photo-img" src="">
+  </div>
+
+  <!-- 對話氣泡區：第 1 句（照片首問）到第 4 輪追問都顯示在這裡 -->
+  <div class="chat-box" id="chat-box"></div>
+
+  <!-- 狀態 + 計時器 單行 -->
+  <div class="record-info-row">
+    <div class="record-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">準備中</span>
+    </div>
+    <div class="record-timer-group">
+      <span class="record-timer" id="record-timer">03:00</span>
+      <span class="record-limit">限制三分鐘</span>
+    </div>
+  </div>
+
+  <!-- 波形 -->
+  <div class="waveform" id="waveform">
+    <div id="wave-bars">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+  </div>
+
+  <!-- 點擊錄音操作區 -->
+  <div class="hold-record-section" id="hold-record-section">
+    <div class="record-btn-row" id="record-btn-row">
+      <button class="hold-mic-btn" id="hold-mic-btn" type="button" aria-label="開始錄音" disabled>
+        <span class="material-symbols-outlined" id="hold-mic-icon">mic</span>
+      </button>
+      <button class="btn-complete" id="btn-complete" type="button" style="display:none;" aria-label="完成錄音">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>完成</span>
+      </button>
+    </div>
+    <p class="hold-hint" id="hold-hint">正在準備問題…</p>
+    <button class="btn-restart" id="btn-restart" type="button" style="display:none">重新錄製</button>
+    <button class="btn-skip-round" id="btn-skip-round" type="button" style="display:none">這題跳過</button>
+  </div>
+
+  <button class="btn-save" id="btn-finalize" type="button" style="display:none;">生成日記</button>
+
+  <form style="display:none;">
+    {% csrf_token %}
+  </form>
+
+</main>
+
+<!-- Loading Overlay（Whisper 處理中） -->
+<div id="loading-overlay" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:#6b9a7a;
+  flex-direction:column; align-items:center; justify-content:center;
+  font-family:'Noto Sans TC',sans-serif;
+">
+  <div style="
+    width:190px; height:190px; background:#fff; border-radius:50%;
+    border:4px solid rgba(255,255,255,0.6);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:52px; box-shadow:0 4px 24px rgba(0,0,0,0.12);
+  ">
+    <img src="/static/img/logo.jpg.png" alt="logo" style="width:68%;height:68%;object-fit:contain;"/>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;color:#fff;">
+    <span class="material-symbols-outlined" id="loading-gear" style="
+      font-size:30px; color:#fff;
+      font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 30;
+      animation:gear-spin 1.8s linear infinite;
+    ">settings</span>
+    <span style="font-size:20px;font-weight:500;letter-spacing:0.04em;color:#fff;">語言認知計算中請稍後</span>
+  </div>
+  <h2 class="congrats-title">恭喜完成！</h2>
+    <p class="congrats-sub">記錄也是改變生命力量的一部分。為你的持之以恆鼓掌！</p>
+</div>
+<style>
+  @keyframes gear-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
+
+<div id="nav-placeholder"></div>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/headerback.js"></script>
+<script src="../static/js/voice.js"></script>
+</body>
+</html>

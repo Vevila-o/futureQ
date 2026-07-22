@@ -1,94 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>聲影日記</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/nav.css">
+<link rel="stylesheet" href="../static/css/header.css">
+</head>
+<body>
 
-{% load static %}
+<div id="header-placeholder"></div>
 
-{% block title %}語音日記{% endblock %}
-
-{% block head_css %}
-<link rel="stylesheet" href="{% static 'index.css' %}">
-{% endblock %}
-
-{% block content %}
-<div class="app" id="app">
-
-  <!-- ── Phase 1: 上傳照片 ─────────────────────────────── -->
-  <section class="phase" id="phase-upload">
-
-    <div class="header">
-      <h1 class="logo">📖 語音日記</h1>
-      <p class="tagline">用聲音，記錄生活的溫度</p>
+<!-- MAIN -->
+<main>
+  <section>
+    <h2 class="welcome-name">早安，林奶奶 👋</h2>
+    <p class="welcome-sub">今天想記錄下什麼美好的回憶嗎？</p>
+  </section>
+  <section>
+{% comment %} {% if has_today_diary %}
+<a href="/index/" style="text-decoration:none;display:block;">
+  <button class="action-btn action-btn-today" style="width:100%;opacity:0.75;cursor:default;">
+    <div style="text-align:left;">
+      <span class="action-label">今天</span>
+      <span class="action-sub">已完成今天的紀錄</span>
     </div>
-
-    <form method="post" action="{% url 'upload_photo' %}"
-          enctype="multipart/form-data" id="upload-form">
-      {% csrf_token %}
-      <label class="drop-zone" id="drop-zone" for="photo-input">
-        <div class="drop-zone-content" id="drop-content">
-          <span class="drop-icon">📷</span>
-          <span class="drop-text">點擊選擇照片</span>
-          <span class="drop-hint">JPG・PNG・HEIC 均可</span>
-        </div>
-        <img id="upload-preview" class="upload-preview" alt="預覽">
-      </label>
-      <input type="file" id="photo-input" name="photo"
-             accept="image/*" class="sr-only" required>
-      <button type="submit" class="btn btn-primary" id="upload-submit" disabled>
-        選好了，開始記錄 →
-      </button>
-    </form>
-
+    <span class="material-symbols-outlined" style="font-size:60px;font-variation-settings:'FILL' 1;">check_circle</span>
+  </button>
+</a>
+{% else %} {% endcomment %}
+<a href="/uploadPhoto/" style="text-decoration:none;display:block;">
+  <button class="action-btn action-btn-today" style="width:100%;">
+    <div style="text-align:left;">
+      <span class="action-label">今天</span>
+      <span class="action-sub">點擊開始記錄</span>
+    </div>
+    <span class="material-symbols-outlined" style="font-size:60px;font-variation-settings:'FILL' 1;">add_circle</span>
+  </button>
+</a>
+{% comment %} {% endif %} {% endcomment %}
+<a href="/review/" style="text-decoration:none;display:block;">
+  <button class="action-btn action-btn-past" style="width:100%;">
+    <div style="text-align:left;">
+      <span class="action-label">動態回顧</span>
+      <span class="action-sub">重溫過往的時光</span>
+    </div>
+    <span class="material-symbols-outlined" style="font-size:52px;">history_edu</span>
+  </button>
+</a>
   </section>
 
-  <!-- ── Phase 2: 錄音（含 AI 追問泡泡）──────────────────── -->
-  <section class="phase hidden" id="phase-record">
-
-    <div class="record-header">
-      <img id="photo-thumb" src="" alt="照片" class="photo-thumb">
-      <div class="round-badge">
-        第 <span id="round-current">1</span> 輪
-        <span class="round-sep">/</span> 3
-      </div>
+  <!-- 日曆卡片 -->
+  <div class="cal-card">
+    <div class="cal-header">
+      <span class="cal-month-title" id="cal-title"></span>
+      <button class="cal-view-btn" id="btn-view-toggle">以列表顯示</button>
     </div>
-
-    <div class="question-bubble hidden" id="question-bubble">
-      <p id="question-text"></p>
+    <div class="cal-weekdays">
+      <span class="cal-weekday">一</span>
+      <span class="cal-weekday">二</span>
+      <span class="cal-weekday">三</span>
+      <span class="cal-weekday">四</span>
+      <span class="cal-weekday">五</span>
+      <span class="cal-weekday">六</span>
+      <span class="cal-weekday">日</span>
     </div>
-
-    <p class="record-prompt" id="record-prompt">
-      說說這張照片背後的故事吧 ✨
-    </p>
-
-    <div class="recorder-wrap">
-      <div class="timer hidden" id="timer">
-        <span id="timer-sec">60</span> 秒
-      </div>
-      <button class="btn btn-record" id="btn-record">
-        <span class="rec-dot"></span> 開始錄音
+    <div class="cal-grid" id="cal-grid"></div>
+    <div id="cal-list"></div>
+    <div class="cal-footer">
+      <button class="cal-nav-btn" id="btn-prev" aria-label="上一個月">
+        <span class="material-symbols-outlined" style="font-size:22px;">chevron_left</span>
       </button>
-      <button class="btn btn-stop hidden" id="btn-stop">
-        ⏹ 停止並送出
+      <button class="cal-picker-btn" id="btn-picker">
+        <span id="picker-label">選擇 月／年</span>
+        <span class="material-symbols-outlined" style="font-size:18px;">keyboard_arrow_down</span>
+      </button>
+      <button class="cal-nav-btn" id="btn-next" aria-label="下一個月">
+        <span class="material-symbols-outlined" style="font-size:22px;">chevron_right</span>
       </button>
     </div>
+  </div>
+</main>
 
-    <button class="btn btn-skip hidden" id="btn-skip">
-      略過問答，直接整理日記
-    </button>
-
-  </section>
-
-  <!-- ── Phase 3: 處理中 ───────────────────────────────── -->
-  <section class="phase hidden" id="phase-processing">
-    <div class="processing">
-      <div class="spinner"></div>
-      <p id="processing-msg">語音辨識中⋯</p>
+<!-- 月份選擇器 Popup -->
+<div id="picker-popup">
+  <div id="picker-box">
+    <div class="picker-year-row">
+      <button class="picker-year-btn" id="picker-prev-year">
+        <span class="material-symbols-outlined" style="font-size:20px;">chevron_left</span>
+      </button>
+      <span class="picker-year-label" id="picker-year-label">2026 年</span>
+      <button class="picker-year-btn" id="picker-next-year">
+        <span class="material-symbols-outlined" style="font-size:20px;">chevron_right</span>
+      </button>
     </div>
-  </section>
-
+    <div class="picker-months" id="picker-months"></div>
+  </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- 日記內容 Modal -->
+<div id="entry-overlay">
+  <div id="entry-modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-date" id="modal-date"></span>
+      <button class="modal-close" id="modal-close-btn">
+        <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <div class="modal-photo">
+      <div class="modal-photo-placeholder" id="modal-photo-placeholder">
+        <span class="material-symbols-outlined" style="font-size:40px;opacity:.4;">image</span>
+        <span style="font-size:13px;opacity:.5;">尚未上傳照片</span>
+      </div>
+      <img id="modal-photo-img" style="display:none;" alt="日記照片"/>
+    </div>
+    <audio id="modal-audio" style="display:none;"></audio>
+    <button class="modal-play-btn" id="modal-play-btn">
+      <span class="material-symbols-outlined" id="modal-play-icon" style="font-size:22px;font-variation-settings:'FILL' 1;">play_arrow</span>
+      <span id="modal-play-text">播放語音</span>
+    </button>
+    <div class="modal-transcript">
+      <div class="modal-transcript-title">語音轉譯內容</div>
+      <div class="modal-transcript-text" id="modal-transcript"></div>
+    </div>
+  </div>
+</div>
+
+<div id="nav-placeholder"></div>
+
 <script>
-  const SESSION_STATE = {{ session_state_json|default:"{}"|safe }};
+  window.CALENDAR_DATA = {{ calendar_data_json|safe }};
 </script>
-<script src="{% static 'voice/recorder.js' %}"></script>
-{% endblock %}
+
+<script src="../static/js/index.js"></script>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/header.js"></script>
+
+</body>
+</html>

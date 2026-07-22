@@ -6,3 +6,4 @@ server.err.log
 backups/
 .pytest_cache/
 venv/
+media/

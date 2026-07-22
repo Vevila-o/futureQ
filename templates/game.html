@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <title>憶智防線 - 遊戲首頁</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../static/css/index.css">
+  <link rel="stylesheet" href="../static/css/nav.css">
+  <link rel="stylesheet" href="../static/css/header.css">
+  <link rel="stylesheet" href="../static/css/game.css">
+  <style>
+    /* 2x2 四宮格成績與成就排列 */
+    .score-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .score-stats-grid .score-stat-card {
+      width: 100%;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    /* 讓成就入口卡片點擊時有舒適的 Q 彈回饋感 */
+    .achieve-entry-card {
+      text-decoration: none;
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s, background-color 0.2s ease;
+      cursor: pointer;
+    }
+    .achieve-entry-card:active {
+      transform: scale(0.96);
+      background-color: #DDEEE4 !important; /* 點擊時顏色稍微深一點點點點 */
+    }
+
+    /* 右下角商城懸浮按鈕 CSS 樣式 */
+    .floating-market-btn {
+      position: fixed;
+      bottom: 110px; /* 向上微調，避開最底部的導覽列 */
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #FFB300, #F57C00); /* 亮眼的金黃/暖橘漸層 */
+      border-radius: 50%;
+      box-shadow: 0 6px 16px rgba(245, 124, 0, 0.4);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      animation: floatBounce 3s ease-in-out infinite;
+    }
+
+    /* 按鈕內部的文字與圖標垂直排版 */
+    .market-btn-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+    }
+
+    .market-btn-text {
+      font-size: 13px;
+      font-weight: 900;
+      margin-top: -1px;
+      letter-spacing: 0.5px;
+    }
+
+    /* 輕微上下漂浮的動畫 */
+    @keyframes floatBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* 點擊時的按壓回饋效果 */
+    .floating-market-btn:active {
+      transform: scale(0.92);
+      box-shadow: 0 3px 8px rgba(245, 124, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header 動態插入點 -->
+<div id="header-placeholder"></div>
+
+<main>
+
+  <!-- 問候語 -->
+  <section class="home-greeting">
+    <h2 class="welcome-name">早安，玉蘭！</h2>
+    <p class="welcome-sub">今天也要保持大腦活力喔。</p>
+  </section>
+
+  <!-- 每日建議卡片 -->
+  <a href="/market/" style="text-decoration:none;display:block;">
+    <div class="home-quest-card">
+      <div class="home-quest-icon">
+        <span class="material-symbols-outlined" style="font-size:40px;font-variation-settings:'FILL' 1;color:var(--primary);">lightbulb</span>
+      </div>
+      <div class="home-quest-text">
+        <span class="home-quest-label">每日建議</span>
+        <span class="home-quest-title">完成一場菜市場遊戲</span>
+      </div>
+      <span class="material-symbols-outlined home-quest-arrow">chevron_right</span>
+    </div>
+  </a>
+
+  <!-- 大腦訓練遊戲 -->
+  <section class="home-section">
+    <div class="home-section-header">
+      <h3 class="home-section-title">大腦訓練遊戲</h3>
+    </div>
+
+    <a href="/market/" style="text-decoration:none;display:block;">
+      <div class="home-game-btn">
+        <div class="home-game-icon">
+          <span class="material-symbols-outlined" style="font-size:48px;">shopping_cart</span>
+        </div>
+        <span class="home-game-name">菜市場</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- 我的成績（2x2 佈局） -->
+  <section class="home-section">
+    <div class="home-section-header">
+      <h3 class="home-section-title">我的成績</h3>
+    </div>
+
+    <div class="score-stats-grid">
+      <!-- 最高分 -->
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">emoji_events</span>
+        <span class="score-stat-num">{{ highest_score }}</span>
+        <span class="score-stat-label">最高分</span>
+      </div>
+      
+      <!-- 累計次數 -->
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">history</span>
+        <span class="score-stat-num">{{ total_count }}</span>
+        <span class="score-stat-label">累計次數</span>
+      </div>
+      
+      <!-- 連續天數 -->
+      <div class="score-stat-card">
+        <span class="material-symbols-outlined score-stat-icon">local_fire_department</span>
+        <span class="score-stat-num">{{ streak_days }}</span>
+        <span class="score-stat-label">連續天數</span>
+      </div>
+
+      <!-- 💡 完美統一版：「我的成就」圖標全面換成標準綠色，數字精確綁定後端解鎖數量 -->
+      <a href="/achievements/" class="score-stat-card achieve-entry-card">
+        <span class="material-symbols-outlined score-stat-icon" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+        <span class="score-stat-num">{{ unlocked_achievements_count }}</span>
+        <span class="score-stat-label">我的成就 ➔</span>
+      </a>
+    </div>
+
+    <!-- 最近紀錄 -->
+    <div class="score-recent-title" style="margin-top: 25px;">最近紀錄</div>
+    <div class="score-record-list">
+      {% for record in recent_records %}
+      <div class="score-record-item">
+        <div class="score-record-left">
+          <span class="material-symbols-outlined" style="color:var(--primary);">shopping_cart</span>
+          <div>
+            <p class="score-record-name">{{ record.game_name }}</p>
+            <p class="score-record-date">{{ record.date_label }}</p>
+          </div>
+        </div>
+        <span class="score-record-score">{{ record.score }} 分</span>
+      </div>
+      {% empty %}
+      <p class="score-record-empty">還沒有遊戲紀錄，快去玩一場吧！</p>
+      {% endfor %}
+    </div>
+
+  </section>
+
+</main>
+
+<!-- 右下角點數商城懸浮按鈕 -->
+<a href="/shop/" class="floating-market-btn" aria-label="點數商城">
+  <div class="market-btn-content">
+    <span class="material-symbols-outlined" style="font-size: 38px; font-variation-settings: 'FILL' 1;">storefront</span>
+    <span class="market-btn-text">逛商城</span>
+  </div>
+</a>
+
+<!-- 導覽列動態插入點 -->
+<div id="nav-placeholder"></div>
+
+<script src="../static/js/header.js"></script>
+<script src="../static/js/nav.js"></script>
+<script src="../static/js/game.js"></script>
+
+</body>
+</html>

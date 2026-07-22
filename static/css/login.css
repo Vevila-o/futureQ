@@ -1,0 +1,106 @@
+/* =========================================
+   login.css
+   ========================================= */
+
+.login-main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  max-width: none;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 36px 28px 32px;
+  border: 1.5px solid var(--outline-variant);
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.login-title {
+  font-size: calc(22px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 4px;
+}
+
+.login-sub {
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-surface-variant);
+  margin-bottom: 24px;
+}
+
+.login-error {
+  width: 100%;
+  background: #ffdad6;
+  color: var(--error);
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-label {
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  border: 1.5px solid var(--outline-variant);
+  background: var(--surface-container);
+  color: var(--on-surface);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: calc(15px * var(--fs-scale));
+}
+.login-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: calc(16px * var(--fs-scale));
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s;
+}
+.login-btn:active { transform: scale(.97); }

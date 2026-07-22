@@ -12,7 +12,19 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
+
+# Windows 的預設主控台編碼（cp950）無法印出 print() 裡的 emoji（🎙️、🏆…），
+# 一旦印到一半噴 UnicodeEncodeError，會直接把整支 view 帶進 except 區塊，
+# 回傳一個看起來莫名其妙的錯誤（例如聊天室錄音 API 直接回 500）。
+# 開發時強制主控台輸出用 UTF-8，避免 log 用的 emoji 把正常請求搞掛。
+if sys.platform == "win32":
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +42,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# DualSessionMiddleware 取代了原生 SessionMiddleware（功能相同，只是 /admin/ 用獨立 cookie），
+# 所以關閉 admin.E410 這條只檢查字串是否存在的系統檢查。
+SILENCED_SYSTEM_CHECKS = ['admin.E410']
+
 
 # Application definition
 
@@ -45,7 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'voiceDiary.middleware.DualSessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -127,9 +143,18 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'Voice.User'
+LOGIN_URL = '/login/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 OPENAI_API_KEY  = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL    = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
 OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+
+_default_origins = (
+    'http://127.0.0.1:8000,'
+    'http://localhost:8000,'
+    'https://*.ngrok-free.app,'
+    'https://*.ngrok.io'
+)
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _default_origins).split(',')

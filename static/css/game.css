@@ -1,0 +1,335 @@
+/* =========================================
+   home.css — 憶智防線首頁專用樣式
+   ========================================= */
+
+/* 問候區塊 */
+.home-greeting {
+  margin-bottom: 20px;
+}
+
+/* 每日建議卡片 */
+.home-quest-card {
+  background: var(--secondary-container);
+  border-radius: 20px;
+  padding: 20px 24px;
+  border: 1.5px solid var(--outline-variant);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+}
+.home-quest-card:active {
+  transform: scale(.98);
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+}
+
+.home-quest-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--surface-tint);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-quest-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-quest-label {
+  font-size: calc(13px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.home-quest-title {
+  font-size: calc(17px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.3;
+}
+
+.home-quest-arrow {
+  color: var(--outline-variant);
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+/* 區段共用 */
+.home-section {
+  margin-bottom: 28px;
+}
+
+.home-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.home-section-title {
+  font-size: calc(30px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.home-section-link {
+  font-size: calc(15px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+.home-section-link:hover {
+  text-decoration: underline;
+}
+
+/* 遊戲按鈕 */
+.home-game-btn {
+  background: var(--primary);
+  border-radius: 20px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  border: 1.5px solid transparent;
+}
+.home-game-btn:active {
+  transform: scale(.98);
+}
+
+.home-game-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  color: white;
+  flex-shrink: 0;
+}
+
+.home-game-name {
+  font-size: calc(30px * var(--fs-scale));
+  font-weight: 700;
+  color:  white;
+}
+
+/* 動態牆卡片 */
+.home-feed-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 20px 24px;
+  border: 1.5px solid var(--outline-variant);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.home-feed-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.home-feed-avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--secondary-container);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-feed-name {
+  font-size: calc(17px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.home-feed-time {
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}
+
+.home-feed-content {
+  font-size: calc(16px * var(--fs-scale));
+  color: var(--on-surface);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.home-feed-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--outline-variant);
+}
+
+.home-feed-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  font-size: calc(16px * var(--fs-scale));
+  font-weight: 700;
+  font-family: 'Noto Sans TC', sans-serif;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: color .15s, background .15s;
+}
+.home-feed-btn:hover {
+  background: var(--surface-container-high);
+}
+.home-feed-btn#btn-like:hover {
+  color: #e53935;
+}
+.home-feed-btn#btn-comment:hover {
+  color: var(--primary);
+}
+
+/* =========================================
+   我的成績區塊
+   ========================================= */
+
+/* 三格統計 */
+.score-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.score-stat-card {
+  background: var(--secondary-container);
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.achivement {
+  background: #344f41;
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+
+.score-stat-icon {
+  font-size: 28px;
+  color: var(--primary);
+  font-variation-settings: 'FILL' 1;
+}
+.achivement-icon {
+  font-size: 28px;
+  color: white;
+  font-variation-settings: 'FILL' 1;
+}
+.score-stat-num {
+  font-size: calc(24px * var(--fs-scale));
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1.1;
+}
+
+.achivement-score{
+  font-size: calc(24px * var(--fs-scale));
+  font-weight: 900;
+  color: white;
+  line-height: 1.1;
+}
+
+.score-stat-label {
+  font-size: calc(12px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface-variant);
+}
+
+.achivment-label {
+  font-size: calc(12px * var(--fs-scale));
+  font-weight: 700;
+  color: rgb(207, 207, 207);
+}
+
+/* 最近紀錄 */
+.score-recent-title {
+  font-size: calc(15px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  margin-bottom: 10px;
+}
+
+.score-record-list {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1.5px solid var(--outline-variant);
+  overflow: hidden;
+}
+
+.score-record-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1.5px solid var(--outline-variant);
+}
+
+.score-record-item:last-child {
+  border-bottom: none;
+}
+
+.score-record-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-record-name {
+  font-size: calc(15px * var(--fs-scale));
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.score-record-date {
+  font-size: calc(13px * var(--fs-scale));
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}
+
+.score-record-score {
+  font-size: calc(16px * var(--fs-scale));
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.score-record-empty {
+  padding: 20px 18px;
+  text-align: center;
+  font-size: calc(14px * var(--fs-scale));
+  color: var(--on-surface-variant);
+}

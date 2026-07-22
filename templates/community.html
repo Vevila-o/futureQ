@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>社群 — 聲影日記</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/index.css"/>
+  <link rel="stylesheet" href="/static/css/nav.css"/>
+  <link rel="stylesheet" href="/static/css/header.css"/>
+  <link rel="stylesheet" href="/static/css/community.css"/>
+</head>
+<body>
+
+<div id="header-placeholder"></div>
+
+<main>
+
+  <section class="community-intro">
+    <h2 class="community-heading">社群動態</h2>
+    <p class="community-sub">點擊日記卡片，收聽大家的語音加油</p>
+  </section>
+
+  <div class="community-feed" id="community-feed"></div>
+
+  <div class="community-empty" id="community-empty" style="display:none;">
+    <span class="material-symbols-outlined" style="font-size:64px;color:var(--outline-variant);">sentiment_very_satisfied</span>
+    <p>還沒有日記，快去錄製第一篇吧！</p>
+  </div>
+
+</main>
+
+<div id="nav-placeholder"></div>
+<script src="/static/js/nav.js"></script>
+<script src="/static/js/header.js"></script>
+<script>
+  window.COMMUNITY_DATA = {{ diary_list_json|safe }};
+  window.COMMUNITY_AUTO_EXPAND = "{{ auto_expand_id }}";
+  window.COMMUNITY_USER_DISPLAY_NAME = "{{ user_display_name|escapejs }}";
+</script>
+<script src="/static/js/shareUtil.js"></script>
+<script src="/static/js/community.js"></script>
+</body>
+</html>

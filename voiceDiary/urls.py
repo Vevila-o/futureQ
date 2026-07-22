@@ -15,14 +15,67 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from Voice import views
 from Voice import views as voice_views
+from django.conf import settings
+from django.conf.urls.static import static
 
-# voice 命名空間（不需要獨立 urls.py）
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('index/', voice_views.voiceIndex, name="index"), #首頁
-    path('uploadPhoto/',voice_views.upload_photo, name='upload_photo'), #照片上傳
 
+    # 登入 / 登出
+    path('', voice_views.login_view, name='login_root'),
+    path('login/', voice_views.login_view, name='login_view'),
+    path('logout/', voice_views.logout_view, name='logout_view'),
+
+    # 頁面
+    path('index/', voice_views.voiceIndex, name="index"),
+    path('dashboard/', voice_views.dashboard, name='dashboard'),
+    path('uploadPhoto/', voice_views.upload_photo, name='upload_photo'),
+    path('member/', voice_views.member_page, name='member_page'),
+    path('loading/', voice_views.loading_page, name='loading_page'),
+    path('voice/', voice_views.voice_page, name='voice_page'),
+    path('finish/', voice_views.finish_page, name='finish_page'),
+    path('review/', voice_views.review_page, name='review_page'),
+    path('share/', voice_views.share_page, name='share_page'),
+    path('game/', voice_views.game_page, name='game_page'),
+    path('market/', voice_views.market_page, name='market_page'),
+    
+    # 🌟 成功接通！成就頁面的路徑
+    path('achievements/', voice_views.achievements_page, name='achievements_page'),
+    
+    path('api/save-game-result/', voice_views.save_game_result, name='save_game_result'),
+    path('community/', voice_views.community_page, name='community_page'),
+    # path('api/ai-chat/', voice_views.ai_chat_api, name='ai_chat_api'),
+
+    # 儲存聲影日記
+    path('saveDiary/', voice_views.save_diary, name='save_diary'),
+    path('updateDiaryAudio/', voice_views.update_diary_audio, name='update_diary_audio'),
+    
+    # 聊天室對話（4 輪：照片辨識首問 + 3 次追問）
+    path('api/ai-first-question/', voice_views.ai_firstQ, name='ai_firstQ'),
+    path('api/vision-first-question/', voice_views.vision_firstQ, name='vision_firstQ'),
+    path('api/upload-chat-voice/', voice_views.upload_chat_voice, name='upload_chat_voice'),
+    path('api/skip-chat-round/', voice_views.skip_chat_round, name='skip_chat_round'),
+    path('api/finalize-diary/', voice_views.finalize_diary, name='finalize_diary'),
+    path('api/voice-reply/', voice_views.api_voice_reply, name='api_voice_reply'),
+    path('api/voice-reply/<int:reply_id>/transcribe/', voice_views.api_voice_reply_transcribe, name='api_voice_reply_transcribe'),
+    path('api/save-share-card-image/', voice_views.save_share_card_image, name='save_share_card_image'),
+
+    # 站內通知
+    path('api/notifications/', voice_views.api_notifications, name='api_notifications'),
+    path('api/notifications/mark-read/', voice_views.api_notifications_mark_read, name='api_notifications_mark_read'),
+    path('api/notifications/clear/', voice_views.api_notifications_clear, name='api_notifications_clear'),
+
+    # 共用元件
+    path('header/', voice_views.header_partial, name='header_partial'),
+    path('headerback/', voice_views.headerback_partial, name='headerback_partial'),
+    path('nav/', voice_views.nav_partial, name='nav_partial'),
+
+    #點數商城
+    path('shop/', voice_views.shop_page, name='shop_page'),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
