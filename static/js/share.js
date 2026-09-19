@@ -153,7 +153,6 @@ window.addEventListener('scroll', () => {
   var activeStream = null;
   var timerId      = null;
   var elapsed      = 0;
-  var pressing     = false;
 
   function padTwo(n) { return String(n).padStart(2, '0'); }
 
@@ -187,7 +186,7 @@ window.addEventListener('scroll', () => {
       elapsed = 0;
       timerId = setInterval(tickTimer, 1000);
       vrMicIcon.textContent = 'graphic_eq';
-      vrHint.textContent    = '錄音中... 放開停止';
+      vrHint.textContent    = '錄音中... 再次點擊停止';
       vrTimer.style.display = 'block';
       vrTimer.textContent   = '00:00 / 00:10';
       vrMicBtn.classList.add('vr-recording');
@@ -203,7 +202,7 @@ window.addEventListener('scroll', () => {
     vrMicBtn.classList.remove('vr-recording');
     vrTimer.style.display = 'none';
     vrMicIcon.textContent = 'mic';
-    vrHint.textContent    = '長按開始錄音';
+    vrHint.textContent    = '點一下開始錄音';
   }
 
   function showPreview() {
@@ -218,31 +217,16 @@ window.addEventListener('scroll', () => {
     audioChunks             = [];
     vrPreview.style.display = 'none';
     vrHint.style.display    = 'block';
-    vrHint.textContent      = '長按開始錄音';
+    vrHint.textContent      = '點一下開始錄音';
     vrAudioPlayer.src       = '';
   }
 
-  vrMicBtn.addEventListener('touchstart', function (e) {
-    e.preventDefault();
-    pressing = true;
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') startRecording();
-  }, { passive: false });
-
-  vrMicBtn.addEventListener('mousedown', function () {
-    pressing = true;
-    if (!mediaRecorder || mediaRecorder.state === 'inactive') startRecording();
-  });
-
-  document.addEventListener('touchend', function () {
-    if (!pressing) return;
-    pressing = false;
-    if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
-  });
-
-  document.addEventListener('mouseup', function () {
-    if (!pressing) return;
-    pressing = false;
-    if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+  vrMicBtn.addEventListener('click', function () {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   });
 
   vrRedoBtn.addEventListener('click', resetRecorder);
